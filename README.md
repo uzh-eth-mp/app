@@ -2,8 +2,8 @@
 
 ## Overview
 The app consists of four main components:
-  * Block consumer - scrape block data from the nodes and propagate to a message queue
-  * Transaction consumer - save data from transactions to the database
+  * Data producer - scrape block data from the nodes and propagate to a message queue
+  * Data consumer - save data from transactions to the database
   * Message queue - Kafka
   * Database - PostgreSQL
 
@@ -19,7 +19,7 @@ The development build creates a local PostgreSQL database and connects to public
 
 To run a development build:
 ```
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+$ sh run-dev.sh
 ```
 
 ### Production
@@ -27,7 +27,7 @@ The production build expects a database / local blockchain nodes to be already r
 
 To run a production build:
 ```
-$ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+$ sh run-prod.sh
 ```
 
 ### Per node dev/prod config
