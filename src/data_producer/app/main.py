@@ -1,11 +1,19 @@
 import argparse
 import asyncio
 
+from app import init_logger
 from app.config import Config
+from app.producer import DataProducer
 
+
+
+log = init_logger(__name__)
 
 async def main(config: Config):
-    pass
+    log.info("Starting the app...")
+    data_producer = DataProducer(config)
+    await data_producer.start_data_fetching()
+    log.info("Exiting the app...")
 
 
 if __name__ == "__main__":
@@ -13,7 +21,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Block Consumer")
     parser.add_argument(
         "--cfg",
-        help="The configuration file",
+        help="The configuration file path",
         type=str,
         required=True
     )
@@ -21,6 +29,7 @@ if __name__ == "__main__":
 
     # Load the config file
     config = Config.parse_file(args.cfg)
+    log.info("Config loaded.")
 
     # Run the app
     asyncio.run(main(config))

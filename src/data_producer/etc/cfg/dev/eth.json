@@ -1,5 +1,6 @@
 {
-    "node_url": "http://localhost",
+    "node_url": "https://mainnet.infura.io/v3/5ac780e50f2d4c48aedf160d077963ce",
     "db_url": "http://localhost",
-    "kafka_url": "http://localhost"
+    "kafka_url": "http://localhost",
+    "kafka_topic": "eth"
 }

@@ -1,5 +1,6 @@
 {
-    "node_url": "http://localhost",
+    "node_url": "https://bsc-dataseed1.binance.org/",
     "db_url": "http://localhost",
-    "kafka_url": "http://localhost"
+    "kafka_url": "http://localhost",
+    "kafka_topic": "bsc"
 }

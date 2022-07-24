@@ -10,9 +10,9 @@ class Config(BaseSettings):
     # The blockchain node RPC API URL
     node_url: AnyUrl
 
-    # The PostgreSQL database URL
+    # PostgreSQL
     db_url: AnyUrl
 
-    # Kafka URL
+    # Kafka
     kafka_url: AnyUrl
-
+    kafka_topic: str

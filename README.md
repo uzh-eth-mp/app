@@ -11,6 +11,22 @@ The app consists of four main components:
 
 The block / transaction consumers are blockchain agnostic / evm compatible, thus only require a configuration file to specify which blockchain should be mined for data and stored later.
 
+### Directory structure
+```
+.
+├── README.md
+├── docker-compose.dev.yml
+├── docker-compose.prod.yml
+├── docker-compose.yml
+├── etc                         # utility files
+│   ├── img
+│   └── scripts                 # scripts for running the app
+└── src                         # source code for containers
+    ├── data_consumer
+    ├── data_producer
+    └── db
+```
+
 ## Running the app
 The application stack is managed by docker-compose. Each compose configuration file targets a different environment.
 
@@ -19,7 +35,19 @@ The development build creates a local PostgreSQL database and connects to public
 
 To run a development build:
 ```
-$ sh run-dev.sh
+$ sh etc/scripts/run-dev.sh
+```
+
+#### Per node dev config
+You can also run the app only for a specific blockchain.
+```
+# ETH
+$ sh etc/scripts/run-dev-eth.sh
+# ETC
+$ sh etc/scripts/run-dev-etc.sh
+# BSC
+$ sh etc/scripts/run-dev-bsc.sh
+
 ```
 
 ### Production
@@ -27,16 +55,5 @@ The production build expects a database / local blockchain nodes to be already r
 
 To run a production build:
 ```
-$ sh run-prod.sh
-```
-
-### Per node dev/prod config
-You can also run the app only for a specific blockchain.
-```
-# ETH
-$ docker-compose -f docker-compose.yml -f <dev/prod.yml> --profile eth up
-# BSC
-$ docker-compose -f docker-compose.yml -f <dev/prod.yml> --profile bsc up
-# ETC
-$ docker-compose -f docker-compose.yml -f <dev/prod.yml> --profile etc up
+$ sh etc/scripts/run-prod.sh
 ```

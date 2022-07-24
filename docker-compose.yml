@@ -27,21 +27,21 @@ services:
   data_producer_eth:
     build:
       context: ./src/data_producer
-    profiles: ["eth"]
+    profiles: ["eth", "all"]
     depends_on:
       - kafka
 
   data_producer_etc:
     build:
       context: ./src/data_producer
-    profiles: ["etc"]
+    profiles: ["etc", "all"]
     depends_on:
       - kafka
 
   data_producer_bsc:
     build:
       context: ./src/data_producer
-    profiles: ["bsc"]
+    profiles: ["bsc", "all"]
     depends_on:
       - kafka
 
