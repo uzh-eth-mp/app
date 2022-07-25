@@ -17,7 +17,7 @@ async def main(config: Config):
 
 if __name__ == "__main__":
     # CLI arguments parser
-    parser = argparse.ArgumentParser(description="Block Consumer")
+    parser = argparse.ArgumentParser(description="Data Producer")
     parser.add_argument(
         "--cfg",
         help="The configuration file path",
