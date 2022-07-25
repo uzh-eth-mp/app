@@ -3,15 +3,15 @@ import asyncio
 
 from app import init_logger
 from app.config import Config
-from app.producer import DataProducer
+from app.consumer import DataConsumer
 
 
 log = init_logger(__name__)
 
 async def main(config: Config):
     log.info("Starting the app...")
-    data_producer = DataProducer(config)
-    await data_producer.start_data_fetching()
+    consumer = DataConsumer(config)
+    await consumer.start_data_processing()
     log.info("Exiting the app...")
 
 
