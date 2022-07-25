@@ -17,7 +17,6 @@ services:
       - "kafka_data:/bitnami"
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-      #- KAFKA_CFG_BROKER_ID=0
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
       - KAFKA_CFG_LISTENERS=PLAINTEXT://kafka:9092
       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
@@ -32,14 +31,12 @@ services:
     profiles: ["eth", "all"]
     depends_on:
       - kafka
-
   data_producer_etc:
     build:
       context: ./src/data_producer
     profiles: ["etc", "all"]
     depends_on:
       - kafka
-
   data_producer_bsc:
     build:
       context: ./src/data_producer
@@ -52,6 +49,18 @@ services:
     build:
       context: ./src/data_consumer
     profiles: ["eth", "all"]
+    depends_on:
+      - kafka
+  data_consumer_etc:
+    build:
+      context: ./src/data_consumer
+    profiles: ["etc", "all"]
+    depends_on:
+      - kafka
+  data_consumer_bsc:
+    build:
+      context: ./src/data_consumer
+    profiles: ["bsc", "all"]
     depends_on:
       - kafka
 

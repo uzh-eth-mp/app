@@ -36,3 +36,15 @@ services:
     depends_on:
       - db
       - kafka
+
+  data_consumer_etc:
+    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/dev/etc.json" ]
+    depends_on:
+      - db
+      - kafka
+
+  data_consumer_bsc:
+    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/dev/bsc.json" ]
+    depends_on:
+      - db
+      - kafka

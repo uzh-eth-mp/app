@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Start the containers in detached mode and
-# attach the logs only to the data producers
+# attach the logs only to the data producers and consumers
 docker-compose \
     -f docker-compose.yml \
     -f docker-compose.dev.yml \

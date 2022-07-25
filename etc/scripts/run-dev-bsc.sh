@@ -11,6 +11,6 @@ docker-compose \
     --remove-orphans \
     -d && \
     docker-compose logs \
-    -f data_producer_bsc
+    -f data_producer_bsc data_consumer_bsc
 
 docker-compose down --remove-orphans

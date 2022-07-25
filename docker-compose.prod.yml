@@ -9,3 +9,12 @@ services:
 
   data_producer_bsc:
     command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/bsc.json" ]
+
+  data_consumer_eth:
+    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/eth.json" ]
+
+  data_consumer_etc:
+    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/etc.json" ]
+
+  data_consumer_bsc:
+    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/bsc.json" ]
