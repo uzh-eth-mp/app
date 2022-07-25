@@ -57,3 +57,5 @@ To run a production build:
 ```
 $ sh etc/scripts/run-prod.sh
 ```
+
+> Note: The volumes for kafka / zookeeper sometimes need to be fully restarted with `docker-compose down --volumes`

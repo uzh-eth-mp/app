@@ -9,8 +9,6 @@ services:
       - "zookeeper_data:/bitnami"
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
-    logging:
-      driver: "none"
   kafka:
     image: docker.io/bitnami/kafka:3.2
     ports:
@@ -19,6 +17,10 @@ services:
       - "kafka_data:/bitnami"
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      #- KAFKA_CFG_BROKER_ID=0
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
       - ALLOW_PLAINTEXT_LISTENER=yes
     depends_on:
       - zookeeper
@@ -45,7 +47,13 @@ services:
     depends_on:
       - kafka
 
-  # Transaction consumers
+  # Data consumers
+  data_consumer_eth:
+    build:
+      context: ./src/data_consumer
+    profiles: ["eth", "all"]
+    depends_on:
+      - kafka
 
 # Kafka related config
 # see: https://github.com/bitnami/bitnami-docker-kafka/blob/a576f9847c9ed455645d6540a7f32e7935e6b4d7/docker-compose.yml#L24

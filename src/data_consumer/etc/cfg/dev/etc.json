@@ -1,0 +1,6 @@
+{
+    "node_url": "https://www.ethercluster.com/etc",
+    "db_url": "http://localhost",
+    "kafka_url": "http://localhost",
+    "kafka_topic": "etc"
+}

@@ -11,6 +11,6 @@ docker-compose \
     --remove-orphans \
     -d && \
     docker-compose logs \
-    -f data_producer_eth
+    -f data_producer_eth data_consumer_eth
 
 docker-compose down --remove-orphans

@@ -1,8 +1,10 @@
-import asyncio
-
+from app import init_logger
 from app.config import Config
 from app.kafka.manager import KafkaManager
 from app.node.connector import NodeConnector
+
+
+log = init_logger(__name__)
 
 
 class DataProducer:
@@ -19,12 +21,14 @@ class DataProducer:
 
     async def start_data_fetching(self):
         """
-        Start the while loop that collects all the block data
+        Start a while loop that collects all the block data
         based on the config values
         """
-        # TODO: finish the code in this method
+        # Connect to Kafka
+        await self.kafka_manager.start()
 
-        # Get the current latest block
+        # Get the current latest block number
+        latest_nr = await self.node_connector.get_latest_block_number()
 
         # Get the last block that was processed from the DB
 
@@ -33,7 +37,6 @@ class DataProducer:
         # if last >= latest: do nothing
 
         while True:
-            await asyncio.sleep(1)
             # query the node for current block data
 
             # upsert the static block data (blocknr, blockhash,
@@ -44,3 +47,10 @@ class DataProducer:
 
             # upsert the latest processed block if the Kafka messages are
             # sent successfully
+
+
+            # FIXME: remove next 2 lines
+            await self.kafka_manager.send_message("test")
+            break
+
+        await self.kafka_manager.stop()
