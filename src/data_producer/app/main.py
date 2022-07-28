@@ -10,8 +10,8 @@ log = init_logger(__name__)
 
 async def main(config: Config):
     log.info("Starting the app...")
-    data_producer = DataProducer(config)
-    await data_producer.start_data_fetching()
+    async with DataProducer(config) as data_producer:
+        await data_producer.start_data_fetching()
     log.info("Exiting the app...")
 
 
