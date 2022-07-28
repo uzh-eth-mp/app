@@ -1,6 +1,6 @@
 {
     "node_url": "https://bsc-dataseed1.binance.org/",
-    "db_url": "postgresql://db:5432",
+    "db_dsn": "postgresql://db:5432",
     "kafka_url": "kafka:9092",
     "kafka_topic": "bsc"
 }

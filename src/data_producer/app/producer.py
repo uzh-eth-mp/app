@@ -1,7 +1,12 @@
+from __future__ import annotations
+
+import asyncio
+
 from app import init_logger
 from app.config import Config
 from app.kafka.manager import KafkaManager
 from app.node.connector import NodeConnector
+from app.db.manager import DatabaseManager
 
 
 log = init_logger(__name__)
@@ -11,6 +16,7 @@ class DataProducer:
     """Manage Kafka, db and node operations"""
 
     def __init__(self, config: Config) -> None:
+        # Initialize the manager objects
         self.kafka_manager = KafkaManager(
             kafka_url=config.kafka_url,
             topic=config.kafka_topic
@@ -18,17 +24,32 @@ class DataProducer:
         self.node_connector = NodeConnector(
             node_url=config.node_url
         )
+        self.db_manager = DatabaseManager(
+            postgresql_dsn=config.db_dsn,
+            node_name=config.kafka_topic
+        )
 
-    async def start_data_fetching(self):
+    async def __aenter__(self) -> DataProducer:
+        # Connect to Kafka
+        await self.kafka_manager.connect()
+        # Connect to the db
+        await self.db_manager.connect()
+
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await self.kafka_manager.stop()
+
+    async def start_data_fetching(self) -> None:
         """
         Start a while loop that collects all the block data
         based on the config values
         """
-        # Connect to Kafka
-        await self.kafka_manager.start()
-
         # Get the current latest block number
         latest_nr = await self.node_connector.get_latest_block_number()
+
+        # FIXME: remove next line
+        await self.db_manager.insert_block_data()
 
         # Get the last block that was processed from the DB
 
@@ -50,7 +71,5 @@ class DataProducer:
 
 
             # FIXME: remove next 2 lines
-            await self.kafka_manager.send_message("test")
-            break
-
-        await self.kafka_manager.stop()
+            await self.kafka_manager.send_message(f"Latest block nr: {latest_nr}")
+            await asyncio.sleep(5)

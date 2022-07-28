@@ -42,7 +42,7 @@ class KafkaManager:
         )
         self.topic = topic
 
-    async def start(self):
+    async def connect(self):
         """Connect (with linear backoff) to the kafka cluster.
 
         Note:

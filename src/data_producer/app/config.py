@@ -1,6 +1,7 @@
 from pydantic import (
     BaseSettings,
-    AnyUrl
+    AnyUrl,
+    PostgresDsn
 )
 
 
@@ -11,7 +12,7 @@ class Config(BaseSettings):
     node_url: AnyUrl
 
     # PostgreSQL
-    db_url: AnyUrl
+    db_dsn: PostgresDsn
 
     # Kafka
     kafka_url: str

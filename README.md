@@ -58,4 +58,12 @@ To run a production build:
 $ sh etc/scripts/run-prod.sh
 ```
 
-> Note: The volumes for kafka / zookeeper sometimes need to be fully restarted with `docker-compose down --volumes`
+> Note: If you encounter a `Error response from daemon: network` error, the volumes need to be fully restarted with `docker-compose down --volumes --remove-orphans`.
+
+## Running only the database
+In case you only need to run the development database:
+```
+$ sh etc/scripts/run-dev-db.sh
+```
+
+For connecting to the database check [src/db/README.md](src/db/README.md).
