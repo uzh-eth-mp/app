@@ -1,6 +1,6 @@
 import asyncio
 
-from aiokafka import AIOKafkaProducer
+from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from aiokafka.errors import (
     KafkaError,
     KafkaTimeoutError,
@@ -20,15 +20,15 @@ class KafkaManagerError(Exception):
 
 class KafkaManager:
     """
-    Manage the Kafka cluster connection and allow producing
-    messages to a selected topic.
+    Manage the Kafka cluster connection.
+    Base class for KafkaProducerManager and KafkaConsumerManager.
     """
     # The delay before attempting the initial connection (in seconds)
     INITIAL_CONNECTION_DELAY = 30
     # The delay between connection attempts (in seconds)
     LINEAR_BACKOFF_DELAY = 5
     # The maximum allowed initial connection attempts before the app exits
-    INITIAL_CONNECTION_MAX_ATTEMPTS = 15
+    INITIAL_CONNECTION_MAX_ATTEMPTS = 10
 
     def __init__(self, kafka_url: str, topic: str) -> None:
         """
@@ -36,11 +36,7 @@ class KafkaManager:
             kafka_url: the url of the Kafka cluster
             topic: the Kafka topic
         """
-        self.producer = AIOKafkaProducer(
-            bootstrap_servers=kafka_url,
-            enable_idempotence=True
-        )
-        self.topic = topic
+        self._client = None
 
     async def connect(self):
         """Connect (with linear backoff) to the kafka cluster.
@@ -62,14 +58,14 @@ class KafkaManager:
             attempt_i += 1
             if attempt_i > self.INITIAL_CONNECTION_MAX_ATTEMPTS:
                 # Need to cleanup the producer before exiting.
-                await self.producer.stop()
+                await self._client.stop()
                 # Exit the app if the max attempts have been reached
                 raise KafkaManagerError(
                     "Maximum number of initial connection attempts reached."
                 )
             # Try to connect to the cluster
             try:
-                await self.producer.start()
+                await self._client.start()
                 # If the call above doesn't raise an exception,
                 # we're connected.
                 connected = True
@@ -80,17 +76,27 @@ class KafkaManager:
                 continue
         log.info("Connected to Kafka")
 
-    async def stop(self):
+    async def disconnect(self):
         """Flush pending data and disconnect from the kafka cluster"""
-        log.info("Disconnecting from Kafka")
-        await self.producer.stop()
+        await self._client.stop()
         log.info("Disconnected from Kafka")
+
+
+class KafkaProducerManager(KafkaManager):
+    """Manage producing events to a given Kafka topic"""
+    def __init__(self, kafka_url: str, topic: str) -> None:
+        super().__init__(kafka_url, topic)
+        self._client = AIOKafkaProducer(
+            bootstrap_servers=kafka_url,
+            enable_idempotence=True
+        )
+        self.topic = topic
 
     async def send_message(self, msg: str):
         """Send message to a Kafka broker"""
         try:
             # Send the message
-            send_future = await self.producer.send(
+            send_future = await self._client.send(
                 topic=self.topic,
                 value=msg.encode()
             )
@@ -109,3 +115,21 @@ class KafkaManager:
             # Generic kafka error
             log.error(f"{err} on {msg}")
             raise err
+
+class KafkaConsumerManager(KafkaManager):
+    """Manage consuming events from a given Kafka topic"""
+    def __init__(self, kafka_url: str, topic: str) -> None:
+        super().__init__(kafka_url, topic)
+        self._client = AIOKafkaConsumer(
+            topic,
+            bootstrap_servers=kafka_url
+        )
+
+    async def start_consuming(self):
+        """Consume messages from a given topic"""
+        try:
+            async for event in self._client:
+                log.debug(f"Received event: {event}")
+                await asyncio.sleep(10)
+        finally:
+            self.disconnect()

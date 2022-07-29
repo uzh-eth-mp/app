@@ -22,8 +22,7 @@ The block / transaction consumers are blockchain agnostic / evm compatible, thus
 │   ├── img
 │   └── scripts                 # scripts for running the app
 └── src                         # source code for containers
-    ├── data_consumer
-    ├── data_producer
+    ├── data_collection         # producer + consumer code
     └── db
 ```
 

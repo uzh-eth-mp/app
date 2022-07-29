@@ -27,7 +27,6 @@ class DatabaseManager:
 
     async def connect(self):
         """Connects to the PostgreSQL database."""
-        log.info("Connecting to PostgreSQL")
         self.db = await asyncpg.connect(
             dsn=self.dsn
         )

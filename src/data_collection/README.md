@@ -1,5 +1,13 @@
-# Data Producer
-Fetches data from nodes via RPC and puts them into a Kafka topic.
+# Data Collection containers
+Code for building producer and consumer docker containers.
+
+```
+# Start an ETH data producer
+$ python -m app.main --cfg etc/cfg/dev/eth.json --mode producer
+
+# Start an ETH data consumer
+$ $ python -m app.main --cfg etc/cfg/dev/eth.json --mode consumer
+```
 
 ## Running the code
 ## Locally via Docker
@@ -14,14 +22,14 @@ $ docker run -it data_producer
 Make sure your python version is at least `3.9` (`python --version`)
 
 ```
-# create a virtual environment from this directory (src/data_producer)
+# create a virtual environment from this directory (src/data_collection)
 $ python -m venv venv
 # activate it
 $ source ./venv/bin/activate
 # install requirements
 (venv) $ pip install -r requirements.txt
 # run the code
-$ python -m app.main --cfg etc/cfg/dev/eth.json
+$ python -m app.main --cfg etc/cfg/dev/eth.json --mode producer
 ```
 
 ## Requirements
