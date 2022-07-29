@@ -2,19 +2,19 @@ version: "3.9"
 services:
   # Different configuration files for data producers
   data_producer_eth:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/eth.json" ]
+    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/eth.json", "--mode", "producer" ]
 
   data_producer_etc:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/etc.json" ]
+    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/etc.json", "--mode", "producer" ]
 
   data_producer_bsc:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/bsc.json" ]
+    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/bsc.json", "--mode", "producer" ]
 
   data_consumer_eth:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/eth.json" ]
+    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/eth.json", "--mode", "consumer" ]
 
   data_consumer_etc:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/etc.json" ]
+    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/etc.json", "--mode", "consumer" ]
 
   data_consumer_bsc:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/bsc.json" ]
+    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/bsc.json", "--mode", "consumer" ]

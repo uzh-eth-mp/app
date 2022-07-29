@@ -1,44 +1,27 @@
-from __future__ import annotations
-
 import asyncio
 
 from app import init_logger
+from app.data_collector import DataCollector
+from app.kafka.manager import KafkaProducerManager
 from app.config import Config
-from app.kafka.manager import KafkaManager
-from app.node.connector import NodeConnector
-from app.db.manager import DatabaseManager
 
 
 log = init_logger(__name__)
 
 
-class DataProducer:
-    """Manage Kafka, db and node operations"""
+class DataProducer(DataCollector):
+    """
+    Produce block / transaction data from the blockchain (node) to a Kafka topic.
 
+    This class also updates the database with block data and saves the state
+    of processing (latest_processed_block).
+    """
     def __init__(self, config: Config) -> None:
-        # Initialize the manager objects
-        self.kafka_manager = KafkaManager(
+        super().__init__(config)
+        self.kafka_manager = KafkaProducerManager(
             kafka_url=config.kafka_url,
             topic=config.kafka_topic
         )
-        self.node_connector = NodeConnector(
-            node_url=config.node_url
-        )
-        self.db_manager = DatabaseManager(
-            postgresql_dsn=config.db_dsn,
-            node_name=config.kafka_topic
-        )
-
-    async def __aenter__(self) -> DataProducer:
-        # Connect to Kafka
-        await self.kafka_manager.connect()
-        # Connect to the db
-        await self.db_manager.connect()
-
-        return self
-
-    async def __aexit__(self, exc_type, exc, tb):
-        await self.kafka_manager.stop()
 
     async def start_data_fetching(self) -> None:
         """

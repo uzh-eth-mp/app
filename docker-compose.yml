@@ -27,19 +27,19 @@ services:
   # Data producers
   data_producer_eth:
     build:
-      context: ./src/data_producer
+      context: ./src/data_collection
     profiles: ["eth", "all"]
     depends_on:
       - kafka
   data_producer_etc:
     build:
-      context: ./src/data_producer
+      context: ./src/data_collection
     profiles: ["etc", "all"]
     depends_on:
       - kafka
   data_producer_bsc:
     build:
-      context: ./src/data_producer
+      context: ./src/data_collection
     profiles: ["bsc", "all"]
     depends_on:
       - kafka
@@ -47,19 +47,19 @@ services:
   # Data consumers
   data_consumer_eth:
     build:
-      context: ./src/data_consumer
+      context: ./src/data_collection
     profiles: ["eth", "all"]
     depends_on:
       - kafka
   data_consumer_etc:
     build:
-      context: ./src/data_consumer
+      context: ./src/data_collection
     profiles: ["etc", "all"]
     depends_on:
       - kafka
   data_consumer_bsc:
     build:
-      context: ./src/data_consumer
+      context: ./src/data_collection
     profiles: ["bsc", "all"]
     depends_on:
       - kafka

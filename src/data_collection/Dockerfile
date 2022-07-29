@@ -10,4 +10,4 @@ RUN pip3 install -r requirements.txt
 
 COPY . .
 
-CMD [ "python3", "-m", "app.main", "--cfg", "etc/cfg/dev/eth.json" ]
+CMD [ "python3", "-m", "app.main", "--cfg", "etc/cfg/dev/eth.json", "--mode", "producer" ]
