@@ -26,16 +26,20 @@ BEGIN
        total_supply numeric(78,0) NOT NULL,  #uint256
        block_timestamp timestamp NOT NULL,   #without time zone
        block_number bigint NOT NULL,
-      )', 'block_data_' || token_name);
+      )', 'token_contract_data_' || token_name);
 END
 $func$;
 
-SELECT create_table_block_data('ERC20');
-SELECT create_table_block_data('ERC271');
+SELECT create_table_token_contract_data('eth', 'ERC20');
+SELECT create_table_token_contract_data('bsc', 'ERC20');
+SELECT create_table_token_contract_data('etc', 'ERC20');
+SELECT create_table_token_contract_data('bsc', 'ERC271');
+SELECT create_table_token_contract_data('eth', 'ERC271');
+SELECT create_table_token_contract_data('etc', 'ERC271');
 
 
 -- ERC1155
-CREATE TABLE ERC1151(
+CREATE TABLE IF NOT EXISTS ERC1151(
        contract id PRIMARY KEY NOT NULL,
        address numeric(78,0) NOT NULL,       #uint256
        decimals int NOT NULL,                #int8
@@ -46,9 +50,9 @@ CREATE TABLE ERC1151(
 
 
 -- since not every contract is a token, we create a separate table for the contract data.
- CREATE TABLE CONTRACT_DATA(
+ CREATE TABLE IF NOT EXISTS CONTRACT_DATA(
        contract id PRIMARY KEY NOT NULL,
-       bytecode bytea NOT NULL, ###### I AM NOT SURE IF ALL CONTRACTS HAVE IT ###
+       bytecode bytea,
        block_timestamp timestamp NOT NULL,
        block_number bigint
 );
