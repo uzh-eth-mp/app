@@ -34,9 +34,8 @@ $func$
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       unique_id PRIMARY KEY NOT NULL,
        transaction_hash varchar(256),
-       block_number bigint NOT NULL,
+       block_number REFERENCES %I bigint NOT NULL,
        timestamp timestamp NOT NULL,
        from_address varchar(256) NOT NULL,
        to_address varchar(256) NOT NULl
@@ -46,7 +45,8 @@ BEGIN
        gas_limit numeric(78,0) NOT NULL,
        gas_used numeric(78,0) NOT NULL,
        input_data, varchar(128) NOT NULL
-      )', 'block_data_' || node_name);
+      )', 'transaction_data_' || node_name, 'block_data_' || node_name);
+      -- is the input_data only 128 chars long?
 END
 $func$;
 
@@ -75,7 +75,7 @@ BEGIN
        gas_used bigint NOT NULL,
        input_data varchar(128) NOT NULL,
        function_type,
-      )', 'transaction_data_' || node_name);
+      )', 'internal_transaction_data_' || node_name);
 END
 $func$;
 
