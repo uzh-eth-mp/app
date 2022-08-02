@@ -13,9 +13,9 @@ BEGIN
        gas_limit bigint NOT NULL,
        gas_used bigint NOT NULL,
        timestamp timestamp NOT NULL,
-       miner varchar(256) NOT NULL, 
-       parent_hash varchar(256) NOT NULL, 
-       omner_hash varchar(256) NOT NULL,  
+       miner varchar(256) NOT NULL,
+       parent_hash varchar(256) NOT NULL,
+       omner_hash varchar(256) NOT NULL,
        block_reward numeric(78,18) NOT NULL,
        uncles_reward, numeric(78,18) NOT NULL
       )', 'block_data_' || node_name);
@@ -41,7 +41,7 @@ BEGIN
        from_address varchar(256) NOT NULL,
        to_address varchar(256) NOT NULl
        value numeric(78,0) NOT NULL,
-       transaction_fee numeric(78,18) NOT NULL, 
+       transaction_fee numeric(78,18) NOT NULL,
        gas_price numeric(78,18) NOT NULL,
        gas_limit numeric(78,0) NOT NULL,
        gas_used numeric(78,0) NOT NULL,
@@ -70,8 +70,8 @@ BEGIN
        from_address varchar(256) NOT NULL ,
        to_address varchar(256) NOT NULL
        value bigint,
-       gas_price bigint, 
-       gas_limit bigint NOT NULL, 
+       gas_price bigint,
+       gas_limit bigint NOT NULL,
        gas_used bigint NOT NULL,
        input_data varchar(128) NOT NULL,
        function_type,
@@ -96,11 +96,11 @@ BEGIN
        transaction_hash varchar(256) NOT NULL,
        block_hash varchar(256) NOT NULL,
        block_number bigint,
-       contract_Address varchar(256), 
+       contract_Address varchar(256),
        from varchar(256) NOT NULL,
-       to varchar(256) NOT NULL, 
-       gas_used bigint NOT NULL, 
-       logs_bloom varchar(256) NOT NULL, 
+       to varchar(256) NOT NULL,
+       gas_used bigint NOT NULL,
+       logs_bloom varchar(256) NOT NULL,
       )', 'transaction_log_data_' || node_name);
 END
 $func$;
