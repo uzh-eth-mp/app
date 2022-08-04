@@ -1,4 +1,4 @@
--- creating a table -> https://dba.stackexchange.com/a/42930
+-- creating a table func -> https://dba.stackexchange.com/a/42930
 
 -- ERC20 properties -> https://eips.ethereum.org/EIPS/eip-20
 -- ERC721 properties -> https://eips.ethereum.org/EIPS/eip-721
@@ -11,48 +11,80 @@
 -- in postgres int4 = 4 bytes = 32 bit
 
 
-CREATE OR REPLACE FUNCTION create_table_token_contract_data(token_name varchar(30))
+
+-- CONTRACT DATA TABLE
+-- since not every contract is a token, we create a separate table for all the contract data.
+CREATE OR REPLACE FUNCTION create_table_contract_data(blockchain_name varchar(30))
+  RETURNS VOID
+  LANGUAGE plpgsql AS
+$func$
+BEGIN
+   EXECUTE format('
+      CREATE TABLE IF NOT EXISTS %I (blockchain_name varchar(30))
+       contract_address numeric(78,0) PRIMARY KEY NOT NULL,      #uint256
+       bytecode bytea,
+       block_timestamp timestamp NOT NULL,
+       block_number bigint
+      )', 'contract_data_'  || blockchain_name);
+END
+$func$;
+
+SELECT create_table_token_contract_data('bsc');
+SELECT create_table_token_contract_data('eth');
+SELECT create_table_token_contract_data('etc');
+
+
+-- TOKEN CONTRACT DATA TABLE - ERC20 & ERC271
+CREATE OR REPLACE FUNCTION create_table_token_contract_data(blockchain_name varchar(30),token_name varchar(30))
   RETURNS VOID
   LANGUAGE plpgsql AS
 $func$
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       contract id PRIMARY KEY NOT NULL,
-       address numeric(78,0) NOT NULL,       #uint256
+       contract_address numeric(78,0)PRIMARY KEY NOT NULL,      #uint256
        symbol varchar(128) NOT NULL,
        name varchar(256) NOT NULL,
-       decimals int NOT NULL,                #int8
-       total_supply numeric(78,0) NOT NULL,  #uint256
-       block_timestamp timestamp NOT NULL,   #without time zone
+       decimals int NOT NULL,                                   #int8
+       total_supply numeric(78,0) NOT NULL,                     #uint256
+       block_timestamp timestamp NOT NULL,                      #without time zone
        block_number bigint NOT NULL,
-      )', 'token_contract_data_' || token_name);
+       CONSTRAINT fk_contract_address
+         FOREIGN KEY (contract_address)
+            REFERENCES %I(contract_address)
+      )', 'token_contract_data_' || blockchain_name || '_' || token_name, 'contract_data_' || blockchain_name);
 END
 $func$;
 
-SELECT create_table_token_contract_data('eth', 'ERC20');
-SELECT create_table_token_contract_data('bsc', 'ERC20');
-SELECT create_table_token_contract_data('etc', 'ERC20');
-SELECT create_table_token_contract_data('bsc', 'ERC271');
-SELECT create_table_token_contract_data('eth', 'ERC271');
-SELECT create_table_token_contract_data('etc', 'ERC271');
+SELECT create_table_token_contract_data('eth', 'erc20');
+SELECT create_table_token_contract_data('bsc', 'erc20');
+SELECT create_table_token_contract_data('etc', 'erc20');
+SELECT create_table_token_contract_data('bsc', 'erc271');
+SELECT create_table_token_contract_data('eth', 'erc271');
+SELECT create_table_token_contract_data('etc', 'erc271');
 
 
--- ERC1155
-CREATE TABLE IF NOT EXISTS ERC1151(
-       contract id PRIMARY KEY NOT NULL,
-       address numeric(78,0) NOT NULL,       #uint256
-       decimals int NOT NULL,                #int8
-       total_supply numeric(78,0) NOT NULL,  #uint256
-       block_timestamp timestamp NOT NULL,   #without time zone
+--TOKEN CONTRACT DATA TABLE - ERC1155
+CREATE OR REPLACE FUNCTION create_table_token_contract_data_erc1155(blockchain_name varchar(30))
+  RETURNS VOID
+  LANGUAGE plpgsql AS
+$func$
+BEGIN
+   EXECUTE format('
+      CREATE TABLE IF NOT EXISTS %I (blockchain_name varchar(30))
+       contract_address numeric(78,0)PRIMARY KEY NOT NULL,       #uint256
+       decimals int NOT NULL,                                    #int8
+       total_supply numeric(78,0) NOT NULL,                      #uint256
+       block_timestamp timestamp NOT NULL,                       #without time zone
        block_number bigint NOT NULL,
-);
+       CONSTRAINT fk_contract_address
+         FOREIGN KEY (contract_address)
+            REFERENCES %I(contract_address)
+      )', 'token_contract_data_'  || blockchain_name || '_erc1155', 'contract_data_'  || blockchain_name);
+END
+$func$;
 
+SELECT create_table_token_contract_data('bsc');
+SELECT create_table_token_contract_data('eth');
+SELECT create_table_token_contract_data('etc');
 
--- since not every contract is a token, we create a separate table for the contract data.
- CREATE TABLE IF NOT EXISTS CONTRACT_DATA(
-       contract id PRIMARY KEY NOT NULL,
-       bytecode bytea,
-       block_timestamp timestamp NOT NULL,
-       block_number bigint
-);
