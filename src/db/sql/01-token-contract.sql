@@ -29,9 +29,9 @@ BEGIN
 END
 $func$;
 
-SELECT create_table_token_contract_data('bsc');
-SELECT create_table_token_contract_data('eth');
-SELECT create_table_token_contract_data('etc');
+SELECT create_table_contract_data('bsc');
+SELECT create_table_contract_data('eth');
+SELECT create_table_contract_data('etc');
 
 
 -- TOKEN CONTRACT DATA TABLE - ERC20 & ERC271
@@ -84,7 +84,7 @@ BEGIN
 END
 $func$;
 
-SELECT create_table_token_contract_data('bsc');
-SELECT create_table_token_contract_data('eth');
-SELECT create_table_token_contract_data('etc');
+SELECT create_table_token_contract_data_erc1155('bsc');
+SELECT create_table_token_contract_data_erc1155('eth');
+SELECT create_table_token_contract_data_erc1155('etc');
 
