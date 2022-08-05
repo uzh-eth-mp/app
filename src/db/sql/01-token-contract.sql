@@ -65,6 +65,7 @@ SELECT create_table_token_contract_data('etc', 'erc271');
 
 
 --TOKEN CONTRACT DATA TABLE - ERC1155
+-- unlike ERC20, ERC1155 does not have name, symbol, and decimal. Check the metadata file.
 CREATE OR REPLACE FUNCTION create_table_token_contract_data_erc1155(blockchain_name varchar(30))
   RETURNS VOID
   LANGUAGE plpgsql AS
@@ -73,7 +74,6 @@ BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (blockchain_name varchar(30))
        contract_address numeric(78,0)PRIMARY KEY NOT NULL,       #uint256
-       decimals int NOT NULL,                                    #int8
        total_supply numeric(78,0) NOT NULL,                      #uint256
        block_timestamp timestamp NOT NULL,                       #without time zone
        block_number bigint NOT NULL,
