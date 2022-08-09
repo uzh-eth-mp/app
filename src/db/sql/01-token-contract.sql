@@ -23,77 +23,69 @@
 
 -- CONTRACT TABLE
 -- since not every contract is a token, we create a separate table for all the contract data.
-CREATE OR REPLACE FUNCTION contract(blockchain_name varchar(30))
+CREATE OR REPLACE FUNCTION create_table_contract(blockchain_name varchar(30))
   RETURNS VOID
   LANGUAGE plpgsql AS
 $func$
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       address numeric(78,0) PRIMARY KEY NOT NULL,
+       address varchar(256) PRIMARY KEY NOT NULL,
+       transaction_hash varchar(256) NOT NULL,
+       -- block_timestamp, block_number probably not needed here
        block_timestamp timestamp NOT NULL,
        block_number bigint NOT NULL
       )', blockchain_name || '_contract');
 END
 $func$;
 
-SELECT contract('bsc');
-SELECT contract('eth');
-SELECT contract('etc');
+SELECT create_table_contract('bsc');
+SELECT create_table_contract('eth');
+SELECT create_table_contract('etc');
 
 
 -- Create enum type for the tokens category
-CREATE TYPE category AS ENUM ('erc20', 'erc271', 'erc1155');
+CREATE TYPE token_category AS ENUM ('erc20', 'erc271', 'erc1155');
 
 -- TOKEN CONTRACT TABLE - ERC20 & ERC271 & ERC1155
-CREATE OR REPLACE FUNCTION token_contract(blockchain_name varchar(30))
+CREATE OR REPLACE FUNCTION create_table_token_contract(blockchain_name varchar(30))
   RETURNS VOID
   LANGUAGE plpgsql AS
 $func$
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       address numeric(78,0) PRIMARY KEY REFERENCES %I(address)  NOT NULL,
+       address varchar(256) PRIMARY KEY REFERENCES %I(address) NOT NULL,
        symbol varchar(128),
        name varchar(256),
        decimals int,
        total_supply numeric(78,0),
-       token_category category
+       token_category token_category
       )', blockchain_name || '_token_contract', blockchain_name || '_contract');
 END
 $func$;
 
-SELECT token_contract('eth');
-SELECT token_contract('bsc');
-SELECT token_contract('etc');
+SELECT create_table_token_contract('eth');
+SELECT create_table_token_contract('bsc');
+SELECT create_table_token_contract('etc');
 
 
 --CONTRACT SUPPLY CHANGE TABLE
-CREATE OR REPLACE FUNCTION contract_supply_change(blockchain_name varchar(30))
+CREATE OR REPLACE FUNCTION create_table_contract_supply_change(blockchain_name varchar(30))
   RETURNS VOID
   LANGUAGE plpgsql AS
 $func$
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I(
-       address numeric(78,0)  NOT NULL,
+       address varchar(256) REFERENCES %I(address) NOT NULL,
        amount_changed numeric(78,0) NOT NULL,
-       block_timestamp timestamp NOT NULL,
        transaction_hash varchar(256) NOT NULL,
-       PRIMARY KEY(address, block_timestamp),
-       FOREIGN KEY(address)
-       REFERENCES %I(address)
+       PRIMARY KEY(address, transaction_hash)
       )', blockchain_name || '_contract_supply_change', blockchain_name || '_token_contract');
 END
 $func$;
 
-SELECT contract_supply_change('eth');
-SELECT contract_supply_change('bsc');
-SELECT contract_supply_change('etc');
-
-
-
-
-
-
-
+SELECT create_table_contract_supply_change('eth');
+SELECT create_table_contract_supply_change('bsc');
+SELECT create_table_contract_supply_change('etc');
