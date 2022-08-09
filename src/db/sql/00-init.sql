@@ -66,7 +66,7 @@ BEGIN
        transaction_hash varchar(256) REFERENCES %I NOT NULL,
        block_hash varchar(256) NOT NULL,
        block_number bigint,
-       timestamp varchar(256) NOT NULL,
+       timestamp timestamp NOT NULL,
        from_address varchar(256) NOT NULL ,
        to_address varchar(256) NOT NULL,
        value numeric(78,18),
