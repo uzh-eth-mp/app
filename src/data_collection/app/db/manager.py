@@ -49,8 +49,8 @@ class DatabaseManager:
         await self.db.execute(f"""
             INSERT INTO {table} (block_number, block_hash, nonce, difficulty, gas_limit, gas_used, timestamp, miner, parent_hash, omner_hash, block_reward, uncles_reward)
             VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9, $10, $11, $12);
-        """, self.block_number, self.block_hash, self.nonce, self.difficulty, self.gas_limit, self.gas_used, self.timestamp,self.miner,
-             self.parent_hash, self.owner_hash, self.block_reward, self.uncles_reward)
+        """, block_number, block_hash, nonce, difficulty, gas_limit, gas_used, timestamp,  miner,
+             parent_hash, omner_hash, block_reward, uncles_reward)
 
     
     async def insert_transaction_data(self, transaction_hash: str, block_number: int, from_address: str, to_address: str, value: float, transaction_fee: float,
@@ -64,20 +64,20 @@ class DatabaseManager:
         await self.db.execute(f"""
             INSERT INTO {table} (transaction_hash, block_number, from_address, to_address, value, transaction_fee, gas_price, gas_limit, gas_used, is_token_tx, input_data)
             VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9, $10, $11);
-        """, self.transaction_hash, self.block_number, self.from_address, self.to_address, self.value, self.transaction_fee, self.gas_price, self.gas_limit, self.gas_used, self.is_token_tx, self.input_data)
+        """, transaction_hash, block_number, from_address, to_address, value, transaction_fee, gas_price, gas_limit, gas_used, is_token_tx, input_data)
 
-
-    async def insert_internal_transaction_data(self):
+    async def insert_internal_transaction_data(self, transaction_hash: str, block_number: int, from_address: str, to_address: str, value: float, transaction_fee: float,
+                                      gas_price: float, gas_limit: int, gas_used: int, is_token_tx: bool, input_data: str):
         """
         Insert transaction data into the database
         """
 
         table = f"internal_transaction_data_{self.node_name}"
-       
+
         await self.db.execute(f"""
-            INSERT INTO {table} (transaction_hash, block_number, from_address,to_address, value, transaction_fee, timestamp, miner, parent_hash, omner_hash, block_reward, uncles_reward)
-            VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9, $10, $11, $12);
-        """, hash, difficulty, gas_limit)
+            INSERT INTO {table} (transaction_hash, block_number, from_address, to_address, value, transaction_fee, gas_price, gas_limit, gas_used, is_token_tx, input_data)
+            VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9, $10, $11);
+        """, transaction_hash, block_number, from_address, to_address, value, transaction_fee, gas_price, gas_limit, gas_used, is_token_tx, input_data)
 
 
     async def insert_transaction_log_data(self, unique_id: int, transaction_hash: str, address: str, log_index: int, data: str, block_hash: str, block_number: int, removed: bool, topics: list[str]):
@@ -88,8 +88,8 @@ class DatabaseManager:
         table = f"transaction_log_data_{self.node_name}"
        
         await self.db.execute(f"""
-            INSERT INTO {table} (unique_id, transaction_hash, address, log_index, data, black_hash, block_number, removed, topics)
+            INSERT INTO {table} (transaction_hash, address, log_index, data, black_hash, block_number, removed, topics)
             VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9);
-        """, self.unique_id, self.transaction_hash, self.address, self.log_index, self.data, self.black_hash, self.block_number, self.removed, self.topics)
+        """, transaction_hash, address, log_index, data, block_hash, block_number, removed, topics)
 
     

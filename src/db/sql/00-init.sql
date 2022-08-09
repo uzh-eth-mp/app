@@ -13,13 +13,13 @@ BEGIN
        difficulty numeric(78,0) NOT NULL,
        gas_limit bigint NOT NULL,
        gas_used bigint NOT NULL,
-       timestamp varchar(256) NOT NULL,
+       timestamp timestamp NOT NULL,
        miner varchar(256) NOT NULL,
        parent_hash varchar(256) NOT NULL,
        omner_hash varchar(256) NOT NULL,
        block_reward numeric(78,18) NOT NULL,
        uncles_reward numeric(78,18) NOT NULL
-      )', 'block_data_' || node_name);
+      )', node_name || '_block_data') ;
 END
 $func$;
 
@@ -46,7 +46,7 @@ BEGIN
        gas_used numeric(78,0) NOT NULL,
        is_token_tx boolean NOT NULL,
        input_data varchar(256) NOT NULL
-      )', 'transaction_data_' || node_name, 'block_data_' || node_name);
+      )', node_name || '_transaction_data', node_name || '_block_data');
 END
 $func$;
 
@@ -76,7 +76,7 @@ BEGIN
        input_data varchar(256) NOT NULL,
        function_type varchar(256) NOT NULL,
        PRIMARY KEY (unique_id)
-      )', 'internal_transaction_data_' || node_name,'transaction_data_' || node_name );
+      )', node_name || '_internal_transaction_data', node_name || '_transaction_data');
 END
 $func$;
 
@@ -103,7 +103,7 @@ BEGIN
        removed boolean NOT NULL,
        topics varchar(256) ARRAY,
        PRIMARY KEY (unique_id)
-      )', 'transaction_log_data_' || node_name, 'transaction_data_' || node_name);
+      )', node_name || '_transaction_log_data' , node_name || '_transaction_data');
 END
 $func$;
 
