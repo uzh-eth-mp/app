@@ -23,9 +23,9 @@ BEGIN
 END
 $func$;
 
-SELECT create_table_block_data('eth');
-SELECT create_table_block_data('etc');
-SELECT create_table_block_data('bsc');
+SELECT create_table_block('eth');
+SELECT create_table_block('etc');
+SELECT create_table_block('bsc');
 
 
 CREATE OR REPLACE FUNCTION create_table_transaction(node_name varchar(3))
@@ -50,9 +50,9 @@ BEGIN
 END
 $func$;
 
-SELECT create_table_transaction_data('eth');
-SELECT create_table_transaction_data('etc');
-SELECT create_table_transaction_data('bsc');
+SELECT create_table_transaction('eth');
+SELECT create_table_transaction('etc');
+SELECT create_table_transaction('bsc');
 
 
 CREATE OR REPLACE FUNCTION create_table_internal_transaction(node_name varchar(3))
@@ -62,7 +62,7 @@ $func$
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       unique_id PRIMARY KEY NOT NULL,
+       unique_id UUID DEFAULT gen_random_uuid (),
        transaction_hash varchar(256) REFERENCES %I NOT NULL,
        block_hash varchar(256) NOT NULL,
        block_number bigint,
@@ -75,13 +75,14 @@ BEGIN
        gas_used bigint NOT NULL,
        input_data varchar(256) NOT NULL,
        function_type varchar(256) NOT NULL,
+       PRIMARY KEY (unique_id)
       )', 'internal_transaction_data_' || node_name,'transaction_data_' || node_name );
 END
 $func$;
 
-SELECT create_table_internal_transaction_data('eth');
-SELECT create_table_internal_transaction_data('etc');
-SELECT create_table_internal_transaction_data('bsc');
+SELECT create_table_internal_transaction('eth');
+SELECT create_table_internal_transaction('etc');
+SELECT create_table_internal_transaction('bsc');
 
 
 
@@ -92,20 +93,21 @@ $func$
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       unique_id PRIMARY KEY,
+       unique_id UUID DEFAULT gen_random_uuid (),
        transaction_hash varchar(256) REFERENCES %I NOT NULL,
        address varchar(256) NOT NULL,
        log_index int, 
-       data varchar(256) NOT NULL
+       data varchar(256) NOT NULL,
        block_hash varchar(256) NOT NULL,
        block_number bigint,
        removed boolean NOT NULL,
-       topics varchar(256) ARRAY[]
+       topics varchar(256) ARRAY,
+       PRIMARY KEY (unique_id)
       )', 'transaction_log_data_' || node_name, 'transaction_data_' || node_name);
 END
 $func$;
 
 
-SELECT create_table_transaction_log_data('eth');
-SELECT create_table_transaction_log_data('etc');
-SELECT create_table_transaction_log_data('bsc');
+SELECT create_table_transaction_logs('eth');
+SELECT create_table_transaction_logs('etc');
+SELECT create_table_transaction_logs('bsc');
