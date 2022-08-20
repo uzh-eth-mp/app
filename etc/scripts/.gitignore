@@ -1,0 +1,2 @@
+# Avoid committing this file, only used for manual testing
+psql_functions.py
