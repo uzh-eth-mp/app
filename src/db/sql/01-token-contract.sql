@@ -32,8 +32,7 @@ BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
        address varchar(256) PRIMARY KEY NOT NULL,
-       transaction_hash varchar(256) NOT NULL,
-       -- block_timestamp and block_number can be obtained from the create_table_block by using transaction_hash
+       transaction_hash varchar(256) NOT NULL
       )', blockchain_name || '_contract');
 END
 $func$;
