@@ -55,7 +55,7 @@ class DatabaseManager:
 
     async def insert_table_contract(self, address: str, transaction_hash: str):
         """CONTRACT  TABLE"""
-        table = f"contract_{self.node_name}"
+        table = f"{self.node_name}_contract"
 
         await self.db.execute(f"""
             INSERT INTO {table} (address, transaction_hash)
@@ -66,7 +66,7 @@ class DatabaseManager:
         self, address: str, symbol: str, name: str,
         decimals: int, total_supply: int, token_category: str
     ):
-        table = f"token_contract_{self.node_name}"
+        table = f"{self.node_name}_token_contract"
 
         await self.db.execute(f"""
             INSERT INTO {table} (address, symbol, name, decimals, total_supply, token_category)
@@ -74,10 +74,10 @@ class DatabaseManager:
         """, address, symbol, name, decimals, total_supply, token_category)
 
     async def insert_table_contract_supply_change(self, address: str, amount_changed: int, transaction_hash: str):
-        table = f"contract_supply_change_{self.node_name}"
+        table = f"{self.node_name}_contract_supply_change"
 
 
         await self.db.execute(f"""
-            INSERT INTO {table} (address, amount_changed, transaction_changed)
+            INSERT INTO {table} (address, amount_changed, transaction_hash)
             VALUES ($1, $2, $3);
         """, address, amount_changed, transaction_hash)
