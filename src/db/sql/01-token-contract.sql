@@ -5,13 +5,14 @@
 -- ERC 1155 properties -> https://eips.ethereum.org/EIPS/eip-1155
 
 -- uint256 data type in postgreSQL as numeric(78,0) -> https://stackoverflow.com/questions/50072618/how-to-create-an-uint256-in-postgresql
+-- but we agreed on varchar(256) for address.
 
 -- beware of the python and postgreSQL datatype conventions.
 -- in python int32 = 32 bit
 -- in postgres int4 = 4 bytes = 32 bit
 
 
---address numeric(78,0)PRIMARY KEY NOT NULL,              #uint256
+--address varchar(256)PRIMARY KEY NOT NULL,              #uint256
 --symbol varchar(128) NOT NULL,
 --name varchar(256) NOT NULL,
 --decimals int NOT NULL,                                   #int8
@@ -31,10 +32,7 @@ BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
        address varchar(256) PRIMARY KEY NOT NULL,
-       transaction_hash varchar(256) NOT NULL,
-       -- block_timestamp, block_number probably not needed here
-       block_timestamp timestamp NOT NULL,
-       block_number bigint NOT NULL
+       transaction_hash varchar(256) NOT NULL
       )', blockchain_name || '_contract');
 END
 $func$;
