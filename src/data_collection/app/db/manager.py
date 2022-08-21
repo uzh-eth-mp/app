@@ -38,7 +38,7 @@ class DatabaseManager:
         log.info("Disconnected from PostgreSQL")
 
     async def insert_block_data(self, block_number: int, block_hash: str, nonce: str, difficulty: int,
-                                 gas_limit: int, gas_used: int, timestamp: int, miner: str, parent_hash: str, 
+                                 gas_limit: int, gas_used: int, timestamp: int, miner: str, parent_hash: str,
                                  block_reward: float):
         """
         Insert block data into the database
@@ -85,12 +85,39 @@ class DatabaseManager:
         """
         Insert transaction log data into the database
         """
-        
+
         table = f"transaction_log_data_{self.node_name}"
-       
+
         await self.db.execute(f"""
             INSERT INTO {table} (transaction_hash, address, log_index, data, removed, topics)
             VALUES ($1, $2, $3,$4, $5, $6);
         """, transaction_hash, address, log_index, data, removed, topics)
 
-    
+    async def insert_table_contract(self, address: str, transaction_hash: str):
+        """CONTRACT  TABLE"""
+        table = f"{self.node_name}_contract"
+
+        await self.db.execute(f"""
+            INSERT INTO {table} (address, transaction_hash)
+            VALUES ($1, $2);
+        """, address, transaction_hash)
+
+    async def insert_table_token_contract(
+        self, address: str, symbol: str, name: str,
+        decimals: int, total_supply: int, token_category: str
+    ):
+        table = f"{self.node_name}_token_contract"
+
+        await self.db.execute(f"""
+            INSERT INTO {table} (address, symbol, name, decimals, total_supply, token_category)
+            VALUES ($1, $2, $3, $4, $5, $6);
+        """, address, symbol, name, decimals, total_supply, token_category)
+
+    async def insert_table_contract_supply_change(self, address: str, amount_changed: int, transaction_hash: str):
+        table = f"{self.node_name}_contract_supply_change"
+
+
+        await self.db.execute(f"""
+            INSERT INTO {table} (address, amount_changed, transaction_hash)
+            VALUES ($1, $2, $3);
+        """, address, amount_changed, transaction_hash)
