@@ -1,8 +1,10 @@
 import asyncpg
 
 from datetime import datetime
+from typing import Any, Optional, Union
 
 from app import init_logger
+from app.db.exceptions import UnknownBlockIdentifier
 
 
 log = init_logger(__name__)
@@ -59,7 +61,6 @@ class DatabaseManager:
             timestamp, miner, parent_hash, block_reward
         )
 
-
     async def insert_transaction(
         self, transaction_hash: str, block_number: int, from_address: str, to_address: str,
         value: float, transaction_fee: float, gas_price: float, gas_limit: int, gas_used: int,
@@ -99,7 +100,6 @@ class DatabaseManager:
             transaction_hash, from_address, to_address, value, gas_price,
             gas_limit, gas_used, input_data, function_type
         )
-
 
     async def insert_transaction_logs(
         self, transaction_hash: str, address: str, log_index: int, data: str, removed: bool, topics: list[str]
@@ -152,3 +152,57 @@ class DatabaseManager:
             INSERT INTO {table} (address, amount_changed, transaction_hash)
             VALUES ($1, $2, $3);
         """, address, amount_changed, transaction_hash)
+
+    async def upsert_last_processed_block_number(
+        self, last_block_number: int
+    ):
+        """
+        Upsert the last processed block number.
+        """
+        # TODO
+        pass
+
+    async def get_block(
+        self, block_identifier: Optional[Union[str, int]] = None
+    ) -> Optional[dict[str, Any]]:
+        """
+        Get the block data with a given identifier from the block table.
+
+        Note:
+            If block_identifier is `None`, returns the latest block data in the table.
+
+        Returns:
+            Optional[dict[str, Any]]: if available returns block data as a dict,
+                                      otherwise returns `None`
+        """
+        table = f"{self.node_name}_block"
+
+        if block_identifier is None:
+            # Get latest / last block
+            query = f"SELECT * FROM {table} ORDER BY block_number DESC LIMIT 1;"
+            args = []
+        elif isinstance(block_identifier, str):
+            # Get block by hash
+            query = f"SELECT * FROM {table} WHERE block_hash = $1;"
+            args = (block_identifier,)
+        elif isinstance(block_identifier, int):
+            # Get block by number
+            query = f"SELECT * FROM {table} WHERE block_number = $1"
+            args = (block_identifier,)
+        else:
+            raise UnknownBlockIdentifier()
+
+        # Fetch the first row from the table
+        res = await self.db.fetchrow(query, *args)
+
+        # Return a dictionary
+        return dict(res) if res else None
+
+    async def get_last_processed_block_number(
+        self
+    ) -> Optional[int]:
+        """
+        Get the last processed block number
+        """
+        # TODO
+        return None

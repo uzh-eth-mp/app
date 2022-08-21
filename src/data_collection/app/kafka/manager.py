@@ -1,5 +1,7 @@
 import asyncio
 
+from typing import List
+
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from aiokafka.errors import (
     KafkaError,
@@ -24,7 +26,7 @@ class KafkaManager:
     Base class for KafkaProducerManager and KafkaConsumerManager.
     """
     # The delay before attempting the initial connection (in seconds)
-    INITIAL_CONNECTION_DELAY = 30
+    INITIAL_CONNECTION_DELAY = 45
     # The delay between connection attempts (in seconds)
     LINEAR_BACKOFF_DELAY = 5
     # The maximum allowed initial connection attempts before the app exits
@@ -116,6 +118,41 @@ class KafkaProducerManager(KafkaManager):
             log.error(f"{err} on {msg}")
             raise err
 
+    async def send_batch(self, msgs: List[str]):
+        """Send a batch of messages to a Kafka broker"""
+        try:
+            kafka_batch = self._client.create_batch()
+
+            for msg in msgs:
+                # key and timestamp arguments are required
+                kafka_batch.append(
+                    key=None,
+                    value=msg.encode(),
+                    timestamp=None
+                )
+
+            kafka_batch.close()
+
+            # Add the batch to the first partition's submission queue. If this method
+            # times out, we can say for sure that batch will never be sent.
+            send_fut = await self._client.send_batch(
+                kafka_batch,
+                self.topic,
+                partition=0
+            )
+
+            # Batch will either be delivered or an unrecoverable error will occur.
+            # Cancelling this future will not cancel the send.
+            _ = await send_fut
+        except KafkaTimeoutError:
+            # Producer request timeout, message could have been sent to
+            # the broker but there is no ack
+            # TODO: somehow figure out whether this message should be
+            # resent or not, maybe flag this message with a 'check_duplicate'
+            # flag and let the consumer figure it out if these transactions are already
+            # present in the database
+            log.error(f"KafkaTimeoutError on batch")
+
 class KafkaConsumerManager(KafkaManager):
     """Manage consuming events from a given Kafka topic"""
     def __init__(self, kafka_url: str, topic: str) -> None:
@@ -130,6 +167,7 @@ class KafkaConsumerManager(KafkaManager):
         try:
             async for event in self._client:
                 log.debug(f"Received event: {event}")
-                await asyncio.sleep(10)
+                await asyncio.sleep(1)
         finally:
+            log.info("Disconnecting kafka consumer client")
             self.disconnect()

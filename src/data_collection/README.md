@@ -1,5 +1,5 @@
 # Data Collection containers
-Code for building producer and consumer docker containers.
+Code for building producer and consumer docker containers. The code between these containers is shared and only an input argument (`--mode`) into the main module determines whether a producer or consumer is started:
 
 ```
 # Start an ETH data producer
@@ -34,3 +34,6 @@ $ python -m app.main --cfg etc/cfg/dev/eth.json --mode producer
 
 ## Requirements
 Requirements can be found and should only be modified in `requirements.in`. After updating a requirement make sure to run `pip-compile requirements.in` (from the venv) which creates an updated `requirements.txt` file.
+
+## Configuration
+The app requires a configuration file to be passed into the main module with an input argument (`--cfg`). A description of each of the values inside any `etc/cfg/<config>.json` file can be found in [app/config.py](app/config.py)

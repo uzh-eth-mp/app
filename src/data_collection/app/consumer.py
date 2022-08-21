@@ -15,7 +15,7 @@ class DataConsumer(DataCollector):
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
-        self.kafka_manager = KafkaConsumerManager(
+        self.kafka_manager: KafkaConsumerManager = KafkaConsumerManager(
             kafka_url=config.kafka_url,
             topic=config.kafka_topic
         )

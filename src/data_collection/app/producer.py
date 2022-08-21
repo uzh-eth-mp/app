@@ -1,8 +1,11 @@
-import asyncio
+from datetime import datetime
+
+from web3.exceptions import BlockNotFound
 
 from app import init_logger
 from app.data_collector import DataCollector
 from app.kafka.manager import KafkaProducerManager
+from app.node.block_explorer import BlockExplorer
 from app.config import Config
 
 
@@ -18,7 +21,8 @@ class DataProducer(DataCollector):
     """
     def __init__(self, config: Config) -> None:
         super().__init__(config)
-        self.kafka_manager = KafkaProducerManager(
+        self.config = config
+        self.kafka_manager: KafkaProducerManager = KafkaProducerManager(
             kafka_url=config.kafka_url,
             topic=config.kafka_topic
         )
@@ -28,31 +32,63 @@ class DataProducer(DataCollector):
         Start a while loop that collects all the block data
         based on the config values
         """
-        # Get the current latest block number
-        latest_nr = await self.node_connector.get_latest_block_number()
+        # Get block exploration bounds (start and end block number)
+        block_explorer = BlockExplorer(
+            data_collection_cfg=self.config.data_collection,
+            db=self.db_manager
+        )
+        start_block, end_block = await block_explorer.get_exploration_bounds()
 
-        # FIXME: remove next line
-        await self.db_manager.insert_block_data()
+        # Current block index, last processed block index
+        i_block, i_processed_block = start_block, None
 
-        # Get the last block that was processed from the DB
+        if end_block is not None:
+            # If end block contains a number, continue until we reach it
+            should_continue = lambda i: i <= end_block
+        else:
+            # Else continue forever until a 'BlockNotFound' exception is raised
+            should_continue = lambda _: True
 
-        # if last == None: mine from latest to genesis
-        # if latest > last: mine from latest to last
-        # if last >= latest: do nothing
+        end_block_str = f"block #{end_block}" if end_block else "'latest' block"
+        log.info(f"Starting from block #{start_block}, expecting to finish at {end_block_str}")
+        try:
+            while should_continue(i_block):
+                # query the node for current block data
+                block_data = await self.node_connector.get_block_data(i_block)
 
-        while True:
-            # query the node for current block data
+                # upsert the static block data to the block table
+                await self.db_manager.insert_block(
+                    block_number=block_data["number"],
+                    block_hash=block_data["hash"].hex(),
+                    nonce=block_data["nonce"].hex(),
+                    difficulty=block_data["difficulty"],
+                    gas_limit=block_data["gasLimit"],
+                    gas_used=block_data["gasUsed"],
+                    timestamp=datetime.fromtimestamp(block_data["timestamp"]),
+                    miner=block_data["miner"],
+                    parent_hash=block_data["parentHash"].hex(),
+                    # TODO: need to calculate the block reward
+                    # https://ethereum.stackexchange.com/questions/5958/how-to-query-the-amount-of-mining-reward-from-a-certain-block
+                    block_reward=0,
+                )
 
-            # upsert the static block data (blocknr, blockhash,
-            # difficulty, ...) to the database
+                # Send all the transaction hashes to Kafka so consumers can process them
+                txs = list(map(lambda tx: tx.hex(), block_data["transactions"]))
+                await self.kafka_manager.send_batch(msgs=txs)
 
-            # send all the transaction hashes to Kafka for
-            # the data consumers to process them
+                # upsert the latest processed block if the Kafka messages are
+                # sent successfully
+                i_processed_block = i_block
+                await self.db_manager.upsert_last_processed_block_number(i_processed_block)
 
-            # upsert the latest processed block if the Kafka messages are
-            # sent successfully
+                # Continue from the next block
+                i_block += 1
 
-
-            # FIXME: remove next 2 lines
-            await self.kafka_manager.send_message(f"Latest block nr: {latest_nr}")
-            await asyncio.sleep(5)
+        except BlockNotFound:
+            # OK, raised when the latest block is reached
+            pass
+        finally:
+            if i_processed_block is None:
+                log.info("Finished before collecting any block data.")
+            else:
+                log.info(f"Finished at block #{i_processed_block}")
