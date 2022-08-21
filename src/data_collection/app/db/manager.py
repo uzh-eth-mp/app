@@ -1,5 +1,7 @@
 import asyncpg
 
+from datetime import datetime
+
 from app import init_logger
 
 
@@ -37,21 +39,83 @@ class DatabaseManager:
         await self.db.close()
         log.info("Disconnected from PostgreSQL")
 
-    async def insert_block_data(self):
+    async def insert_block_data(
+        self, block_number: int, block_hash: str, nonce: str, difficulty: int,
+        gas_limit: int, gas_used: int, timestamp: datetime, miner: str, parent_hash: str,
+        block_reward: float
+    ):
         """
         Insert block data into the database
         """
-        # TODO: Update this method with valid block data given
-        # from the arguments
-        table = f"block_data_{self.node_name}"
-        hash = "0xb2fb6a01624f285604913697f0f80c8ee86620750be532cc3dc5751cf079662e"
-        difficulty = "12,120,825,516,066,787"
-        gas_limit = "29,970,705"
 
-        await self.db.execute(f"""
-            INSERT INTO {table} (hash, difficulty, gas_limit)
-            VALUES ($1, $2, $3);
-        """, hash, difficulty, gas_limit)
+        table = f"{self.node_name}_block_data"
+
+        await self.db.execute(
+            f"""
+            INSERT INTO {table} (block_number, block_hash, nonce, difficulty, gas_limit, gas_used, timestamp, miner, parent_hash, block_reward)
+            VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9, $10);
+            """,
+            block_number, block_hash, nonce, difficulty, gas_limit, gas_used,
+            timestamp, miner, parent_hash, block_reward
+        )
+
+
+    async def insert_transaction_data(
+        self, transaction_hash: str, block_number: int, from_address: str, to_address: str,
+        value: float, transaction_fee: float, gas_price: float, gas_limit: int, gas_used: int,
+        is_token_tx: bool, input_data: str
+    ):
+        """
+        Insert transaction data into the database
+        """
+
+        table = f"{self.node_name}_transaction_data"
+
+        await self.db.execute(
+            f"""
+            INSERT INTO {table} (transaction_hash, block_number, from_address, to_address, value, transaction_fee, gas_price, gas_limit, gas_used, is_token_tx, input_data)
+            VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9, $10, $11);
+            """,
+            transaction_hash, block_number, from_address, to_address, value, transaction_fee,
+            gas_price, gas_limit, gas_used, is_token_tx, input_data
+        )
+
+    # FIXME: not really sure about the data schema here, might be quite different
+    # for example the gas stuff might not be needed
+    async def insert_internal_transaction_data(
+        self, transaction_hash: str, from_address: str, to_address: str, value: float,
+        gas_price: float, gas_limit: int, gas_used: int, input_data: str, function_type: str
+    ):
+        """
+        Insert internal transaction data into the database
+        """
+        table = f"{self.node_name}_internal_transaction_data"
+
+        await self.db.execute(
+            f"""
+            INSERT INTO {table} (transaction_hash, from_address, to_address, value, gas_price, gas_limit, gas_used, input_data, function_type)
+            VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9);
+            """,
+            transaction_hash, from_address, to_address, value, gas_price,
+            gas_limit, gas_used, input_data, function_type
+        )
+
+
+    async def insert_transaction_log_data(
+        self, transaction_hash: str, address: str, log_index: int, data: str, removed: bool, topics: list[str]
+    ):
+        """
+        Insert transaction log data into the database
+        """
+
+        table = f"{self.node_name}_transaction_log_data"
+
+        await self.db.execute(
+            f"""
+            INSERT INTO {table} (transaction_hash, address, log_index, data, removed, topics)
+            VALUES ($1, $2, $3,$4, $5, $6);
+            """, transaction_hash, address, log_index, data, removed, topics
+        )
 
     async def insert_table_contract(self, address: str, transaction_hash: str):
         """CONTRACT  TABLE"""
