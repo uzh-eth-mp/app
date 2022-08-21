@@ -1,5 +1,7 @@
 import asyncpg
 
+from datetime import datetime
+
 from app import init_logger
 
 
@@ -39,7 +41,7 @@ class DatabaseManager:
 
     async def insert_block_data(
         self, block_number: int, block_hash: str, nonce: str, difficulty: int,
-        gas_limit: int, gas_used: int, timestamp: int, miner: str, parent_hash: str,
+        gas_limit: int, gas_used: int, timestamp: datetime, miner: str, parent_hash: str,
         block_reward: float
     ):
         """
@@ -59,8 +61,9 @@ class DatabaseManager:
 
 
     async def insert_transaction_data(
-        self, transaction_hash: str, block_number: int, from_address: str, to_address: str, value: float,
-        transaction_fee: float, gas_price: float, gas_limit: int, gas_used: int, is_token_tx: bool, input_data: str
+        self, transaction_hash: str, block_number: int, from_address: str, to_address: str,
+        value: float, transaction_fee: float, gas_price: float, gas_limit: int, gas_used: int,
+        is_token_tx: bool, input_data: str
     ):
         """
         Insert transaction data into the database
@@ -77,7 +80,8 @@ class DatabaseManager:
             gas_price, gas_limit, gas_used, is_token_tx, input_data
         )
 
-
+    # FIXME: not really sure about the data schema here, might be quite different
+    # for example the gas stuff might not be needed
     async def insert_internal_transaction_data(
         self, transaction_hash: str, from_address: str, to_address: str, value: float,
         gas_price: float, gas_limit: int, gas_used: int, input_data: str, function_type: str
@@ -85,7 +89,6 @@ class DatabaseManager:
         """
         Insert internal transaction data into the database
         """
-
         table = f"{self.node_name}_internal_transaction_data"
 
         await self.db.execute(
