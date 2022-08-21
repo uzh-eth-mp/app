@@ -17,7 +17,7 @@ BEGIN
        miner varchar(256) NOT NULL,
        parent_hash varchar(256) NOT NULL,
        block_reward numeric(78,18) NOT NULL
-      )', node_name || '_block_data') ;
+      )', node_name || '_block') ;
 END
 $func$;
 
@@ -44,7 +44,7 @@ BEGIN
        gas_used numeric(78,0) NOT NULL,
        is_token_tx boolean NOT NULL,
        input_data varchar(256) NOT NULL
-      )', node_name || '_transaction_data', node_name || '_block_data');
+      )', node_name || '_transaction', node_name || '_block');
 END
 $func$;
 
@@ -71,7 +71,7 @@ BEGIN
        input_data varchar(256) NOT NULL,
        function_type varchar(256) NOT NULL,
        PRIMARY KEY (unique_id)
-      )', node_name || '_internal_transaction_data', node_name || '_transaction_data');
+      )', node_name || '_internal_transaction', node_name || '_transaction');
 END
 $func$;
 
@@ -90,12 +90,12 @@ BEGIN
        unique_id UUID DEFAULT gen_random_uuid (),
        transaction_hash varchar(256) REFERENCES %I NOT NULL,
        address varchar(256) NOT NULL,
-       log_index int, 
+       log_index int,
        data varchar(256) NOT NULL,
        removed boolean NOT NULL,
        topics varchar(256) ARRAY,
        PRIMARY KEY (unique_id)
-      )', node_name || '_transaction_log_data' , node_name || '_transaction_data');
+      )', node_name || '_transaction_logs' , node_name || '_transaction');
 END
 $func$;
 

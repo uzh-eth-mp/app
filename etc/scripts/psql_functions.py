@@ -19,12 +19,12 @@ async def main():
 
     # Code you want to test goes below
     # e.g.   await manager.insert_block_data()
-    await manager.insert_table_contract(
+    await manager.insert_contract(
         address="0xdAC17F958D2ee523a2206206994597C13D831ec7",
         transaction_hash="0x871dadd3f5ca95b398575d710d39385de9123a10717e2e37a90545a805daca77"
     )
 
-    await manager.insert_table_token_contract(
+    await manager.insert_token_contract(
         address="0xdAC17F958D2ee523a2206206994597C13D831ec7",
         symbol="USDT",
         name="Tether",
@@ -33,7 +33,7 @@ async def main():
         token_category="erc20"
     )
 
-    await manager.insert_table_contract_supply_change(
+    await manager.insert_contract_supply_change(
         address="0xdAC17F958D2ee523a2206206994597C13D831ec7",
         amount_changed=22,
         transaction_hash="0x871dadd3f5ca95b398575d710d39385de9123a10717e2e37a90545a805daca78"
