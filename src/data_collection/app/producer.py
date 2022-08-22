@@ -31,9 +31,6 @@ class DataProducer(DataCollector):
         # Get the current latest block number
         latest_nr = await self.node_connector.get_latest_block_number()
 
-        # FIXME: remove next line
-        await self.db_manager.insert_block_data()
-
         # Get the last block that was processed from the DB
 
         # if last == None: mine from latest to genesis
