@@ -24,7 +24,7 @@ class KafkaManager:
     Base class for KafkaProducerManager and KafkaConsumerManager.
     """
     # The delay before attempting the initial connection (in seconds)
-    INITIAL_CONNECTION_DELAY = 30
+    INITIAL_CONNECTION_DELAY = 45
     # The delay between connection attempts (in seconds)
     LINEAR_BACKOFF_DELAY = 5
     # The maximum allowed initial connection attempts before the app exits
