@@ -1,0 +1,33 @@
+
+name: DatabaseManager tests
+
+on:
+  push:
+    branches-ignore:
+      - 'main'
+    paths:
+      # SQL related
+      - 'src/db'
+      # DatabaseManager related
+      - 'src/data_collection/app/db'
+      - 'src/data_collection/tests/db'
+      - 'src/data_collection/Dockerfile.tests'
+      - 'src/data_collection/pytest.ini'
+      - 'src/data_collection/requirements-tests.in'
+      - 'src/data_collection/requirements-tests.txt'
+      - 'src/data_collection/scripts/wait-for-db.sh'
+
+env:
+  IMAGE_NAME: ${{ github.repository }}
+  GHCR: ghcr.io
+
+jobs:
+  build_and_test:
+    name: Run docker-compose for testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+
+      - name: Run docker-compose.tests.yml
+        run: bash etc/scripts/ci/build-and-run-db-tests.sh
