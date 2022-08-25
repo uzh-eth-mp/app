@@ -9,8 +9,8 @@ on:
       # SQL related
       - 'src/db'
       # DatabaseManager related
-      - 'src/data_collection/app/db'
-      - 'src/data_collection/tests/db'
+      - 'src/data_collection/app/db/**'
+      - 'src/data_collection/tests/db/**'
       - 'src/data_collection/Dockerfile.tests'
       - 'src/data_collection/pytest.ini'
       - 'src/data_collection/requirements-tests.in'
@@ -31,3 +31,4 @@ jobs:
 
       - name: Run docker-compose.tests.yml
         run: bash etc/scripts/ci/build-and-run-db-tests.sh
+        shell: bash
