@@ -7,9 +7,9 @@ on:
       - 'main'
     paths:
       - .github/workflows/test-database.yaml
-      # SQL related
-      - 'src/db'
-      # DatabaseManager related
+      # SQL
+      - 'src/db/**'
+      # Python
       - 'src/data_collection/app/db/**'
       - 'src/data_collection/tests/db/**'
       - 'src/data_collection/Dockerfile.tests'
@@ -23,8 +23,8 @@ env:
   GHCR: ghcr.io
 
 jobs:
-  build_and_test:
-    name: Run docker-compose for testing
+  test:
+    name: Run tests
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
