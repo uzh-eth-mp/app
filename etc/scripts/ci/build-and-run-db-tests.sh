@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Run database tests
 docker-compose \

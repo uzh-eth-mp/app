@@ -1,11 +1,12 @@
 
-name: DatabaseManager tests
+name: Database integration tests
 
 on:
   push:
     branches-ignore:
       - 'main'
     paths:
+      - .github/workflows/test-database.yaml
       # SQL related
       - 'src/db'
       # DatabaseManager related
@@ -30,5 +31,5 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Run docker-compose.tests.yml
-        run: bash etc/scripts/ci/build-and-run-db-tests.sh
+        run: docker-compose -f docker-compose.tests.yml up test_db --build --abort-on-container-exit
         shell: bash
