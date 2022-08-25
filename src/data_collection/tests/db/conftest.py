@@ -19,8 +19,8 @@ def event_loop():
     return asyncio.get_event_loop()
 
 
-@pytest_asyncio.fixture(scope="session")
-async def db_manager():
+@pytest_asyncio.fixture(scope="session", params=["eth", "etc", "bsc"])
+async def db_manager(request):
     # Get postgres dsn
     host = os.environ.get("POSTGRES_HOST")
     port = os.environ.get("POSTGRES_PORT")
@@ -30,7 +30,7 @@ async def db_manager():
     db_dsn = f"postgresql://{user}:{pw}@{host}:{port}/{db_name}"
     db_manager = DatabaseManager(
         postgresql_dsn=db_dsn,
-        node_name="eth"
+        node_name=request.param
     )
     # Connect to the db
     await db_manager.connect()
