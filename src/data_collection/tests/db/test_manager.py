@@ -69,7 +69,7 @@ class TestInsert:
         self, db_manager, contract_data, token_contract_data,
         contract_supply_change_data, amount
     ):
-        """Test insert of token contract data"""
+        """Test insert of contract supply change data"""
         await db_manager.insert_contract(**contract_data)
         await db_manager.insert_token_contract(**token_contract_data)
         contract_supply_change_data["amount_changed"] = amount
