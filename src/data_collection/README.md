@@ -34,3 +34,9 @@ $ python -m app.main --cfg etc/cfg/dev/eth.json --mode producer
 
 ## Requirements
 Requirements can be found and should only be modified in `requirements.in`. After updating a requirement make sure to run `pip-compile requirements.in` (from the venv) which creates an updated `requirements.txt` file.
+
+## Testing
+
+The tests can be found in the `tests/` directory. Currently only the `db/manager.py` class is tested.
+
+The recommended way to start the tests is to use the `etc/scripts/run-tests-db.sh` script in the root of this repository.
