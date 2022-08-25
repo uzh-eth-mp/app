@@ -24,13 +24,27 @@ The block / transaction consumers are blockchain agnostic / evm compatible, thus
 └── src                         # source code for containers
     ├── data_collection         # producer + consumer code
     └── db
+.
+├── README.md
+├── docker-compose.dev.yml
+├── docker-compose.prod.yml
+├── docker-compose.tests.yml
+├── docker-compose.yml
+├── etc
+│   ├── img
+│   ├── scripts                 # scripts for running app and tests
+│   └── web3_examples.ipynb
+└── src                         # code for containers / services
+    ├── data_collection         # producer + consumer code
+    ├── db                      # dataschema definitions
+    └── kafka
 ```
 
 ## Running the app
 The application stack is managed by docker-compose. Each compose configuration file targets a different environment.
 
-### Development
-The development build creates a local PostgreSQL database and connects to public blockchain node APIs.
+### Development environment
+The development environment build is intended for development purposes. It creates a local PostgreSQL database (with persistence in `src/sql/db-data`) and connects to public blockchain node APIs such as Infura.
 
 To run a development build:
 ```
@@ -49,8 +63,8 @@ $ sh etc/scripts/run-dev-bsc.sh
 
 ```
 
-### Production
-The production build expects a database / local blockchain nodes to be already reachable.
+### Production environment
+The production environment build expects a database / local blockchain nodes to be already reachable.
 
 To run a production build:
 ```
@@ -66,3 +80,14 @@ $ sh etc/scripts/run-dev-db.sh
 ```
 
 For connecting to the database check [src/db/README.md](src/db/README.md).
+
+## Tests
+
+Currently, only the `DatabaseManager` class is tested. These database manager tests require an active database connection so the configuration in `docker-compose.tests.yml` starts an in-memory postgresql database along with the testing container.
+
+To start the tests:
+```
+$ sh etc/scripts/run-tests-db.sh
+```
+
+> Note: When running the tests locally, it might sometimes be necessary to `docker volume prune` in order for the database to start properly.
