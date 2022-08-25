@@ -30,12 +30,6 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v2
 
-      - name: Print compose version
-        run: docker-compose --version
-
-      - name: Print compose v2 version
-        run: docker compose --version
-
       - name: Run docker-compose.tests.yml
         run: docker compose -f docker-compose.tests.yml up test_db --build --abort-on-container-exit
         shell: bash
