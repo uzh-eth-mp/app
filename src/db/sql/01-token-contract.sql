@@ -43,7 +43,7 @@ SELECT create_table_contract('etc');
 
 
 -- Create enum type for the tokens category
-CREATE TYPE token_category AS ENUM ('erc20', 'erc271', 'erc1155');
+CREATE TYPE token_category AS ENUM ('erc20', 'erc721', 'erc1155');
 
 -- TOKEN CONTRACT TABLE - ERC20 & ERC271 & ERC1155
 CREATE OR REPLACE FUNCTION create_table_token_contract(blockchain_name varchar(30))

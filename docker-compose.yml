@@ -2,27 +2,28 @@ version: "3.9"
 services:
   # Kafka
   zookeeper:
-    image: docker.io/bitnami/zookeeper:3.8
+    image: zookeeper:3.8.0
     ports:
       - "2181:2181"
-    volumes:
-      - "zookeeper_data:/bitnami"
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
+    volumes:
+      - ./src/kafka/data/zookeeper-data/data:/data
+      - ./src/kafka/data/zookeeper-data/datalog:/datalog
   kafka:
-    image: docker.io/bitnami/kafka:3.2
+    build:
+      context: ./src/kafka
     ports:
       - "9092:9092"
-    volumes:
-      - "kafka_data:/bitnami"
     environment:
-      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://kafka:9092
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
-      - ALLOW_PLAINTEXT_LISTENER=yes
-    depends_on:
-      - zookeeper
+      - KAFKA_CREATE_TOPICS=eth:1:1,etc:1:1,bsc:1:1
+      - KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS=6000
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_LOG_DIRS=/kafka/kafka-logs
+    volumes:
+      - ./src/kafka/data/kafka-data:/kafka
 
   # Data producers
   data_producer_eth:

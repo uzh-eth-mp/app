@@ -37,3 +37,9 @@ Requirements can be found and should only be modified in `requirements.in`. Afte
 
 ## Configuration
 The app requires a configuration file to be passed into the main module with an input argument (`--cfg`). A description of each of the values inside any `etc/cfg/<config>.json` file can be found in [app/config.py](app/config.py)
+
+## Testing
+
+The tests can be found in the `tests/` directory. Currently only the `db/manager.py` class is tested.
+
+The recommended way to start the tests is to use the `etc/scripts/run-tests-db.sh` script in the root of this repository.
