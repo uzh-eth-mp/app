@@ -80,7 +80,7 @@ BEGIN
        amount_changed numeric(78,0) NOT NULL,
        transaction_hash varchar(256) NOT NULL,
        PRIMARY KEY(address, transaction_hash)
-   )', blockchain_name || '_contract_supply_change', blockchain_name || '_contract');
+   )', blockchain_name || '_contract_supply_change', blockchain_name || '_token_contract');
 END
 $func$;
 
