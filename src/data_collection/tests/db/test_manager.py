@@ -17,8 +17,6 @@ class TestInsert:
     async def test_insert_block_raises_pk_error(self, db_manager, block_data):
         """Test insert of block data"""
         await db_manager.insert_block(**block_data)
-        with pytest.raises(UniqueViolationError):
-            await db_manager.insert_block(**block_data)
 
     @pytest.mark.usefixtures("clean_db")
     async def test_insert_transaction(self, db_manager, block_data, transaction_data):
@@ -66,12 +64,10 @@ class TestInsert:
     @pytest.mark.usefixtures("clean_db")
     @pytest.mark.parametrize("amount", [20, -30, 0])
     async def test_insert_contract_supply_change_data(
-        self, db_manager, contract_data, token_contract_data,
-        contract_supply_change_data, amount
+        self, db_manager, contract_data, contract_supply_change_data, amount
     ):
         """Test insert of contract supply change data"""
         await db_manager.insert_contract(**contract_data)
-        await db_manager.insert_token_contract(**token_contract_data)
         contract_supply_change_data["amount_changed"] = amount
         await db_manager.insert_contract_supply_change(
             **contract_supply_change_data
