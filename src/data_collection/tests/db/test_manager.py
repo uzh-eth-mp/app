@@ -1,8 +1,5 @@
 import pytest
-from asyncpg.exceptions import (
-    ForeignKeyViolationError,
-    UniqueViolationError
-)
+from asyncpg.exceptions import ForeignKeyViolationError
 
 
 class TestInsert:
@@ -14,8 +11,8 @@ class TestInsert:
         await db_manager.insert_block(**block_data)
 
     @pytest.mark.usefixtures("clean_db")
-    async def test_insert_block_raises_pk_error(self, db_manager, block_data):
-        """Test insert of block data"""
+    async def test_double_insert_block(self, db_manager, block_data):
+        """Test double insert of the same block data"""
         await db_manager.insert_block(**block_data)
         await db_manager.insert_block(**block_data)
 
@@ -28,7 +25,7 @@ class TestInsert:
 
     @pytest.mark.usefixtures("clean_db")
     async def test_insert_transaction_raises_fk_error(
-        self, db_manager, block_data, transaction_data
+        self, db_manager, transaction_data
     ):
         """Test insert of transaction data without matching block number"""
         with pytest.raises(ForeignKeyViolationError):
