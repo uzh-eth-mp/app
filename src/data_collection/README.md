@@ -39,4 +39,4 @@ Requirements can be found and should only be modified in `requirements.in`. Afte
 
 The tests can be found in the `tests/` directory. Currently only the `db/manager.py` class is tested.
 
-The recommended way to start the tests is to use the `etc/scripts/run-tests-db.sh` script in the root of this repository.
+The recommended way to start the tests is to use the `scripts/run-tests-db.sh` script in the root of this repository.

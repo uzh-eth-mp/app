@@ -41,26 +41,25 @@ The block / transaction consumers are blockchain agnostic / evm compatible, thus
 ```
 
 ## Running the app
-The application stack is managed by docker-compose. Each compose configuration file targets a different environment.
+The application stack is managed by [docker compose](https://docs.docker.com/compose/#compose-v2-and-the-new-docker-compose-command). Each compose configuration file targets a different environment.
 
 ### Development environment
 The development environment build is intended for development purposes. It creates a local PostgreSQL database (with persistence in `src/sql/db-data`) and connects to public blockchain node APIs such as Infura.
 
 To run a development build:
 ```
-$ sh etc/scripts/run-dev.sh
+$ sh scripts/run-dev.sh
 ```
 
 #### Per node dev config
 You can also run the app only for a specific blockchain.
 ```
 # ETH
-$ sh etc/scripts/run-dev-eth.sh
+$ sh scripts/run-dev-eth.sh
 # ETC
-$ sh etc/scripts/run-dev-etc.sh
+$ sh scripts/run-dev-etc.sh
 # BSC
-$ sh etc/scripts/run-dev-bsc.sh
-
+$ sh scripts/run-dev-bsc.sh
 ```
 
 ### Production environment
@@ -68,15 +67,15 @@ The production environment build expects a database / local blockchain nodes to 
 
 To run a production build:
 ```
-$ sh etc/scripts/run-prod.sh
+$ sh scripts/run-prod.sh
 ```
 
-> Note: If you encounter a `Error response from daemon: network` error, the volumes need to be fully restarted with `docker-compose down --volumes --remove-orphans`.
+> Note: If you encounter a `Error response from daemon: network` error, the volumes need to be fully restarted with `docker compose down --volumes --remove-orphans`.
 
 ## Running only the database
 In case you only need to run the development database:
 ```
-$ sh etc/scripts/run-dev-db.sh
+$ sh scripts/run-dev-db.sh
 ```
 
 For connecting to the database check [src/db/README.md](src/db/README.md).
@@ -87,7 +86,7 @@ Currently, only the `DatabaseManager` class is tested. These database manager te
 
 To start the tests:
 ```
-$ sh etc/scripts/run-tests-db.sh
+$ sh scripts/run-tests-db.sh
 ```
 
-> Note: When running the tests locally, it might sometimes be necessary to `docker volume prune` in order for the database to start properly.
+> Note: When running the tests locally, it might sometimes be necessary to `docker volume prune` in order for the database to restart properly.
