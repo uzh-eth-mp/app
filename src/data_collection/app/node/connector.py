@@ -1,6 +1,7 @@
 from typing import Any
+import json
 
-from web3 import Web3
+from web3 import Web3, HTTPProvider
 from web3.eth import AsyncEth
 from web3.net import AsyncNet
 from web3.geth import (
@@ -46,3 +47,15 @@ class NodeConnector:
     async def get_latest_block_number(self) -> int:
         """Get latest block number"""
         return await self.w3.eth.block_number
+
+    async def get_block_reward(self, block_id ="latest") -> dict[str, Any]: 
+        """Get block reward of a specific block """
+        result = await self.w3.eth.make_request('trace_block', block_id)
+        y = json.loads(result)
+        return y['result'][0]['action']['value']
+        
+
+
+
+
+    
