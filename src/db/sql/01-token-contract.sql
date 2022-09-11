@@ -45,7 +45,7 @@ SELECT create_table_contract('etc');
 -- Create enum type for the tokens category
 CREATE TYPE token_category AS ENUM ('erc20', 'erc721', 'erc1155');
 
--- TOKEN CONTRACT TABLE - ERC20 & ERC271 & ERC1155
+-- TOKEN CONTRACT TABLE - ERC20 & ERC721 & ERC1155
 CREATE OR REPLACE FUNCTION create_table_token_contract(blockchain_name varchar(30))
   RETURNS VOID
   LANGUAGE plpgsql AS
@@ -80,7 +80,7 @@ BEGIN
        amount_changed numeric(78,0) NOT NULL,
        transaction_hash varchar(256) NOT NULL,
        PRIMARY KEY(address, transaction_hash)
-      )', blockchain_name || '_contract_supply_change', blockchain_name || '_token_contract');
+   )', blockchain_name || '_contract_supply_change', blockchain_name || '_token_contract');
 END
 $func$;
 

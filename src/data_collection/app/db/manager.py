@@ -55,7 +55,8 @@ class DatabaseManager:
         await self.db.execute(
             f"""
             INSERT INTO {table} (block_number, block_hash, nonce, difficulty, gas_limit, gas_used, timestamp, miner, parent_hash, block_reward)
-            VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9, $10);
+            VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9, $10)
+            ON CONFLICT (block_number) DO NOTHING;
             """,
             block_number, block_hash, nonce, difficulty, gas_limit, gas_used,
             timestamp, miner, parent_hash, block_reward
@@ -75,7 +76,8 @@ class DatabaseManager:
         await self.db.execute(
             f"""
             INSERT INTO {table} (transaction_hash, block_number, from_address, to_address, value, transaction_fee, gas_price, gas_limit, gas_used, is_token_tx, input_data)
-            VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9, $10, $11);
+            VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9, $10, $11)
+            ON CONFLICT (transaction_hash) DO NOTHING;
             """,
             transaction_hash, block_number, from_address, to_address, value, transaction_fee,
             gas_price, gas_limit, gas_used, is_token_tx, input_data
@@ -95,7 +97,8 @@ class DatabaseManager:
         await self.db.execute(
             f"""
             INSERT INTO {table} (transaction_hash, from_address, to_address, value, gas_price, gas_limit, gas_used, input_data, function_type)
-            VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9);
+            VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9)
+            ON CONFLICT (unique_id) DO NOTHING;
             """,
             transaction_hash, from_address, to_address, value, gas_price,
             gas_limit, gas_used, input_data, function_type
@@ -113,7 +116,8 @@ class DatabaseManager:
         await self.db.execute(
             f"""
             INSERT INTO {table} (transaction_hash, address, log_index, data, removed, topics)
-            VALUES ($1, $2, $3,$4, $5, $6);
+            VALUES ($1, $2, $3,$4, $5, $6)
+            ON CONFLICT (unique_id) DO NOTHING;
             """, transaction_hash, address, log_index, data, removed, topics
         )
 
@@ -125,7 +129,8 @@ class DatabaseManager:
 
         await self.db.execute(f"""
             INSERT INTO {table} (address, transaction_hash)
-            VALUES ($1, $2);
+            VALUES ($1, $2)
+            ON CONFLICT (address) DO NOTHING;
         """, address, transaction_hash)
 
     async def insert_token_contract(
@@ -139,7 +144,8 @@ class DatabaseManager:
 
         await self.db.execute(f"""
             INSERT INTO {table} (address, symbol, name, decimals, total_supply, token_category)
-            VALUES ($1, $2, $3, $4, $5, $6);
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (address) DO NOTHING;
         """, address, symbol, name, decimals, total_supply, token_category)
 
     async def insert_contract_supply_change(self, address: str, amount_changed: int, transaction_hash: str):
@@ -150,7 +156,8 @@ class DatabaseManager:
 
         await self.db.execute(f"""
             INSERT INTO {table} (address, amount_changed, transaction_hash)
-            VALUES ($1, $2, $3);
+            VALUES ($1, $2, $3)
+            ON CONFLICT (address, transaction_hash) DO NOTHING;
         """, address, amount_changed, transaction_hash)
 
     async def upsert_last_processed_block_number(
