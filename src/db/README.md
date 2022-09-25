@@ -14,4 +14,4 @@ The `sql` directory contains all init scripts. The default database name is `db`
 
 ## Deleting the local data
 
-To delete the local data, just delete `db-data` in this directory.
+To delete the local data, just delete `data/postgres-data` in the root directory of this repo.

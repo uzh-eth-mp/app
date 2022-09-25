@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from app.config import Config
 from app.kafka.manager import KafkaManager
-from app.node.connector import NodeConnector
+from app.web3.node_connector import NodeConnector
 from app.db.manager import DatabaseManager
+from app.db.redis import RedisManager
 
 
 class DataCollector:
@@ -21,6 +22,10 @@ class DataCollector:
         self.db_manager = DatabaseManager(
             postgresql_dsn=config.db_dsn,
             node_name=config.kafka_topic
+        )
+        self.redis_manager = RedisManager(
+            redis_url=config.redis_url,
+            topic=config.kafka_topic
         )
 
     async def __aenter__(self) -> DataCollector:

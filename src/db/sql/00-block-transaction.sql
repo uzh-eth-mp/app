@@ -36,14 +36,14 @@ BEGIN
        transaction_hash varchar(256) PRIMARY KEY NOT NULL,
        block_number bigint REFERENCES %I NOT NULL,
        from_address varchar(256) NOT NULL,
-       to_address varchar(256) NOT NULl,
+       to_address varchar(256),
        value numeric(78,18),
        transaction_fee numeric(78,18) NOT NULL,
        gas_price numeric(78,18) NOT NULL,
        gas_limit numeric(78,0) NOT NULL,
        gas_used numeric(78,0) NOT NULL,
        is_token_tx boolean NOT NULL,
-       input_data varchar(256) NOT NULL
+       input_data varchar(65536) NOT NULL
       )', node_name || '_transaction', node_name || '_block');
 END
 $func$;

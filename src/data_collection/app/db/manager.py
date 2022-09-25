@@ -34,12 +34,12 @@ class DatabaseManager:
         self.db = await asyncpg.connect(
             dsn=self.dsn
         )
-        log.info("Connected to PostgreSQL")
+        log.debug("Connected to PostgreSQL")
 
     async def disconnect(self):
         """Disconnect from PostgreSQL"""
         await self.db.close()
-        log.info("Disconnected from PostgreSQL")
+        log.debug("Disconnected from PostgreSQL")
 
     async def insert_block(
         self, block_number: int, block_hash: str, nonce: str, difficulty: int,

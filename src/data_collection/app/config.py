@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import (
     AnyUrl,
@@ -14,6 +14,11 @@ class DataCollectionConfig(BaseSettings):
     # The ending block number. Takes precedence over the setting in the db.
     end_block: Optional[int]
 
+    # Contains a list of smart contract addresses of interest.
+    # Any transaction interacting (create, call) with these addresses
+    # will be saved in the database.
+    contracts: List[str]
+
 
 class Config(BaseSettings):
     """Store an app configuration file"""
@@ -23,6 +28,9 @@ class Config(BaseSettings):
 
     # PostgreSQL
     db_dsn: PostgresDsn
+
+    # Redis URL
+    redis_url: AnyUrl
 
     # Kafka
     kafka_url: str

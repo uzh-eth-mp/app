@@ -1,5 +1,6 @@
 """App module"""
 import logging
+import os
 import sys
 
 loggers = dict()
@@ -18,6 +19,6 @@ def init_logger(name):
         handler.setFormatter(formatter)
         logger = logging.getLogger(name)
         logger.addHandler(handler)
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(os.getenv("LOG_LEVEL", "DEBUG"))
         loggers[name] = logger
         return logger

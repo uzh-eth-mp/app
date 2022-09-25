@@ -10,41 +10,39 @@ services:
       - ./src/db/.env
     # Persistent storage
     volumes:
-      - ./src/db/db-data:/var/lib/postgresql/data
+      - ./data/postgresql-data:/var/lib/postgresql/data
 
   # Different configuration files for data producers
   data_producer_eth:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/dev/eth.json", "--mode", "producer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/eth.json --mode producer"
     depends_on:
       - db
-      - kafka
 
   data_producer_etc:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/dev/etc.json", "--mode", "producer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/etc.json --mode producer"
     depends_on:
       - db
-      - kafka
 
   data_producer_bsc:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/dev/bsc.json", "--mode", "producer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/bsc.json --mode producer"
     depends_on:
       - db
-      - kafka
 
   data_consumer_eth:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/dev/eth.json", "--mode", "consumer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/eth.json --mode consumer"
+    deploy:
+      replicas: 50
+    environment:
+      - LOG_LEVEL=INFO
     depends_on:
       - db
-      - kafka
 
   data_consumer_etc:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/dev/etc.json", "--mode", "consumer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/etc.json --mode consumer"
     depends_on:
       - db
-      - kafka
 
   data_consumer_bsc:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/dev/bsc.json", "--mode", "consumer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/bsc.json --mode consumer"
     depends_on:
       - db
-      - kafka

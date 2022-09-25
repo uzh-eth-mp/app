@@ -43,6 +43,12 @@ The block / transaction consumers are blockchain agnostic / evm compatible, thus
 ## Running the app
 The application stack is managed by [docker compose](https://docs.docker.com/compose/#compose-v2-and-the-new-docker-compose-command). Each compose configuration file targets a different environment.
 
+## Configuration
+
+The main configuration files are located in `etc/cfg` and are split between a development and production enviornment.
+
+The only environment variable is `LOG_LEVEL` which you can freely set in the docker-compose. The default value is set in `src/data_collection/Dockerfile` as `INFO`
+
 ### Development environment
 The development environment build is intended for development purposes. It creates a local PostgreSQL database (with persistence in `src/sql/db-data`) and connects to public blockchain node APIs such as Infura.
 

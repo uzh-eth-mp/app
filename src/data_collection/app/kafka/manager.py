@@ -1,8 +1,12 @@
 import asyncio
 
-from typing import List
+from typing import List, Generator
 
-from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
+from aiokafka import (
+    AIOKafkaConsumer,
+    AIOKafkaProducer,
+    ConsumerRecord
+)
 from aiokafka.errors import (
     KafkaError,
     KafkaTimeoutError,
@@ -25,8 +29,6 @@ class KafkaManager:
     Manage the Kafka cluster connection.
     Base class for KafkaProducerManager and KafkaConsumerManager.
     """
-    # The delay before attempting the initial connection (in seconds)
-    INITIAL_CONNECTION_DELAY = 45
     # The delay between connection attempts (in seconds)
     LINEAR_BACKOFF_DELAY = 5
     # The maximum allowed initial connection attempts before the app exits
@@ -47,12 +49,6 @@ class KafkaManager:
             Retrying with linear backoff is required as the
             startup time of Kafka is variable (usually 25-35s)
         """
-        log.info(
-            f"Waiting {self.INITIAL_CONNECTION_DELAY}s for Kafka to boot up"
-        )
-        await asyncio.sleep(self.INITIAL_CONNECTION_DELAY)
-
-        log.info("Connecting to Kafka with linear backoff")
         connected, attempt_i = False, 0
 
         while not connected:
@@ -76,12 +72,12 @@ class KafkaManager:
                 log.info(f"Connection failed - retrying in {self.LINEAR_BACKOFF_DELAY}s")
                 await asyncio.sleep(self.LINEAR_BACKOFF_DELAY)
                 continue
-        log.info("Connected to Kafka")
+        log.debug("Connected to Kafka")
 
     async def disconnect(self):
         """Flush pending data and disconnect from the kafka cluster"""
         await self._client.stop()
-        log.info("Disconnected from Kafka")
+        log.debug("Disconnected from Kafka")
 
 
 class KafkaProducerManager(KafkaManager):
@@ -93,6 +89,10 @@ class KafkaProducerManager(KafkaManager):
             enable_idempotence=True
         )
         self.topic = topic
+        # The number of partitions for this topic
+        self.n_partitions = 100
+        # The currently selected partition that will receive the next batch
+        self.i_partition = 0
 
     async def send_message(self, msg: str):
         """Send message to a Kafka broker"""
@@ -138,12 +138,18 @@ class KafkaProducerManager(KafkaManager):
             send_fut = await self._client.send_batch(
                 kafka_batch,
                 self.topic,
-                partition=0
+                partition=self.i_partition
             )
 
             # Batch will either be delivered or an unrecoverable error will occur.
             # Cancelling this future will not cancel the send.
             _ = await send_fut
+
+            # Increment the partition counter so that the next batch will be sent onto another partition
+            self.i_partition += 1
+            if self.i_partition == self.n_partitions:
+                # Roll over to partition 0 if we reach the last partition
+                self.i_partition = 0
         except KafkaTimeoutError:
             # Producer request timeout, message could have been sent to
             # the broker but there is no ack
@@ -159,15 +165,17 @@ class KafkaConsumerManager(KafkaManager):
         super().__init__(kafka_url, topic)
         self._client = AIOKafkaConsumer(
             topic,
-            bootstrap_servers=kafka_url
+            bootstrap_servers=kafka_url,
+            group_id=topic,
+            auto_offset_reset="earliest"
         )
 
-    async def start_consuming(self):
-        """Consume messages from a given topic"""
+    async def start_consuming(self) -> Generator[ConsumerRecord, None, None]:
+        """Consume messages from a given topic and generate (yield) events"""
         try:
+            # Wait for new events and yield them
             async for event in self._client:
-                log.debug(f"Received event: {event}")
-                await asyncio.sleep(1)
+                yield event
         finally:
             log.info("Disconnecting kafka consumer client")
-            self.disconnect()
+            await self.disconnect()

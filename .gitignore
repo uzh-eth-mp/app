@@ -17,3 +17,6 @@ node_modules/
 .tox/
 htmlcov/
 .coverage
+
+# Data folder
+data/

@@ -8,22 +8,31 @@ services:
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
     volumes:
-      - ./src/kafka/data/zookeeper-data/data:/data
-      - ./src/kafka/data/zookeeper-data/datalog:/datalog
+      - ./data/zookeeper-data/data:/data
+      - ./data/zookeeper-data/datalog:/datalog
   kafka:
     build:
       context: ./src/kafka
     ports:
       - "9092:9092"
     environment:
-      - KAFKA_CREATE_TOPICS=eth:1:1,etc:1:1,bsc:1:1
       - KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS=6000
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
       - KAFKA_LISTENERS=PLAINTEXT://kafka:9092
       - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=false
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
       - KAFKA_LOG_DIRS=/kafka/kafka-logs
+      - KAFKA_CREATE_TOPICS=eth:100:1,etc:100:1,bsc:100:1
     volumes:
-      - ./src/kafka/data/kafka-data:/kafka
+      - ./data/kafka-data:/kafka
+
+  # Redis
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
 
   # Data producers
   data_producer_eth:
@@ -32,18 +41,21 @@ services:
     profiles: ["eth", "all"]
     depends_on:
       - kafka
+      - redis
   data_producer_etc:
     build:
       context: ./src/data_collection
     profiles: ["etc", "all"]
     depends_on:
       - kafka
+      - redis
   data_producer_bsc:
     build:
       context: ./src/data_collection
     profiles: ["bsc", "all"]
     depends_on:
       - kafka
+      - redis
 
   # Data consumers
   data_consumer_eth:
@@ -52,18 +64,21 @@ services:
     profiles: ["eth", "all"]
     depends_on:
       - kafka
+      - redis
   data_consumer_etc:
     build:
       context: ./src/data_collection
     profiles: ["etc", "all"]
     depends_on:
       - kafka
+      - redis
   data_consumer_bsc:
     build:
       context: ./src/data_collection
     profiles: ["bsc", "all"]
     depends_on:
       - kafka
+      - redis
 
 # Kafka related config
 # see: https://github.com/bitnami/bitnami-docker-kafka/blob/a576f9847c9ed455645d6540a7f32e7935e6b4d7/docker-compose.yml#L24

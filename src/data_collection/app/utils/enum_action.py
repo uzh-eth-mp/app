@@ -5,7 +5,7 @@ import enum
 
 class EnumAction(argparse.Action):
     """
-    Argparse action for handling Enums
+    Argparse action for handling Enums, used for DataCollectionMode enum
     """
     def __init__(self, **kwargs):
         # Pop off the type value

@@ -1,5 +1,7 @@
 FROM python:3.9
 
+ENV LOG_LEVEL INFO
+
 # Set working directory
 WORKDIR /app
 
@@ -8,6 +10,10 @@ COPY requirements.txt requirements.txt
 # Install requirements
 RUN pip install -r requirements.txt
 
-COPY . .
+COPY app app
+COPY etc etc
+COPY scripts/wait-for-kafka.sh wait-for-kafka.sh
+
+RUN chmod +x wait-for-kafka.sh
 
 CMD [ "python3", "-m", "app.main", "--cfg", "etc/cfg/dev/eth.json", "--mode", "producer" ]
