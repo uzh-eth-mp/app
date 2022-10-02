@@ -1,11 +1,11 @@
 import asyncio
 
-from typing import List, Generator
+from asyncio import TimeoutError
+from typing import Awaitable, Callable, List
 
 from aiokafka import (
     AIOKafkaConsumer,
-    AIOKafkaProducer,
-    ConsumerRecord
+    AIOKafkaProducer
 )
 from aiokafka.errors import (
     KafkaError,
@@ -14,14 +14,10 @@ from aiokafka.errors import (
 )
 
 from app import init_logger
+from app.kafka.exceptions import KafkaManagerError, KafkaManagerTimeoutError
 
 
 log = init_logger(__name__)
-
-
-class KafkaManagerError(Exception):
-    """Class for KafkaManager related errors"""
-    pass
 
 
 class KafkaManager:
@@ -40,6 +36,7 @@ class KafkaManager:
             kafka_url: the url of the Kafka cluster
             topic: the Kafka topic
         """
+        self.topic = topic
         self._client = None
 
     async def connect(self):
@@ -88,11 +85,14 @@ class KafkaProducerManager(KafkaManager):
             bootstrap_servers=kafka_url,
             enable_idempotence=True
         )
-        self.topic = topic
-        # The number of partitions for this topic
-        self.n_partitions = 100
         # The currently selected partition that will receive the next batch
         self.i_partition = 0
+
+    @property
+    async def number_of_partitions(self) -> int:
+        """Return the number of partitions in this topic"""
+        partitions = await self._client.partitions_for(self.topic)
+        return len(partitions)
 
     async def send_message(self, msg: str):
         """Send message to a Kafka broker"""
@@ -147,7 +147,7 @@ class KafkaProducerManager(KafkaManager):
 
             # Increment the partition counter so that the next batch will be sent onto another partition
             self.i_partition += 1
-            if self.i_partition == self.n_partitions:
+            if self.i_partition == await self.number_of_partitions:
                 # Roll over to partition 0 if we reach the last partition
                 self.i_partition = 0
         except KafkaTimeoutError:
@@ -161,6 +161,10 @@ class KafkaProducerManager(KafkaManager):
 
 class KafkaConsumerManager(KafkaManager):
     """Manage consuming events from a given Kafka topic"""
+    # How much time (in seconds) to wait for the next event / message
+    # from a Kafka topic before exiting
+    EVENT_RETRIEVAL_TIMEOUT=120
+
     def __init__(self, kafka_url: str, topic: str) -> None:
         super().__init__(kafka_url, topic)
         self._client = AIOKafkaConsumer(
@@ -169,13 +173,58 @@ class KafkaConsumerManager(KafkaManager):
             group_id=topic,
             auto_offset_reset="earliest"
         )
+        # True if an event was received. False otherwise.
+        self._event_received = False
 
-    async def start_consuming(self) -> Generator[ConsumerRecord, None, None]:
+    async def _event_timeout(self, event):
+        """Raise an exception if event.set() is not called for EVENT_RETRIEVAL_TIMEOUT seconds"""
+        while True:
+            # Wait for event.set() to be called for EVENT_RETRIEVAL_TIMEOUT seconds
+            await asyncio.wait_for(event.wait(), self.EVENT_RETRIEVAL_TIMEOUT)
+            # Reset the event timeout to wait another 30 seconds for a new Kafka event
+            event.clear()
+
+    async def _start_listening_on_topic(
+        self, on_event_callback: Callable[[str], Awaitable[None]],
+        wait_event: asyncio.Event
+    ):
+        """Listen for new Kafka messages on a predefined topic"""
+        # Wait for new events from Kafka and call the callback
+        async for event in self._client:
+            # Notify the wait_event that we've received a new Kafka topic event
+            wait_event.set()
+            # Await the async callback
+            await on_event_callback(event)
+
+    async def start_consuming(self, on_event_callback: Callable[[str], Awaitable[None]]):
         """Consume messages from a given topic and generate (yield) events"""
         try:
-            # Wait for new events and yield them
-            async for event in self._client:
-                yield event
+            partitions = list(map(lambda p: p.partition, self._client.assignment()))
+            log.info(f"Consuming events in topic '{self.topic}' for partitions: {partitions}")
+
+            # Create an asyncio Event that is used for timing out
+            # when no message from Kafka is received for some time
+            wait_event = asyncio.Event()
+
+            # Create a consume task
+            consume_task = asyncio.create_task(
+                self._start_listening_on_topic(on_event_callback, wait_event)
+            )
+
+            # Create a task for a timeout to run in the background
+            timeout_task = asyncio.create_task(self._event_timeout(wait_event))
+
+            # Wait for consuming to finish
+            # (with a timeout task that can interrupt the consume task by raising an exception)
+            await asyncio.gather(
+                timeout_task,
+                consume_task
+            )
+
+        except TimeoutError:
+            # Raised when no message is received within the specified time
+            log.debug(f"No event received for {self.EVENT_RETRIEVAL_TIMEOUT} seconds - timed out")
+            raise KafkaManagerTimeoutError
         finally:
-            log.info("Disconnecting kafka consumer client")
+            # Disconnect from Kafka
             await self.disconnect()

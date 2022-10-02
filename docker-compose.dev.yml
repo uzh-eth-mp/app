@@ -31,7 +31,7 @@ services:
   data_consumer_eth:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/eth.json --mode consumer"
     deploy:
-      replicas: 50
+      replicas: 2
     environment:
       - LOG_LEVEL=INFO
     depends_on:

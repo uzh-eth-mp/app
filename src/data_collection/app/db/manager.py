@@ -1,7 +1,7 @@
 import asyncpg
 
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any, List, Optional, Union
 
 from app import init_logger
 from app.db.exceptions import UnknownBlockIdentifier
@@ -160,15 +160,6 @@ class DatabaseManager:
             ON CONFLICT (address, transaction_hash) DO NOTHING;
         """, address, amount_changed, transaction_hash)
 
-    async def upsert_last_processed_block_number(
-        self, last_block_number: int
-    ):
-        """
-        Upsert the last processed block number.
-        """
-        # TODO
-        pass
-
     async def get_block(
         self, block_identifier: Optional[Union[str, int]] = None
     ) -> Optional[dict[str, Any]]:
@@ -205,11 +196,7 @@ class DatabaseManager:
         # Return a dictionary
         return dict(res) if res else None
 
-    async def get_last_processed_block_number(
-        self
-    ) -> Optional[int]:
-        """
-        Get the last processed block number
-        """
-        # TODO
-        return None
+    # TODO: Finish get_block_transactions
+    async def get_block_transactions(block_number: int) -> List[dict[str, Any]]:
+        """Get all transactions for the given block number"""
+        pass

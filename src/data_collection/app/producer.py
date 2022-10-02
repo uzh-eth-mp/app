@@ -37,12 +37,11 @@ class DataProducer(DataCollector):
         Start a while loop that collects all the block data from Web3
         based on the config values and inserts transactions into Kafka.
         """
-        # FIXME: use sleep here to prevent consumers from getting stuck when starting for the first time
-        #await asyncio.sleep(10)
         # Get block exploration bounds (start and end block number)
         block_explorer = BlockExplorer(
             data_collection_cfg=self.config.data_collection,
-            db=self.db_manager
+            db=self.db_manager,
+            w3=self.node_connector
         )
         start_block, end_block = await block_explorer.get_exploration_bounds()
 
@@ -57,7 +56,15 @@ class DataProducer(DataCollector):
             should_continue = lambda _: True
 
         end_block_str = f"block #{end_block}" if end_block else "'latest' block"
+
+        # Log information about the producer
+        pretty_config = self.config.dict(exclude={"node_url", "db_dsn", "redis_url", "kafka_url"})
+        log.info(f'Using config: {pretty_config}')
+        n_partitions = await self.kafka_manager.number_of_partitions
+        log.info(f"Found {n_partitions} partition(s) on topic '{self.kafka_manager.topic}'")
         log.info(f"Starting from block #{start_block}, expecting to finish at {end_block_str}")
+
+        # Start producing transactions
         try:
             while should_continue(i_block):
                 # Verify that there is space in the Kafka topic for more transaction hashes
@@ -78,10 +85,8 @@ class DataProducer(DataCollector):
                 # Send all the transaction hashes to Kafka so consumers can process them
                 await self.kafka_manager.send_batch(msgs=block_data.transactions)
 
-                # upsert the latest processed block if the Kafka messages are
-                # sent successfully
+                # Update the processed block variable with current block index
                 i_processed_block = i_block
-                await self.db_manager.upsert_last_processed_block_number(i_processed_block)
 
                 # Increment the number of messages in a topic by the number of
                 # transactions hashes in this block
