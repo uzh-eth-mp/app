@@ -6,9 +6,31 @@ from app.model.abi import ERCABI
 from app.model.transaction import TransactionData, TransactionReceiptData
 from app.utils.data_collector import DataCollector
 from app.web3.parser import ContractParser, ContractData
-
+from eth_hash.auto import keccak
 
 log = init_logger(__name__)
+
+minting_functions = {}
+
+
+def mint(signature_text):
+    def decorator(fun):
+        minting_functions[keccak(signature_text.encode()).hex()] = fun
+
+        def wrapper(topics):
+            return fun(topics)
+
+        return wrapper
+
+    return decorator
+
+
+@mint("Mint(address,uint256,uint256)")
+def mint_ERC20(topics):
+    return topics[2] - topics[1]
+@mint("Issue(uint256)")
+def mint_USDT(topics):
+    return topics[1]
 
 
 class DataConsumer(DataCollector):
@@ -35,7 +57,7 @@ class DataConsumer(DataCollector):
         self._tx_hash = None
 
     def _should_handle_transaction(
-        self, tx_data: TransactionData, tx_receipt_data: TransactionReceiptData
+            self, tx_data: TransactionData, tx_receipt_data: TransactionReceiptData
     ) -> bool:
         """Return True if the transaction interacts with a known contract address"""
         return \
@@ -111,6 +133,15 @@ class DataConsumer(DataCollector):
                 await self.db_manager.insert_transaction_logs(**tx_log.dict())
 
         # TODO: check for AND insert internal transactions here if needed
+
+        for tx_log in tx_receipt_data.logs:
+            event_signature = tx_log.topics[0]
+            if event_signature in minting_functions:
+                self.db_manager.insert_contract_supply_change(
+                    address=tx_receipt_data.contract_address,
+                    transaction_hash=tx_data.transaction_hash,
+                    amount_changed=minting_functions[event_signature](tx_log.topics)
+                )
 
     async def start_consuming_data(self):
         """
