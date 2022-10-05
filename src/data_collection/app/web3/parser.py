@@ -110,5 +110,6 @@ class ContractParser:
             name=name,
             decimals=decimals,
             total_supply=total_supply,
-            token_category=category.value
+            token_category=category.value,
+            events=contract.events
         )
