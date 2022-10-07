@@ -35,7 +35,12 @@ class TransactionReceiptData(Web3BaseModel):
     contract_address: Optional[str] = Field(..., alias="contractAddress")
 
 
-# TODO: finish InternalTransactionData
 class InternalTransactionData(Web3BaseModel):
     """Describes an internal transaction given by `debug_traceTransaction`"""
-    pass
+    from_address: str = Field(..., alias = "from")
+    to_address: str = Field(..., alias = "to")
+    value: float
+    gas_used: float = Field(..., alias="gasUsed")
+    gas_limit: float = Field(..., alias="gas")
+    input_data: str = Field(..., alias="input")
+    function_type: str = Field(..., alias = "type")

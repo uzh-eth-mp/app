@@ -65,7 +65,6 @@ BEGIN
        from_address varchar(256) NOT NULL ,
        to_address varchar(256) NOT NULL,
        value numeric(78,18),
-       gas_price bigint,
        gas_limit bigint NOT NULL,
        gas_used bigint NOT NULL,
        input_data varchar(256) NOT NULL,
