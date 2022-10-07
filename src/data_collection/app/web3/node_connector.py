@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Any, Tuple
 
 from web3 import Web3
 from web3.eth import AsyncEth
@@ -87,7 +87,35 @@ class NodeConnector:
         tx_receipt_data = TransactionReceiptData(**tx_receipt_data_dict)
         return tx_receipt_data, tx_receipt_data_dict
 
-    # TODO: finish get_internal_transactions
-    async def get_internal_transactions(self, tx_hash: str) -> InternalTransactionData:
+    def get_block_reward(self, block_id="latest") -> dict[str, Any]:
+        """Get block reward of a specific block"""
+
+        data = {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "trace_block",
+            "params": [block_id],
+        }
+
+        headers = {"accept": "application/json", "content-type": "application/json"}
+
+        response = requests.post(node_url, json=data, headers=headers)
+        data = response.json()
+        return data["result"][0]["action"]["value"]
+
+    def get_internal_transactions(self, tx_hash: str) -> InternalTransactionData:
         """Get internal transaction data by hash"""
-        pass
+
+        data = {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "trace_replayTransaction",
+            "params": [tx_hash, ["trace"]],
+        }
+
+        headers = {"accept": "application/json", "content-type": "application/json"}
+
+        response = requests.post(node_url, json=data, headers=headers)
+
+        data = response.json()
+        return data["result"]
