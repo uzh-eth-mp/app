@@ -1,0 +1,28 @@
+[
+  {
+  "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+  "network": "eth",
+  "symbol": "USDT",
+  "abi": "erc20",
+    // https://etherscan.io/address/0xdac17f958d2ee523a2206206994597c13d831ec7#code#L444
+  },
+   {
+  "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+  "network": "eth",
+  "symbol": "USDC",
+  "abi": "erc20"
+  },
+  {
+  "address": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+  "network": "eth",
+  "symbol": "DAI",
+  "abi": "erc20",
+    //https://etherscan.io/token/0x6b175474e89094c44da98b954eedeac495271d0f#code#L25
+  },
+  {
+  "address": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
+  "network": "eth",
+  "symbol": "UniSwap V2",
+  "abi": "UniSwapV2"
+  }
+]

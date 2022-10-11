@@ -9,6 +9,7 @@ class TransactionData(Web3BaseModel):
     """Describes a transaction given by `get_transaction`"""
     transaction_hash: str = Field(..., alias="hash")
     block_number: int = Field(..., alias="blockNumber")
+    block_hash: str = Field(..., alias="blockHash")
     from_address: str = Field(..., alias="from")
     to_address: Optional[str] = Field(..., alias="to")
     value: float

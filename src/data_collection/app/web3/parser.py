@@ -1,3 +1,4 @@
+import collections
 from typing import (
     Any,
     Dict,
@@ -7,9 +8,17 @@ from typing import (
 
 from eth_hash.auto import keccak
 from web3 import Web3
+import collections, json
 
 from app.model.abi import ERCABI
 from app.model.contract import ContractCategory, ContractData
+
+_contracts = json.load(open("src/data_collection/etc/contracts.json"))
+_contract_categories = collections.defaultdict(None)
+for _ in _contracts:
+    _contract_categories[_["address"].lower()] = ContractCategory(_["abi"])
+def _get_contract_category(address):
+    return _contract_categories[address.lower()]
 
 
 class ContractParser:
@@ -80,8 +89,9 @@ class ContractParser:
             a ContractData instance
         """
         # Need to obtain contract category first
-        code = (await self.w3.eth.get_code(contract_address)).hex()
-        category = self._get_contract_category(code=code)
+        #code = (await self.w3.eth.get_code(contract_address)).hex()
+        #category = self._get_contract_category(code=code)
+        category = _get_contract_category(contract_address)
         abi = self._get_contract_abi(contract_category=category)
 
         # Create a w3 contract instance
@@ -110,6 +120,6 @@ class ContractParser:
             name=name,
             decimals=decimals,
             total_supply=total_supply,
-            token_category=category.value,
+            token_category=category,
             events=contract.events
         )

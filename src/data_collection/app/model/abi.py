@@ -8,3 +8,4 @@ class ERCABI(BaseModel):
     erc20: List[Dict[str, Any]]
     erc721: List[Dict[str, Any]]
     erc1155: List[Dict[str, Any]]
+    UniSwapV2: List[Dict[str, Any]]

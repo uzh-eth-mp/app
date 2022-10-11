@@ -114,7 +114,7 @@ class DataConsumer(DataCollector):
 
         #Supply Change = mints - burns
         amount_changed = 0
-        for event in get_transaction_events(contract_data, tx_receipt_data):
+        for event in get_transaction_events(contract_data, tx_receipt_data, tx_data.block_hash):
             if isinstance(event, BurnEvent):
                 amount_changed -= event.value
             elif isinstance(event, MintEvent):
