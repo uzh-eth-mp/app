@@ -8,6 +8,7 @@ from web3.geth import (
     AsyncGethPersonal
 )
 import requests
+import aiohttp
 
 from app.model.block import BlockData
 from app.model.transaction import (
@@ -79,10 +80,10 @@ class NodeConnector:
         tx_receipt_data = TransactionReceiptData(**tx_receipt_data_dict)
         return tx_receipt_data
 
-    def get_block_reward(self, block_id ="latest") -> dict[str, Any]: 
+    async def get_block_reward(self, block_id ="latest") -> dict[str, Any]: 
         """Get block reward of a specific block """
 
-        data = {
+        payload = {
             "id": 1,
             "jsonrpc": "2.0",
             "method": "trace_block",
@@ -94,15 +95,16 @@ class NodeConnector:
             "content-type": "application/json"
             }
 
-        response = requests.post(node_url, json = data, headers =headers)
-        data = response.json()
-        return data['result'][0]['action']['value']
+        async with aiohttp.ClientSession() as session:
+            response = await session.post(node_url, data = payload, headers =headers)
+            data = await response.json()
+            return data['result'][0]['action']['value']
 
 
-    def get_internal_transactions(self, tx_hash: str) -> InternalTransactionData:
+    async def get_internal_transactions(self, tx_hash: str) -> InternalTransactionData:
         """Get internal transaction data by hash"""
 
-        data = {
+        payload = {
             "id": 1,
             "jsonrpc": "2.0",
             "method": "trace_replayTransaction",
@@ -114,8 +116,9 @@ class NodeConnector:
             "content-type": "application/json"
             }
 
-        response = requests.post(node_url, json = data, headers =headers)
-
-        data = response.json()
-        return data['result']
+        async with aiohttp.ClientSession() as session:
+            response = await session.post(node_url, data=payload, headers =headers)
+            data = await response.json()
+            internal_tx_data = InternalTransactionData(**data["result"])
+            return internal_tx_data 
 

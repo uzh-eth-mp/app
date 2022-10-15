@@ -106,7 +106,6 @@ def internal_transaction_data() -> dict[str, Any]:
         from_address="0xca44f331c32783cc6678cb5ffaa2b6739299b42b",
         to_address="0xd26a2ba4472a50ea23bef8189a3de4911af03dad",
         value=.000000487343799995,
-        gas_price=.000000002297477913,
         gas_limit=21000,
         gas_used=21000,
         input_data="xd",
