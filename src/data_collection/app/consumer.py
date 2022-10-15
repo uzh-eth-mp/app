@@ -6,7 +6,8 @@ from app.model.abi import ERCABI
 from app.model.transaction import TransactionData, TransactionReceiptData
 from app.utils.data_collector import DataCollector
 from app.web3.parser import ContractParser, ContractData
-from app.web3.transaction_events import get_transaction_events, MintEvent, BurnEvent
+from app.web3.transaction_events import get_transaction_events, MintFungibleEvent, BurnFungibleEvent, PairCreatedEvent,\
+    MintPairEvent, BurnPairEvent, SwapPairEvent, MintNonFungibleEvent, BurnNonFungibleEvent
 
 log = init_logger(__name__)
 
@@ -115,10 +116,13 @@ class DataConsumer(DataCollector):
         #Supply Change = mints - burns
         amount_changed = 0
         for event in get_transaction_events(contract_data, tx_receipt_data, tx_data.block_hash):
-            if isinstance(event, BurnEvent):
+            if isinstance(event, BurnFungibleEvent):
                 amount_changed -= event.value
-            elif isinstance(event, MintEvent):
+            elif isinstance(event, MintFungibleEvent):
                 amount_changed += event.value
+            #factory created a contract, store it in DB for future to check if it is pair contract.
+            elif isinstance(event, PairCreatedEvent):
+                await self.db_manager.insert_pair_contract(event)
         if amount_changed != 0:
             await self.db_manager.insert_contract_supply_change(
                 address=contract_data.address,

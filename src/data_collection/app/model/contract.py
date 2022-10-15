@@ -7,7 +7,8 @@ class ContractCategory(Enum):
     ERC20 = "erc20"
     ERC721 = "erc721"
     ERC1155 = "erc1155"
-    UNI_SWAP_V2 = "UniSwapV2"
+    UNI_SWAP_V2_FACTORY = "UniSwapV2Factory"
+    UNI_SWAP_V2_PAIR = "UniSwapV2Pair"
 
 
 class ContractData(BaseModel):
