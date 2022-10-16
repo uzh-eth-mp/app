@@ -32,7 +32,8 @@ BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
        address varchar(256) PRIMARY KEY NOT NULL,
-       transaction_hash varchar(256) NOT NULL
+       transaction_hash varchar(256) NOT NULL,
+       is_pair_contract boolean NOT NULL,
       )', blockchain_name || '_contract');
 END
 $func$;
@@ -87,3 +88,49 @@ $func$;
 SELECT create_table_contract_supply_change('eth');
 SELECT create_table_contract_supply_change('bsc');
 SELECT create_table_contract_supply_change('etc');
+
+
+---PAIR CONTRACT TABLE---
+CREATE OR REPLACE FUNCTION create_table_pair_contract(blockchain_name varchar(30))
+  RETURNS VOID
+  LANGUAGE plpgsql AS
+$func$
+BEGIN
+   EXECUTE format('
+      CREATE TABLE IF NOT EXISTS %I(
+       address varchar(256) PRIMARY KEY NOT NULL,
+       token0_address varchar(256) NOT NULL 
+       token1_address varchar(256) NOT NULL
+       reserve0 numeric(78,0) NOT NULL,
+       reserve1 numeric(78,0) NOT NULL, 
+       factory varchar(256) NOT NULL, 
+       address varchar(256) REFERENCES %I(address) NOT NULL,
+   )', blockchain_name || '_pair_contract', blockchain_name || '_contract');
+END
+$func$;
+
+SELECT create_table_pair_contract'eth');
+SELECT create_table_pair_contract('bsc');
+SELECT create_table_pair_contract('etc');
+
+
+--CONTRACT SUPPLY CHANGE TABLE
+CREATE OR REPLACE FUNCTION create_table_pair_liquidity_change(blockchain_name varchar(30))
+  RETURNS VOID
+  LANGUAGE plpgsql AS
+$func$
+BEGIN
+   EXECUTE format('
+      CREATE TABLE IF NOT EXISTS %I(
+       address varchar(256) REFERENCES %I(address) NOT NULL,
+       amount0 numeric(78,0) NOT NULL,
+       amount1 numeric(78,0) NOT NULL,
+       transaction_hash varchar(256) NOT NULL,
+       PRIMARY KEY(address, transaction_hash)
+   )', blockchain_name || '_pair_liquidity_change', blockchain_name || '_pair_contract');
+END
+$func$;
+
+SELECT create_table_pair_liquidity_change('eth');
+SELECT create_table_pair_liquidity_change('bsc');
+SELECT create_table_pair_liquidity_change('etc');

@@ -134,6 +134,28 @@ def transaction_logs_data() -> dict[str, Any]:
 def contract_data() -> dict[str, Any]:
     return dict(
         address=shared_address,
+        transaction_hash="0x871dadd3f5ca95b398575d710d39385de9123a10717e2e37a90545a805daca77",
+        is_pair_contract= True
+    )
+
+@pytest.fixture
+def pair_contract_data() -> dict[str, Any]:
+    return dict(
+        address=shared_address,
+        token0_address = "0xCAFE000000000000000000000000000000000000",
+        token1_address = "0xF00D000000000000000000000000000000000000",
+        reserve0 = 1000,
+        reserve1 = 900,
+        factory = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
+        address = shared_address
+    )
+
+@pytest.fixture
+def pair_liquidity_change_data() -> dict[str, Any]:
+    return dict(
+        address=shared_address,
+        amount0 = 100,
+        amount1 = 90,
         transaction_hash="0x871dadd3f5ca95b398575d710d39385de9123a10717e2e37a90545a805daca77"
     )
 
