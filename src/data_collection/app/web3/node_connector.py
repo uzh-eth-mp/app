@@ -32,7 +32,10 @@ class NodeConnector:
         # Workaround with headers allows to connect to the Abacus
         # JSON RPC API through an SSH tunnel. Abacus only allows hostname to
         # be "localhost" otherwise it returns a 403 response code.
-        headers = {"Host": "localhost", "Content-Type": "application/json"}
+        headers = {"Host": "localhost:8545", "Content-Type": "application/json"}
+
+        self.session = aiohttp.ClientSession()
+
         self.w3 = Web3(
             provider=Web3.AsyncHTTPProvider(
                 endpoint_uri=node_url, request_kwargs={"headers": headers}
@@ -100,10 +103,9 @@ class NodeConnector:
 
         headers = {"accept": "application/json", "content-type": "application/json"}
 
-        async with aiohttp.ClientSession() as session:
-            response = await session.post(node_url, data=payload, headers=headers)
-            data = await response.json()
-            return data["result"][0]["action"]["value"]
+        response = await self.session.post(node_url, data=payload, headers=headers)
+        data = await response.json()
+        return data["result"][0]["action"]["value"]
 
     async def get_internal_transactions(self, tx_hash: str) -> InternalTransactionData:
         """Get internal transaction data by hash"""
@@ -117,8 +119,7 @@ class NodeConnector:
 
         headers = {"accept": "application/json", "content-type": "application/json"}
 
-        async with aiohttp.ClientSession() as session:
-            response = await session.post(node_url, data=payload, headers=headers)
-            data = await response.json()
-            internal_tx_data = InternalTransactionData(**data["result"])
-            return internal_tx_data
+        response = await self.session.post(node_url, data=payload, headers=headers)
+        data = await response.json()
+        internal_tx_data = InternalTransactionData(**data["result"])
+        return internal_tx_data
