@@ -39,6 +39,9 @@ class NodeConnector:
             "Host": "localhost:8545",
             "Content-Type": "application/json"
         }
+
+        self.session = aiohttp.ClientSession()
+
         self.w3 = Web3(
             provider=Web3.AsyncHTTPProvider(
                 endpoint_uri=node_url,
@@ -95,10 +98,9 @@ class NodeConnector:
             "content-type": "application/json"
             }
 
-        async with aiohttp.ClientSession() as session:
-            response = await session.post(node_url, data = payload, headers =headers)
-            data = await response.json()
-            return data['result'][0]['action']['value']
+        response = await self.session.post(node_url, data = payload, headers =headers)
+        data = await response.json()
+        return data['result'][0]['action']['value']
 
 
     async def get_internal_transactions(self, tx_hash: str) -> InternalTransactionData:
@@ -116,9 +118,9 @@ class NodeConnector:
             "content-type": "application/json"
             }
 
-        async with aiohttp.ClientSession() as session:
-            response = await session.post(node_url, data=payload, headers =headers)
-            data = await response.json()
-            internal_tx_data = InternalTransactionData(**data["result"])
-            return internal_tx_data 
+        
+        response = await self.session.post(node_url, data=payload, headers =headers)
+        data = await response.json()
+        internal_tx_data = InternalTransactionData(**data["result"])
+        return internal_tx_data 
 
