@@ -33,7 +33,7 @@ BEGIN
       CREATE TABLE IF NOT EXISTS %I (
        address varchar(256) PRIMARY KEY NOT NULL,
        transaction_hash varchar(256) NOT NULL,
-       is_pair_contract boolean NOT NULL,
+       is_pair_contract boolean NOT NULL
       )', blockchain_name || '_contract');
 END
 $func$;
@@ -98,13 +98,13 @@ $func$
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I(
-       address varchar(256) PRIMARY KEY NOT NULL,
+       contract_address varchar(256) PRIMARY KEY NOT NULL,
        token0_address varchar(256) NOT NULL 
        token1_address varchar(256) NOT NULL
        reserve0 numeric(78,0) NOT NULL,
        reserve1 numeric(78,0) NOT NULL, 
        factory varchar(256) NOT NULL, 
-       address varchar(256) REFERENCES %I(address) NOT NULL,
+       address varchar(256) REFERENCES %I(address) NOT NULL
    )', blockchain_name || '_pair_contract', blockchain_name || '_contract');
 END
 $func$;
@@ -122,7 +122,7 @@ $func$
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I(
-       address varchar(256) REFERENCES %I(address) NOT NULL,
+       address varchar(256) REFERENCES %I(contract_address) NOT NULL,
        amount0 numeric(78,0) NOT NULL,
        amount1 numeric(78,0) NOT NULL,
        transaction_hash varchar(256) NOT NULL,

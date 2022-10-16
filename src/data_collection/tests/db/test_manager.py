@@ -84,7 +84,7 @@ class TestInsert:
     async def test_insert_pair_liquidity_change(
         self, db_manager, pair_liquidity_change_data, contract_data, pair_contract_data
     ):
-        """Test insert of contract data"""
+        """Test insert of pair liquity change data"""
         await db_manager.insert_contract(**contract_data)
         await db_manager.insert_pair_contract(**pair_contract_data)
         await db_manager.insert_pair_liquidity_change(**pair_liquidity_change_data)

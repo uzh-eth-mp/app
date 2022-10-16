@@ -141,7 +141,7 @@ def contract_data() -> dict[str, Any]:
 @pytest.fixture
 def pair_contract_data() -> dict[str, Any]:
     return dict(
-        address=shared_address,
+        contract_address= "0xCAFE000000000000000000000000000000000005",
         token0_address = "0xCAFE000000000000000000000000000000000000",
         token1_address = "0xF00D000000000000000000000000000000000000",
         reserve0 = 1000,
