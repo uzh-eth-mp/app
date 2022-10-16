@@ -160,18 +160,18 @@ class DatabaseManager:
             ON CONFLICT (address, transaction_hash) DO NOTHING;
         """, address, amount_changed, transaction_hash)
 
-    async def insert_pair_contract(self, contract_address: str, token0_address: str, token1_address: str, reserve0: int, 
-                                         reserve1: int, factory: str, address: str):
+    async def insert_pair_contract(self, address: str, token0_address: str, token1_address: str, reserve0: int, 
+                                         reserve1: int, factory: str):
         """
         Insert pair contract data into <node>_pair_contract table.
         """
         table = f"{self.node_name}_pair_contract"
 
         await self.db.execute(f"""
-            INSERT INTO {table} (contract_address, token0_address, token1_address, reserve0, reserve1, factory, address)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO {table} (address, token0_address, token1_address, reserve0, reserve1, factory)
+            VALUES ($1, $2, $3, $4, $5, $6)
             ON CONFLICT (address) DO NOTHING;
-        """, contract_address, token0_address, token1_address, reserve0, reserve1, factory, address)
+        """, address, token0_address, token1_address, reserve0, reserve1, factory)
 
     async def insert_pair_liquidity_change(self, address: str, amount0: int, amount1: int, transaction_hash: str):
         """
