@@ -6,8 +6,19 @@ from app.model.abi import ERCABI
 from app.model.transaction import TransactionData, TransactionReceiptData
 from app.utils.data_collector import DataCollector
 from app.web3.parser import ContractParser, ContractData
-from app.web3.transaction_events import get_transaction_events, MintFungibleEvent, BurnFungibleEvent, PairCreatedEvent,\
-    MintPairEvent, BurnPairEvent, SwapPairEvent, MintNonFungibleEvent, BurnNonFungibleEvent
+from app.web3.transaction_events import get_transaction_events
+from app.web3.transaction_events.types import (
+    MintFungibleEvent,
+    BurnFungibleEvent,
+    PairCreatedEvent,
+    MintPairEvent,
+    BurnPairEvent,
+    SwapPairEvent,
+    MintNonFungibleEvent,
+    BurnNonFungibleEvent,
+    TransferFungibleEvent,
+    TransferNonFungibleEvent
+)
 
 log = init_logger(__name__)
 
@@ -115,14 +126,36 @@ class DataConsumer(DataCollector):
 
         #Supply Change = mints - burns
         amount_changed = 0
-        for event in get_transaction_events(contract_data, tx_receipt_data, tx_data.block_hash):
+        for event in get_transaction_events(contract_data.token_category, contract_data.w3_data, tx_receipt_data.w3_data):
             if isinstance(event, BurnFungibleEvent):
                 amount_changed -= event.value
             elif isinstance(event, MintFungibleEvent):
                 amount_changed += event.value
             #factory created a contract, store it in DB for future to check if it is pair contract.
+            elif isinstance(event, TransferFungibleEvent):
+                # TODO: store transfers?
+                pass
             elif isinstance(event, PairCreatedEvent):
-                await self.db_manager.insert_pair_contract(event)
+                # TODO: store contract pair was created.
+                pass
+            elif isinstance(event, MintPairEvent):
+                # TODO: store a liquidity token was minted
+                pass
+            elif isinstance(event, BurnPairEvent):
+                # TODO: store a liquidity token was burned
+                pass
+            elif isinstance(event, SwapPairEvent):
+                # TODO: store a swap occurred in a liquidity pool
+                pass
+            elif isinstance(event, MintNonFungibleEvent):
+                # TODO: store that an NFT was created.
+                pass
+            elif isinstance(event, BurnNonFungibleEvent):
+                # TODO: store that an NFT was destroyed.
+                pass
+            elif isinstance(event, TransferNonFungibleEvent):
+                # TODO: store that an NFT was destroyed.
+                pass
         if amount_changed != 0:
             await self.db_manager.insert_contract_supply_change(
                 address=contract_data.address,

@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from pydantic import Field
+from web3.types import TxData, TxReceipt
 
 from app.model import Web3BaseModel
 
@@ -16,6 +17,9 @@ class TransactionData(Web3BaseModel):
     gas_price: float = Field(..., alias="gasPrice")
     gas_limit: float = Field(..., alias="gas")
     input_data: str = Field(..., alias="input")
+    _w3_data: TxData
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class TransactionLogsData(Web3BaseModel):
@@ -34,6 +38,9 @@ class TransactionReceiptData(Web3BaseModel):
     logs: List[TransactionLogsData]
     transaction_type: str = Field(..., alias="type")
     contract_address: Optional[str] = Field(..., alias="contractAddress")
+    w3_data: TxReceipt
+    class Config:
+        arbitrary_types_allowed = True
 
 
 # TODO: finish InternalTransactionData

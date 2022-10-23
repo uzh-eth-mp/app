@@ -13,7 +13,7 @@ import collections, json
 from app.model.abi import ERCABI
 from app.model.contract import ContractCategory, ContractData
 
-_contracts = json.load(open("src/data_collection/etc/contracts.json"))
+_contracts = json.load(open("etc/cfg/contracts.json"))
 _contract_categories = collections.defaultdict(None)
 for _ in _contracts:
     _contract_categories[_["address"].lower()] = ContractCategory(_["abi"])
@@ -121,5 +121,5 @@ class ContractParser:
             decimals=decimals,
             total_supply=total_supply,
             token_category=category,
-            events=contract.events
+            w3_data=contract
         )

@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import List
+import web3.types
 
 from pydantic import Field, validator
 
@@ -18,6 +19,9 @@ class BlockData(Web3BaseModel):
     transactions: List[str]
     miner: str
     parent_hash: str = Field(..., alias="parentHash")
+    w3_data = web3.types.BlockData
+    class Config:
+        arbitrary_types_allowed = True
 
     @validator("timestamp", pre=True)
     def timestamp_to_datetime(cls, v):

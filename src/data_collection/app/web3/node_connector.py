@@ -59,7 +59,7 @@ class NodeConnector:
     async def get_block_data(self, block_id: str="latest") -> BlockData:
         """Get block data by number/hash"""
         block_data_dict = await self.w3.eth.get_block(block_id)
-        block_data = BlockData(**block_data_dict)
+        block_data = BlockData(**block_data_dict, w3_data=block_data_dict)
         return block_data
 
     async def get_latest_block_number(self) -> int:
@@ -69,13 +69,13 @@ class NodeConnector:
     async def get_transaction_data(self, tx_hash: str) -> TransactionData:
         """Get transaction data by hash"""
         tx_data_dict = await self.w3.eth.get_transaction(tx_hash)
-        tx_data = TransactionData(**tx_data_dict)
+        tx_data = TransactionData(**tx_data_dict, w3_data=tx_data_dict)
         return tx_data
 
     async def get_transaction_receipt_data(self, tx_hash: str) -> TransactionReceiptData:
         """Get transaction receipt data by hash"""
         tx_receipt_data_dict = await self.w3.eth.get_transaction_receipt(tx_hash)
-        tx_receipt_data = TransactionReceiptData(**tx_receipt_data_dict)
+        tx_receipt_data = TransactionReceiptData(**tx_receipt_data_dict, w3_data=tx_receipt_data_dict)
         return tx_receipt_data
 
     # TODO: finish get_internal_transactions

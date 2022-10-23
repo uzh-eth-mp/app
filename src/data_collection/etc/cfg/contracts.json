@@ -3,7 +3,7 @@
   "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
   "network": "eth",
   "symbol": "USDT",
-  "abi": "erc20",
+  "abi": "erc20"
   },
    {
   "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
@@ -15,7 +15,7 @@
   "address": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
   "network": "eth",
   "symbol": "DAI",
-  "abi": "erc20",
+  "abi": "erc20"
   },
   {
   "address": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
