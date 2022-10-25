@@ -21,4 +21,4 @@ jobs:
           mypy_version: '0.910'
           #mypy_flags: '--verbose'
           #mypy_config_file: 'mypy.ini'
-          requirement_files: 'src/data_collection/requirements.txt'
+          requirement_files: 'src/data_collection/requirements.txt src/data_collection/requirements-tests.txt'
