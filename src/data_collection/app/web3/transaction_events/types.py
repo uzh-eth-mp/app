@@ -77,9 +77,13 @@ class MintNonFungibleEvent(ContractEvent):
 class BurnNonFungibleEvent(ContractEvent):
     """
     This represents burn event.
+    https://github.com/ethereum/solidity-underhanded-contest/blob/cc7834ec9e8c804fe9e02735f77ddb22e69f5891/2022/
+    submissions_2022/submission11_DanielVonFange/lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol#L302
+
+
     """
     account: str
-    tokenId: str
+    tokenId: int
 
 
 class TransferNonFungibleEvent(ContractEvent):
@@ -88,4 +92,4 @@ class TransferNonFungibleEvent(ContractEvent):
     """
     src: str
     dst: str
-    tokenId: str
+    tokenId: int

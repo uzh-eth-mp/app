@@ -6,27 +6,15 @@
   "abi": "erc20"
   },
    {
-  "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-  "network": "eth",
-  "symbol": "USDC",
-  "abi": "erc20"
-  },
-  {
-  "address": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
-  "network": "eth",
-  "symbol": "DAI",
-  "abi": "erc20"
-  },
-  {
   "address": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
   "network": "eth",
   "symbol": "UniSwap V2 Factory",
   "abi": "UniSwapV2Factory"
   },
   {
-  "address": "0x0000000000000000",
+  "address": "0x3041cbd36888becc7bbcbc0045e3b1f144466f5f",
   "network": "eth",
-  "symbol": "UniSwap V2 Pair USDT-USDC",
+  "symbol": "UniSwap V2 Pair USDC-USDT",
   "abi": "UniSwapV2Pair"
   }
 

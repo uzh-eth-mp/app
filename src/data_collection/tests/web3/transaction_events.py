@@ -365,7 +365,7 @@ class ERC721Tests(unittest.TestCase):
                       args={
                           'from': '0x000000000000000000000000000000000000BABA',
                           'to': '0x000000000000000000000000000000000000ABAB',
-                          'tokenId': "url"})])
+                          'tokenId': "5"})])
         contract.events.Transfer = MagicMock(return_value=transfer_event)
         issue_event = MagicMock(spec=ContractEvent)
         issue_event.processReceipt = MagicMock(return_value=[])
@@ -385,7 +385,7 @@ class ERC721Tests(unittest.TestCase):
             contract_address='0x000000000000000000000000000000000000AAAA',
             src='0x000000000000000000000000000000000000BABA',
             dst='0x000000000000000000000000000000000000ABAB',
-            tokenId="url")], events)
+            tokenId="5")], events)
 
 
 
