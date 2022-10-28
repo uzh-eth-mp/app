@@ -121,7 +121,7 @@ class ContractParser:
         """
         if category == ContractCategory.UNI_SWAP_V2_PAIR:
             token0 = await contract.functions.token0.call()
-            token1 = await contract.functions.token0.call()
+            token1 = await contract.functions.token1.call()
             reserve0 = await contract.functions.reserve0.call()
             reserve1 = await contract.functions.reserve1.call()
             factory = await contract.functions.factory.call()
