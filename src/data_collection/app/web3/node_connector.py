@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from web3 import Web3
 from web3.eth import AsyncEth
 from web3.net import AsyncNet
@@ -7,6 +9,7 @@ from web3.geth import (
     AsyncGethAdmin,
     AsyncGethPersonal
 )
+from web3.types import TxData, TxReceipt
 
 from app.model.block import BlockData
 from app.model.transaction import (
@@ -66,17 +69,27 @@ class NodeConnector:
         """Get latest block number"""
         return await self.w3.eth.block_number
 
-    async def get_transaction_data(self, tx_hash: str) -> TransactionData:
-        """Get transaction data by hash"""
-        tx_data_dict = await self.w3.eth.get_transaction(tx_hash)
-        tx_data = TransactionData(**tx_data_dict, w3_data=tx_data_dict)
-        return tx_data
+    async def get_transaction_data(self, tx_hash: str) -> Tuple[TransactionData, TxData]:
+        """Get transaction data by hash
 
-    async def get_transaction_receipt_data(self, tx_hash: str) -> TransactionReceiptData:
-        """Get transaction receipt data by hash"""
+        Returns:
+            tx_data (TransactionData)
+            tx_data_dict (web3.TxData)
+        """
+        tx_data_dict = await self.w3.eth.get_transaction(tx_hash)
+        tx_data = TransactionData(**tx_data_dict)
+        return tx_data, tx_data_dict
+
+    async def get_transaction_receipt_data(self, tx_hash: str) -> Tuple[TransactionReceiptData, TxReceipt]:
+        """Get transaction receipt data by hash
+
+        Returns:
+            tx_receipt_data (TransactionReceiptData)
+            tx_receipt_data_dict (web3.TxReceipt)
+        """
         tx_receipt_data_dict = await self.w3.eth.get_transaction_receipt(tx_hash)
-        tx_receipt_data = TransactionReceiptData(**tx_receipt_data_dict, w3_data=tx_receipt_data_dict)
-        return tx_receipt_data
+        tx_receipt_data = TransactionReceiptData(**tx_receipt_data_dict)
+        return tx_receipt_data, tx_receipt_data_dict
 
     # TODO: finish get_internal_transactions
     async def get_internal_transactions(self, tx_hash: str) -> InternalTransactionData:

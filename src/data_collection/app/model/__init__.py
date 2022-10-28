@@ -19,7 +19,12 @@ class Web3BaseModel(BaseModel):
 
     @root_validator(allow_reuse=True, pre=True)
     def transform_hexbytes(cls, values):
-        """Transforms every HexBytes instance into a string value"""
+        """Transforms every HexBytes instance into a string value.
+
+        Note:
+            Any HexBytes value should be implicitly typed as 'str' in the pydantic model
+            inheriting from this class.
+        """
         for key, value in values.items():
             if isinstance(value, HexBytes):
                 values[key] = value.hex()

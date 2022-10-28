@@ -14,7 +14,11 @@ from aiokafka.errors import (
 )
 
 from app import init_logger
-from app.kafka.exceptions import KafkaManagerError, KafkaManagerTimeoutError
+from app.kafka.exceptions import (
+    KafkaManagerError,
+    KafkaConsumerTopicEmptyError,
+    KafkaConsumerTimeoutError
+)
 
 
 log = init_logger(__name__)
@@ -189,12 +193,15 @@ class KafkaConsumerManager(KafkaManager):
         wait_event: asyncio.Event
     ):
         """Listen for new Kafka messages on a predefined topic"""
-        # Wait for new events from Kafka and call the callback
-        async for event in self._client:
-            # Notify the wait_event that we've received a new Kafka topic event
-            wait_event.set()
-            # Await the async callback
-            await on_event_callback(event)
+        try:
+            # Wait for new events from Kafka and call the callback
+            async for event in self._client:
+                # Notify the wait_event that we've received a new Kafka topic event
+                wait_event.set()
+                # Await the async callback
+                await on_event_callback(event)
+        except TimeoutError as e:
+            raise KafkaConsumerTopicEmptyError from e
 
     async def start_consuming(self, on_event_callback: Callable[[str], Awaitable[None]]):
         """Consume messages from a given topic and generate (yield) events"""
@@ -224,7 +231,7 @@ class KafkaConsumerManager(KafkaManager):
         except TimeoutError:
             # Raised when no message is received within the specified time
             log.debug(f"No event received for {self.EVENT_RETRIEVAL_TIMEOUT} seconds - timed out")
-            raise KafkaManagerTimeoutError
+            raise KafkaConsumerTopicEmptyError
         finally:
             # Disconnect from Kafka
             await self.disconnect()
