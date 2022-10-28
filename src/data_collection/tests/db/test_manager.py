@@ -71,3 +71,22 @@ class TestInsert:
         await db_manager.insert_contract_supply_change(
             **contract_supply_change_data
         )
+
+    @pytest.mark.usefixtures("clean_db")
+    async def test_insert_pair_contract(
+        self, db_manager, pair_contract_data,contract_data
+    ):
+        """Test insert of pair contract data"""
+        await db_manager.insert_contract(**contract_data)
+        await db_manager.insert_pair_contract(**pair_contract_data)
+
+    @pytest.mark.usefixtures("clean_db")
+    async def test_insert_pair_liquidity_change(
+        self, db_manager, pair_liquidity_change_data, contract_data, pair_contract_data
+    ):
+        """Test insert of pair liquity change data"""
+        await db_manager.insert_contract(**contract_data)
+        await db_manager.insert_pair_contract(**pair_contract_data)
+        await db_manager.insert_pair_liquidity_change(**pair_liquidity_change_data)
+    
+
