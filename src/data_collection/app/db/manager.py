@@ -121,17 +121,17 @@ class DatabaseManager:
             """, transaction_hash, address, log_index, data, removed, topics
         )
 
-    async def insert_contract(self, address: str, transaction_hash: str):
+    async def insert_contract(self, address: str, transaction_hash: str, is_pair_contract: bool):
         """
         Insert contract data into <node>_contract table.
         """
         table = f"{self.node_name}_contract"
 
         await self.db.execute(f"""
-            INSERT INTO {table} (address, transaction_hash)
-            VALUES ($1, $2)
+            INSERT INTO {table} (address, transaction_hash, is_pair_contract)
+            VALUES ($1, $2, $3)
             ON CONFLICT (address) DO NOTHING;
-        """, address, transaction_hash)
+        """, address, transaction_hash, is_pair_contract)
 
     async def insert_token_contract(
         self, address: str, symbol: str, name: str,
@@ -159,6 +159,32 @@ class DatabaseManager:
             VALUES ($1, $2, $3)
             ON CONFLICT (address, transaction_hash) DO NOTHING;
         """, address, amount_changed, transaction_hash)
+
+    async def insert_pair_contract(self, address: str, token0_address: str, token1_address: str, reserve0: int, 
+                                         reserve1: int, factory: str):
+        """
+        Insert pair contract data into <node>_pair_contract table.
+        """
+        table = f"{self.node_name}_pair_contract"
+
+        await self.db.execute(f"""
+            INSERT INTO {table} (address, token0_address, token1_address, reserve0, reserve1, factory)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (address) DO NOTHING;
+        """, address, token0_address, token1_address, reserve0, reserve1, factory)
+
+    async def insert_pair_liquidity_change(self, address: str, amount0: int, amount1: int, transaction_hash: str):
+        """
+        Insert pair liquidity change data into <node>_token_contract_supply_change table.
+        """
+        table = f"{self.node_name}_pair_liquidity_change"
+
+        await self.db.execute(f"""
+            INSERT INTO {table} (address, amount0, amount1, transaction_hash)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (address, transaction_hash) DO NOTHING;
+        """, address, amount0, amount1, transaction_hash)   
+
 
     async def get_block(
         self, block_identifier: Optional[Union[str, int]] = None
