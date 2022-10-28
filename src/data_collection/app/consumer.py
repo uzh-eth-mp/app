@@ -49,14 +49,6 @@ class DataConsumer(DataCollector):
         # Transaction hash of the currently processed transaction
         self._tx_hash = None
 
-    def _should_handle_transaction(
-        self, tx_data: TransactionData, tx_receipt_data: TransactionReceiptData
-    ) -> bool:
-        """Return True if the transaction interacts with a known contract address"""
-        return \
-            self.contract_parser.is_known_contract_address(tx_data.to_address) or \
-            self.contract_parser.is_known_contract_address(tx_receipt_data.contract_address)
-
     async def _handle_contract_creation(
         self, contract: Contract, tx_data: TransactionData, category: ContractCategory
     ):
