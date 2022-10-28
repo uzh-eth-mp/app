@@ -109,6 +109,9 @@ class DataConsumer(DataCollector):
                 )
                 # _token_contract table
                 # TODO: await self.db_manager.insert_pair_contract()
+                await self.db_manager.insert_pair_contract(
+                    **pair_contract_data.dict()
+                )
 
         return contract
 
@@ -155,6 +158,7 @@ class DataConsumer(DataCollector):
                 pass
             elif isinstance(event, MintPairEvent):
                 # TODO: store a liquidity token was minted
+                # TODO: use self.db_manager.insert_pair_liquidity_change(...)
                 pass
             elif isinstance(event, BurnPairEvent):
                 # TODO: store a liquidity token was burned
