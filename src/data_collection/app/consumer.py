@@ -134,6 +134,8 @@ class DataConsumer(DataCollector):
         """Insert transaction events (supply changes) into the database"""
         # Supply Change = mints - burns
         amount_changed = 0
+        pair_amount0_changed = 0
+        pair_amount1_changed = 0
         for event in get_transaction_events(category, contract, tx_receipt, w3_block_hash):
             # FIXME: Remove log?
             log.debug(f"Caught event ({event.__class__.__name__})")
@@ -141,31 +143,36 @@ class DataConsumer(DataCollector):
                 amount_changed -= event.value
             elif isinstance(event, MintFungibleEvent):
                 amount_changed += event.value
-            #factory created a contract, store it in DB for future to check if it is pair contract.
             elif isinstance(event, TransferFungibleEvent):
-                # TODO: store transfers?
                 pass
             elif isinstance(event, PairCreatedEvent):
-                # TODO: store contract pair was created.
-                pass
+                event.contract_address
+                self.db_manager.insert_pair_contract(
+                    address=event.pair_address,
+                    token0_address=token0,
+                    token1_address=token1,
+                    #https://github.com/Uniswap/v2-core/blob/master/contracts/UniswapV2Factory.sol#L13
+                    #Pairs are created without any reserves.
+                    reserve0=0,
+                    reserve1=0,
+                    factory=contract.address)
             elif isinstance(event, MintPairEvent):
-                # TODO: store a liquidity token was minted
-                # TODO: use self.db_manager.insert_pair_liquidity_change(...)
-                pass
+                pair_amount0_changed += event.amount0
+                pair_amount1_changed += event.amount1
             elif isinstance(event, BurnPairEvent):
-                # TODO: store a liquidity token was burned
-                pass
+                pair_amount0_changed -= event.amount0
+                pair_amount1_changed -= event.amount1
             elif isinstance(event, SwapPairEvent):
-                # TODO: store a swap occurred in a liquidity pool
-                pass
+                # Swap is like a mint + burn, with different ratios
+                pair_amount0_changed += event.in0
+                pair_amount1_changed += event.in1
+                pair_amount0_changed -= event.out0
+                pair_amount1_changed -= event.out1
             elif isinstance(event, MintNonFungibleEvent):
-                # TODO: store that an NFT was created.
                 pass
             elif isinstance(event, BurnNonFungibleEvent):
-                # TODO: store that an NFT was destroyed.
                 pass
             elif isinstance(event, TransferNonFungibleEvent):
-                # TODO: store that an NFT was destroyed.
                 pass
         if amount_changed != 0:
             await self.db_manager.insert_contract_supply_change(
@@ -173,6 +180,12 @@ class DataConsumer(DataCollector):
                 transaction_hash=tx_data.transaction_hash,
                 amount_changed=amount_changed
             )
+        if pair_amount0_changed != 0 or pair_amount1_changed != 0:
+            await self.db_manager.insert_pair_liquidity_change(
+                address=contract.address,
+                amount0=pair_amount0_changed,
+                amount1=pair_amount1_changed,
+                transaction_hash=tx_data.transaction_hash)
 
     async def _on_kafka_event(self, event):
         """Called when a new Kafka event is read from a topic"""

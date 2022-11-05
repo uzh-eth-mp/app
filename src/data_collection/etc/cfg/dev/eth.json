@@ -1,16 +1,37 @@
 {
     "node_url": "http://host.docker.internal:8547",
+    "linux_node_url": "http://172.18.0.1:8547",
     "db_dsn": "postgres://user:postgres@db:5432/db",
     "redis_url": "redis://redis",
     "kafka_url": "kafka:9092",
     "kafka_topic": "eth",
     "data_collection": {
-        "start_block": 4634747,
-        "end_block": 4634748,
+        "start_block": 12809554,
+        "end_block": 12809555,
         "contracts": [
             {
                 "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
                 "symbol": "USDT",
+                "category": "erc20"
+            },
+            {
+                "address": "0xc00e94Cb662C3520282E6f5717214004A7f26888",
+                "symbol": "Compound",
+                "category": "erc20"
+            },
+            {
+                "address": "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9",
+                "symbol": "Aave",
+                "category": "erc20"
+            },
+            {
+                "address": "0xD533a949740bb3306d119CC777fa900bA034cd52",
+                "symbol": "Curve",
+                "category": "erc20"
+            },
+            {
+                "address": "0x92d6c1e31e14520e676a687f0a93788b716beff5",
+                "symbol": "Dydx",
                 "category": "erc20"
             },
             {
