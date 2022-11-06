@@ -146,16 +146,7 @@ class DataConsumer(DataCollector):
             elif isinstance(event, TransferFungibleEvent):
                 pass
             elif isinstance(event, PairCreatedEvent):
-                event.contract_address
-                self.db_manager.insert_pair_contract(
-                    address=event.pair_address,
-                    token0_address=token0,
-                    token1_address=token1,
-                    #https://github.com/Uniswap/v2-core/blob/master/contracts/UniswapV2Factory.sol#L13
-                    #Pairs are created without any reserves.
-                    reserve0=0,
-                    reserve1=0,
-                    factory=contract.address)
+                pass
             elif isinstance(event, MintPairEvent):
                 pair_amount0_changed += event.amount0
                 pair_amount1_changed += event.amount1
