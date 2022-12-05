@@ -34,6 +34,7 @@ def _burn(contract: Contract, receipt: TxReceipt, block_hash: HexBytes) -> Gener
 
 @_event_mapper(ContractCategory.UNI_SWAP_V2_PAIR)
 def _swap(contract: Contract, receipt: TxReceipt, block_hash: HexBytes) -> Generator[ContractEvent, None, None]:
+    #https://github.com/Uniswap/v2-core/blob/master/contracts/UniswapV2Pair.sol#L51
     for eventLog in contract.events.Swap().processReceipt(receipt):
         sender = eventLog['args']['sender']
         amount_0_in = eventLog['args']['amount0In']
