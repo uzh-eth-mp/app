@@ -22,8 +22,7 @@ services:
 
   # Different configuration files for data producers
   data_producer_eth:
-    #command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/eth.json", "--mode", "producer" ]
-    command: [ "sh", "start-prod.sh" ]
+    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/eth.json", "--mode", "producer" ]
     environment:
       - LOG_LEVEL=DEBUG
     depends_on:
