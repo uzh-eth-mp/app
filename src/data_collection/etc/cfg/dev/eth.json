@@ -5,8 +5,8 @@
     "kafka_url": "kafka:9092",
     "kafka_topic": "eth",
     "data_collection": {
-        "start_block": 10000834,
-        "end_block": 10000835,
+        "start_block": 4634748,
+        "end_block": 4634849,
         "contracts": [
             {
                 "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",

@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# Linux workaround for docker container user/group
+mkdir -p ./data/zookeeper-data/data ./data/zookeeper-data/datalog ./data/kafka-data ./data/postgresql-data
+
+export UID=$(id -u)
+export GID=$(id -g)
+
 # Start the containers in detached mode and
 # attach the logs only to the data producers and consumers
 docker compose \

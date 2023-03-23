@@ -16,4 +16,7 @@ COPY scripts/wait-for-kafka.sh wait-for-kafka.sh
 
 RUN chmod +x wait-for-kafka.sh
 
-CMD [ "python3", "-m", "app.main", "--cfg", "etc/cfg/dev/eth.json", "--mode", "producer" ]
+COPY scripts/start-prod.sh start-prod.sh
+RUN chmod +x start-prod.sh
+
+#CMD [ "python3", "-m", "app.main", "--cfg", "etc/cfg/dev/eth.json", "--mode", "producer" ]
