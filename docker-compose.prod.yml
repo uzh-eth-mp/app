@@ -38,20 +38,20 @@ services:
   data_consumer_eth:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/eth.json --mode consumer"
     deploy:
-      replicas: 2
+      replicas: ${N_CONSUMERS}
     depends_on:
       - erigon_proxy
 
   data_consumer_etc:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/etc.json --mode consumer"
     deploy:
-      replicas: 2
+      replicas: ${N_CONSUMERS}
     depends_on:
       - erigon_proxy
 
   data_consumer_bsc:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/bsc.json --mode consumer"
     deploy:
-      replicas: 2
+      replicas:
     depends_on:
       - erigon_proxy
