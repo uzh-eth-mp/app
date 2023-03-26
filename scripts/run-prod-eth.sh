@@ -1,16 +1,7 @@
 #!/bin/bash
 
 set -e
-
-# Prefix for the containers and network
-# "Blockchain Data Collection"
-export PROJECT_NAME="bdc"
-# Directory where the data (PostgreSQL, Kafka) will be stored
-export DATA_DIR=/local/scratch/bdc/data
-
-# Used for correct permissions (e.g. in PostgreSQL)
-export DATA_UID=$(id -u)
-export DATA_GID=$(getent group bdlt | cut -d: -f3)
+source scripts/prepare-env.sh
 
 # Cleanup on exit or interrupt
 function cleanup {
@@ -18,7 +9,7 @@ function cleanup {
     docker compose -p $PROJECT_NAME down --remove-orphans
     echo "Cleanup successful."
 }
-trap cleanup INT EXIT
+trap cleanup EXIT
 
 # Linux workaround for docker container user/group permissions
 mkdir -p \
@@ -42,6 +33,4 @@ docker compose \
     docker network connect ${PROJECT_NAME}_default ${PROJECT_NAME}-erigon_proxy && \
     # attach the logs only to the data producers and consumers
     docker compose -p $PROJECT_NAME logs \
-    -f data_producer_eth
-    # FIXME: use producer + consumer for logs
-#    -f data_producer_eth data_consumer_eth
+    -f data_producer_eth data_consumer_eth

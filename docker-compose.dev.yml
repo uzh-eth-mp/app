@@ -21,7 +21,7 @@ services:
     deploy:
       replicas: 2
     environment:
-      - LOG_LEVEL=DEBUG
+      - LOG_LEVEL=${LOG_LEVEL}
     depends_on:
       - db
 

@@ -16,15 +16,15 @@ services:
     environment:
       # Can update these as necessary
       - PROXY_PORT=18547
-      - ERIGON_PORT=8548
+      - ERIGON_PORT=${ERIGON_PORT}
       # host.docker.internal gets translated to localhost of abacus
-      - ERIGON_HOST=host.docker.internal
+      - ERIGON_HOST=${ERIGON_HOST}
 
   # Different configuration files for data producers
   data_producer_eth:
     command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/eth.json", "--mode", "producer" ]
     environment:
-      - LOG_LEVEL=DEBUG
+      - LOG_LEVEL=${LOG_LEVEL}
     depends_on:
       - erigon_proxy
 

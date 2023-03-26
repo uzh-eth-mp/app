@@ -12,7 +12,12 @@ services:
     group_add:
       - ${DATA_GID}
     ports:
-      - "13338:5432"
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    # 'environment' has priority over 'env_file'
     env_file:
       - ./src/db/.env
     # Persistent storage
@@ -56,7 +61,7 @@ services:
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
       - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
       - KAFKA_LOG_DIRS=/kafka/kafka-logs
-      - KAFKA_CREATE_TOPICS=eth:100:1,etc:100:1,bsc:100:1
+      - KAFKA_CREATE_TOPICS=eth:${KAFKA_N_PARTITIONS}:1,etc:${KAFKA_N_PARTITIONS}:1,bsc:${KAFKA_N_PARTITIONS}:1
     volumes:
       - ${DATA_DIR}/kafka-data:/kafka
 
