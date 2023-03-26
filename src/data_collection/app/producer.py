@@ -37,10 +37,6 @@ class DataProducer(DataCollector):
         Start a while loop that collects all the block data from Web3
         based on the config values and inserts transactions into Kafka.
         """
-        log.debug(self.config.node_url)
-        block = await self.node_connector.w3.eth.get_block(4634748)
-        log.debug(block)
-
         # Get block exploration bounds (start and end block number)
         block_explorer = BlockExplorer(
             data_collection_cfg=self.config.data_collection,
@@ -84,6 +80,7 @@ class DataProducer(DataCollector):
                 block_data: BlockData = await self.node_connector.get_block_data(i_block)
 
                 # Insert new block
+                # FIXME: block reward
                 await self._insert_block(block_data=block_data, block_reward=0)
 
                 # Send all the transaction hashes to Kafka so consumers can process them

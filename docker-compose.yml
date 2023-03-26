@@ -5,38 +5,48 @@ services:
     user: "${UID}:${GID}"
     build:
       context: ./src/db
+      # PostgreSQL permissions (user + bdlt group)
       args:
         UID: "${UID}"
         GID: "${GID}"
-    # FIXME: add groups here
-    # group_add:
-    #   - "bdlt"  # gid 10606
+    group_add:
+      - ${GID}
     ports:
       - "13338:5432"
     env_file:
       - ./src/db/.env
     # Persistent storage
     volumes:
-      - ./data/postgresql-data:/var/lib/postgresql/data
+      - ${DATA_DIR}/postgresql-data:/var/lib/postgresql/data
 
-  # Kafka
+  # Kafka (zookeeper)
   zookeeper:
-    #user: "${UID}:${GID}"
-    image: zookeeper:3.8.0
+    build:
+      context: ./src/zookeeper
+      # Zookeeper permissions (user + bdlt group)
+      args:
+        ZOO_USER: ${USER}
+        ZOO_UID: ${UID}
+        ZOO_GID: ${GID}
+    user: "${USER}:${GID}"
     ports:
       - "2181"
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
     volumes:
-      - ./data/zookeeper-data/data:/data
-      - ./data/zookeeper-data/datalog:/datalog
+      - ${DATA_DIR}/zookeeper-data/data:/data
+      - ${DATA_DIR}/zookeeper-data/datalog:/datalog
   kafka:
-    #user: "${UID}:${GID}"
     build:
       context: ./src/kafka
     ports:
       - "9092"
     environment:
+      # Kafka permissions (user + bdlt group)
+      - KAFKA_USER=${USER}
+      - KAFKA_UID=${UID}
+      - KAFKA_GID=${GID}
+      # Kafka specific environment variables
       - KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS=6000
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
       - KAFKA_LISTENERS=PLAINTEXT://kafka:9092
@@ -47,7 +57,7 @@ services:
       - KAFKA_LOG_DIRS=/kafka/kafka-logs
       - KAFKA_CREATE_TOPICS=eth:100:1,etc:100:1,bsc:100:1
     volumes:
-      - ./data/kafka-data:/kafka
+      - ${DATA_DIR}/kafka-data:/kafka
 
   # Redis
   redis:

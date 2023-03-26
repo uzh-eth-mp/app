@@ -1,14 +1,22 @@
 #!/bin/sh
 
-# Linux workaround for docker container user/group
-mkdir -p ./data/zookeeper-data/data ./data/zookeeper-data/datalog ./data/kafka-data ./data/postgresql-data
-
-export UID=$(id -u)
-export GID=$(id -g)
-
 # Prefix for the containers and network
 # "Blockchain Data Collection"
 export PROJECT_NAME="bdc"
+# Directory where the data (PostgreSQL, Kafka) will be stored
+export DATA_DIR=/local/scratch/bdc/data
+
+# Used for correct permissions (e.g. in PostgreSQL)
+export UID=$(id -u)
+export GID=$(getent group bdlt | cut -d: -f3)
+
+# Linux workaround for docker container user/group permissions
+mkdir -p \
+    $DATA_DIR/zookeeper-data/data \
+    $DATA_DIR/zookeeper-data/datalog \
+    $DATA_DIR/kafka-data \
+    $DATA_DIR/postgresql-data
+chown -R $UID:$GID $DATA_DIR
 
 # Start the containers in detached mode
 docker compose \

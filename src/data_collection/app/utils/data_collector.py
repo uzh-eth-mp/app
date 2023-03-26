@@ -30,9 +30,9 @@ class DataCollector:
 
     async def __aenter__(self) -> DataCollector:
         # Connect to Kafka
-        # await self.kafka_manager.connect()
+        await self.kafka_manager.connect()
         # Connect to the db
-        # await self.db_manager.connect()
+        await self.db_manager.connect()
         return self
 
     async def __aexit__(self, exc_type, exc, tb):

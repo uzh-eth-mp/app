@@ -1,7 +1,15 @@
 #!/bin/sh
 
-# Linux workaround for docker container user/group
-mkdir -p ./data/zookeeper-data/data ./data/zookeeper-data/datalog ./data/kafka-data ./data/postgresql-data
+# Directory where the data (PostgreSQL, Kafka) will be stored
+export DATA_DIR=./data
+
+# Linux workaround for docker container user/group permissions
+mkdir -p \
+    ./${DATA_DIR}/zookeeper-data/data \
+    ./${DATA_DIR}/zookeeper-data/datalog \
+    ./${DATA_DIR}/kafka-data \
+    ./${DATA_DIR}/postgresql-data
+
 
 export UID=$(id -u)
 export GID=$(id -g)
