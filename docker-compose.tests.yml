@@ -25,3 +25,10 @@ services:
       - POSTGRES_DB=postgres
     depends_on:
       - db
+
+  # Tests for web3 code
+  test_web3:
+    build:
+      context: ./src/data_collection
+      dockerfile: Dockerfile.tests
+    command: ["pytest", "tests/web3"]
