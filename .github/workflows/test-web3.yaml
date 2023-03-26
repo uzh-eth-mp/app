@@ -1,22 +1,19 @@
 
-name: Database integration tests
+name: Web3 unit tests
 
 on:
   push:
     branches-ignore:
       - 'main'
     paths:
-      - .github/workflows/test-database.yaml
-      # SQL
-      - 'src/db/**'
+      - .github/workflows/test-web3.yaml
       # Python
-      - 'src/data_collection/app/db/**'
-      - 'src/data_collection/tests/db/**'
+      - 'src/data_collection/app/web3/**'
+      - 'src/data_collection/tests/web3/**'
       - 'src/data_collection/Dockerfile.tests'
       - 'src/data_collection/pytest.ini'
       - 'src/data_collection/requirements-tests.in'
       - 'src/data_collection/requirements-tests.txt'
-      - 'src/data_collection/scripts/wait-for-db.sh'
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -24,12 +21,12 @@ env:
 
 jobs:
   test:
-    name: DB integration tests
+    name: web3 unit tests
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
 
       - name: Run docker-compose.tests.yml
-        run: docker compose -f docker-compose.tests.yml up test_db --build --abort-on-container-exit
+        run: docker compose -f docker-compose.tests.yml up test_web3 --build --abort-on-container-exit
         shell: bash
