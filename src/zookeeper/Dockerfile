@@ -3,7 +3,7 @@ FROM eclipse-temurin:11-jre
 # User permission build args
 ARG ZOO_USER=zookeeper
 ARG ZOO_UID=1000
-ARG ZOO_GID=1000
+ARG ZOO_GID=1337
 
 ENV ZOO_CONF_DIR=/conf \
     ZOO_DATA_DIR=/data \
@@ -16,7 +16,8 @@ ENV ZOO_CONF_DIR=/conf \
     ZOO_AUTOPURGE_SNAPRETAINCOUNT=3 \
     ZOO_MAX_CLIENT_CNXNS=60 \
     ZOO_STANDALONE_ENABLED=true \
-    ZOO_ADMINSERVER_ENABLED=true
+    ZOO_ADMINSERVER_ENABLED=true \
+    ZOO_USER=$ZOO_USER
 
 # Add a user with an explicit UID/GID and create necessary directories
 RUN set -eux; \
@@ -87,4 +88,4 @@ ENV PATH=$PATH:/$DISTRO_NAME/bin \
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod a+rwx /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["$ZOO_USER", "zkServer.sh", "start-foreground"]
+CMD ["zkServer.sh", "start-foreground"]

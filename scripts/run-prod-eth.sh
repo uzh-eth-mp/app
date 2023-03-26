@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+set -e
 
 # Prefix for the containers and network
 # "Blockchain Data Collection"
@@ -7,8 +9,16 @@ export PROJECT_NAME="bdc"
 export DATA_DIR=/local/scratch/bdc/data
 
 # Used for correct permissions (e.g. in PostgreSQL)
-export UID=$(id -u)
-export GID=$(getent group bdlt | cut -d: -f3)
+export DATA_UID=$(id -u)
+export DATA_GID=$(getent group bdlt | cut -d: -f3)
+
+# Cleanup on exit or interrupt
+function cleanup {
+    echo "Starting cleanup; removing containers..."
+    docker compose -p $PROJECT_NAME down --remove-orphans
+    echo "Cleanup successful."
+}
+trap cleanup INT EXIT
 
 # Linux workaround for docker container user/group permissions
 mkdir -p \
@@ -16,7 +26,7 @@ mkdir -p \
     $DATA_DIR/zookeeper-data/datalog \
     $DATA_DIR/kafka-data \
     $DATA_DIR/postgresql-data
-chown -R $UID:$GID $DATA_DIR
+chown -R $DATA_UID:$DATA_GID $DATA_DIR
 
 # Start the containers in detached mode
 docker compose \
@@ -33,6 +43,5 @@ docker compose \
     # attach the logs only to the data producers and consumers
     docker compose -p $PROJECT_NAME logs \
     -f data_producer_eth
+    # FIXME: use producer + consumer for logs
 #    -f data_producer_eth data_consumer_eth
-
-docker compose -p $PROJECT_NAME down --remove-orphans

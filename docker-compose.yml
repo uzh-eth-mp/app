@@ -2,15 +2,15 @@ version: "3.9"
 services:
   # PostgreSQL
   db:
-    user: "${UID}:${GID}"
+    user: "${DATA_UID}:${DATA_GID}"
     build:
       context: ./src/db
-      # PostgreSQL permissions (user + bdlt group)
+      # PostgreSQL data dir permissions (user + bdlt group)
       args:
-        UID: "${UID}"
-        GID: "${GID}"
+        UID: "${DATA_UID}"
+        GID: "${DATA_GID}"
     group_add:
-      - ${GID}
+      - ${DATA_GID}
     ports:
       - "13338:5432"
     env_file:
@@ -23,12 +23,12 @@ services:
   zookeeper:
     build:
       context: ./src/zookeeper
-      # Zookeeper permissions (user + bdlt group)
       args:
+        # Zookeeper data dir permissions (user + bdlt group)
         ZOO_USER: ${USER}
-        ZOO_UID: ${UID}
-        ZOO_GID: ${GID}
-    user: "${USER}:${GID}"
+        ZOO_UID: ${DATA_UID}
+        ZOO_GID: ${DATA_GID}
+    user: "${USER}:${DATA_GID}"
     ports:
       - "2181"
     environment:
@@ -39,13 +39,14 @@ services:
   kafka:
     build:
       context: ./src/kafka
+      args:
+        # Kafka data dir permissions (user + bdlt group)
+        KAFKA_USER: ${USER}
+        KAFKA_UID: ${DATA_UID}
+        KAFKA_GID: ${DATA_GID}
     ports:
       - "9092"
     environment:
-      # Kafka permissions (user + bdlt group)
-      - KAFKA_USER=${USER}
-      - KAFKA_UID=${UID}
-      - KAFKA_GID=${GID}
       # Kafka specific environment variables
       - KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS=6000
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
