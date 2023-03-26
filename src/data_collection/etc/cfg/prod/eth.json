@@ -6,7 +6,7 @@
     "kafka_topic": "eth",
     "data_collection": {
         "start_block": 4634748,
-        "end_block": 4634849,
+        "end_block": 4634749,
         "contracts": [
             {
                 "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",

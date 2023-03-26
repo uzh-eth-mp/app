@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Start the containers in detached mode and
 # attach the logs only to the data producers

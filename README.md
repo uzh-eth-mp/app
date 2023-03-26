@@ -35,20 +35,26 @@ The application stack is managed by [docker compose](https://docs.docker.com/com
 
 > App has been tested on `Docker Compose version v2.14.0`.
 
-These compose files were intended to be ran by a run script which can be found in `scripts/`.
+Compose files should be started with run scripts that can be found in the `scripts/` directory. For long running tasks, you can start the run scripts in the background and keep the logs with:
+```
+$ bash scripts/run-prod-eth.sh > prod-eth.log 2>&1 &
+```
 
 ### Configuration
 Two main configuration files need to be updated accordingly to your use case.
-1. `.env` = most of the general variables
-2. `src/data_collection/etc/cfg/<environment>/<blockchain>.json` = data collection, environment and blockchain specific settings
+1. `.env` = most of the general variables reused accross the application can be found here
+2. `src/data_collection/etc/cfg/<environment>/<blockchain>.json` = environment, data collection and blockchain specific settings
 
-#### .env
-To create an `.env` file you can copy the provided `.env.default` and edit the values as needed. The values in the `.env` file and their description:
+Some of the values need to be updated in **both** configuration files, such as the full `node_url` or full `db_dsn`. Please check if updating one file doesn't require the update of some values in the other file before you continue.
+
+#### 1. .env
+To create an `.env` file you can copy the provided [`.env.default`](.env.default) and edit the values as needed. Description of all environment variables:
 | ENV_VAR | Description | Default value |
 |---|---|---|
 | `PROJECT_NAME` | Prefix for docker network and container names | "bdc" |
 | `DATA_DIR` | Destination directory for the data (PostgreSQL, Kafka, Zookeeper) | "/local/scratch/bdc/data" |
-| `LOG_LEVEL` | logging level of consumers and producers | "DEBUG" |
+| `LOG_LEVEL` | logging level of consumers and producers | "INFO" |
+| `N_CONSUMERS` | number of consumers to use for each blockchain | 2 |
 | `DATA_UID` | Data directory owner ID (can be left blank) | `id -u` |
 | `DATA_GID` | Data directory owner group ID (can be left blank) | `getent group bdlt \| cut -d: -f3` |
 | `POSTGRES_PORT` | Published host port for PostgreSQL | 13338 |
@@ -59,13 +65,13 @@ To create an `.env` file you can copy the provided `.env.default` and edit the v
 | `ERIGON_PORT` | Port of the erigon node | 8547 |
 | `ERIGON_HOST` | Host of the erigon node | "host.docker.internal" |
 
-#### cfg.json
+#### 2. cfg.json
 FIXME: finish this section after adding "producer_type" for `config.py`
 
 #### Additional configuration
-On top of these configuration files, the application stack can be ran simultaneously for multiple blockchains (or individually). This functionality is achieved via [`profiles`](https://docs.docker.com/compose/profiles/) in `docker compose`.
+On top of these two configuration files, the application stack can be ran simultaneously for multiple blockchains (or individually). This functionality is achieved via [`profiles`](https://docs.docker.com/compose/profiles/) in `docker compose`.
 
-For example, running the app for specific blockchain can be achieved via
+For example, running the app for specific blockchain on the production environment can be achieved via:
 ```
 # ETH
 $ bash scripts/run-prod-eth.sh
@@ -76,28 +82,25 @@ $ bash scripts/run-prod-bsc.sh
 ```
 
 ### Environment
-#### Development environment
-The development environment build is intended for development purposes. It creates a local PostgreSQL database (with persistence in `src/sql/db-data`) and connects to public blockchain node APIs such as Infura.
+* Development = use for development and manual testing of new features
+  * `$ bash scripts/run-dev.sh`
+* Production = intended for use on Abacus-3, for final collection of data
+  * `$ bash scripts/run-prod.sh`
 
-To run a development build:
-```
-$ sh scripts/run-dev.sh
-```
+Each of these environments has their own configuration `.json` files. For instance, for *development* you would find the configuration files in [`src/data_collection/etc/cfg/dev`](src/data_collection/etc/cfg/dev/). Similarly, the *production* environment config is in [`src/data_collection/etc/cfg/prod`](src/data_collection/etc/cfg/prod/).
+There is a minor difference between a development and production environment besides the configuration files.
 
-#### Production environment
-The production environment build expects a database / local blockchain nodes to be already reachable.
+#### Differences between environments
+* The docker compose for the production environment creates an NGINX reverse proxy service that allows connecting to the Erigon node running on Abacus-3. Historically, the development environment also used an in-memory database but that has been moved to a regular database to the main [docker-compose.yml](docker-compose.yml).
+* Development environment always uses two replicas for each consumer. The production environment number can be set via `N_CONSUMERS` env var. If you would like fine grained control over the number of consumers for each blockchain, edit the replicas inside compose file directly.
+* The `DATA_DIR` path environment variable in the development environment is modified by adding a `-dev` suffix.
 
-To run a production build:
-```
-$ bash scripts/run-prod.sh
-```
-
-> Note: If you encounter a `Error response from daemon: network` error, the volumes need to be fully restarted with `docker compose down --volumes --remove-orphans`.
+> Note: If you very rarely encounter an `Error response from daemon: network` error, the volumes need to be fully restarted with `docker compose down --volumes --remove-orphans`.
 
 ## Running only the database
-In case you only need to run the database, use:
+In case you only need to run the database on the host (e.g. on abacus-3 to access the data), use:
 ```
-$ sh scripts/run-db.sh
+$ bash scripts/run-db.sh
 ```
 
 This script will only start the database service (defined in [docker-compose.yml](docker-compose.yml)) as a standalone container.
@@ -110,21 +113,28 @@ Currently, only the `DatabaseManager` class is tested. These database manager te
 
 To start the tests:
 ```
-$ sh scripts/run-tests-db.sh
+$ bash scripts/run-tests-db.sh
 ```
 
 > Note: When running the tests locally, it might sometimes be necessary to `docker volume prune` in order for the database to restart properly.
 
+---
 ## TLDR / FAQ
-* How do I start this *locally*?
+* How do I **start** this *locally* on my pc?
   1. configure `.env`
   2. configure `src/data_collection/etc/cfg/dev/<blockchain>.json` (depending on your blockchain)
   3. run `bash scripts/run-dev-<blockchain>.sh`
-* How do I start this on **Abacus-3**?
+* How do I **start** this on *Abacus-3*?
   1. configure `.env`
   2. configure `src/data_collection/etc/cfg/prod/<blockchain>.json` (depending on your blockchain)
   3. run `bash scripts/run-prod-<blockchain>.sh`
-* How many topics and consumers should I use?
+* Does the run script **stop** / **cleanup** all the containers after the configured data collection is finished?
+  * Yes. The consumers wait 2 minutes after the last received event before shutting themselves down. Producer closes immediately after the collection process has been finished. Other containers close when consumers and producers are down.
+* **How many topics and consumers** should I use?
   * Depends on the machine you're running on, but generally the more consumers and topics, the faster the processing.
+* Why does the production environment add an **Erigon proxy service** instead of just using `host.docker.internal` within the consumers / producers?
+  * This reverse proxy is used as a workaround for the abacus-3 firewall. Currently the firewall rules only allow the default docker0 interface to send outbound requests to the host machine. This means that any container started with `docker run --add-host=host.docker.internal:host-gateway ...` will be able to reach the host. This works because the default docker network used for any `docker run` is the 'bridge' which has its default gateway set to the docker0 interface address. However, as soon as you attempt to do this inside of a docker compose (`extra_hosts: host.docker.internal:host-gateway`), it stops working. This is because the compose creates a separate docker network which has a random gateway address used for communication with the host. In theory, you could [set up a custom docker network with a static gateway address](https://stackoverflow.com/a/60245651/4249857) inside of the compose and add this address to the firewall rules, but that wasn't possible at the time of development.
 * Why am I seeing `Unable connect to "kafka:9092": [Errno 111] Connect call failed ('<container_ip>', 9092)` in the logs?
-  * The producers and consumers attempt to connect to the Kafka container as soon as they're started. However the Kafka container takes some time. These messages are generated by the internal kafka library that is used within the project and can be ignored.
+  * The producers and consumers attempt to connect to the Kafka container as soon as they're started. However the Kafka container takes some time and is usually <15s but sometimes it takes a bit longer. These messages are generated by the internal kafka library that is used within the project and can be ignored.
+* Why am I seeing `Group Coordinator Request failed: [Error 15] CoordinatorNotAvailableError` in the logs?
+  * Another Kafka internal log that can be ignored, the coordinator is eventually selected and this error is irrelevant.

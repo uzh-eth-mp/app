@@ -1,22 +1,20 @@
-#!/bin/sh
+#!/bin/bash
 
-# Directory where the data (PostgreSQL, Kafka) will be stored
-export DATA_DIR=./data
+set -e
 
-# Linux workaround for docker container user/group permissions
-mkdir -p \
-    ./${DATA_DIR}/zookeeper-data/data \
-    ./${DATA_DIR}/zookeeper-data/datalog \
-    ./${DATA_DIR}/kafka-data \
-    ./${DATA_DIR}/postgresql-data
+source scripts/util/prepare-env.sh
 
+# Add dev prefix
+export PROJECT_NAME="$PROJECT_NAME-dev"
+export DATA_DIR="$DATA_DIR-dev"
 
-export UID=$(id -u)
-export GID=$(id -g)
+source scripts/util/compose-cleanup.sh
+source scripts/util/prepare-data-dir.sh
 
 # Start the containers in detached mode and
 # attach the logs only to the data producers and consumers
 docker compose \
+    -p $PROJECT_NAME \
     -f docker-compose.yml \
     -f docker-compose.dev.yml \
     --profile eth up \
@@ -24,7 +22,5 @@ docker compose \
     --build \
     --remove-orphans \
     -d && \
-    docker compose logs \
+    docker compose -p $PROJECT_NAME logs \
     -f data_producer_eth data_consumer_eth
-
-docker compose down --remove-orphans

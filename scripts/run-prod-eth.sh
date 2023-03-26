@@ -1,23 +1,9 @@
 #!/bin/bash
 
 set -e
-source scripts/prepare-env.sh
-
-# Cleanup on exit or interrupt
-function cleanup {
-    echo "Starting cleanup; removing containers..."
-    docker compose -p $PROJECT_NAME down --remove-orphans
-    echo "Cleanup successful."
-}
-trap cleanup EXIT
-
-# Linux workaround for docker container user/group permissions
-mkdir -p \
-    $DATA_DIR/zookeeper-data/data \
-    $DATA_DIR/zookeeper-data/datalog \
-    $DATA_DIR/kafka-data \
-    $DATA_DIR/postgresql-data
-chown -R $DATA_UID:$DATA_GID $DATA_DIR
+source scripts/util/prepare-env.sh
+source scripts/util/compose-cleanup.sh
+source scripts/util/prepare-data-dir.sh
 
 # Start the containers in detached mode
 docker compose \

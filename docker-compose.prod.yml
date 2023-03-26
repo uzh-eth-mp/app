@@ -14,7 +14,6 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      # Can update these as necessary
       - PROXY_PORT=18547
       - ERIGON_PORT=${ERIGON_PORT}
       # host.docker.internal gets translated to localhost of abacus
@@ -22,27 +21,37 @@ services:
 
   # Different configuration files for data producers
   data_producer_eth:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/eth.json", "--mode", "producer" ]
-    environment:
-      - LOG_LEVEL=${LOG_LEVEL}
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/eth.json --mode producer"
     depends_on:
       - erigon_proxy
 
   data_producer_etc:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/etc.json", "--mode", "producer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/etc.json --mode producer"
+    depends_on:
+      - erigon_proxy
 
   data_producer_bsc:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/bsc.json", "--mode", "producer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/bsc.json --mode producer"
+    depends_on:
+      - erigon_proxy
 
   data_consumer_eth:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/eth.json", "--mode", "consumer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/eth.json --mode consumer"
     deploy:
       replicas: 2
-    environment:
-      - LOG_LEVEL=DEBUG
+    depends_on:
+      - erigon_proxy
 
   data_consumer_etc:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/etc.json", "--mode", "consumer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/etc.json --mode consumer"
+    deploy:
+      replicas: 2
+    depends_on:
+      - erigon_proxy
 
   data_consumer_bsc:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/bsc.json", "--mode", "consumer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/bsc.json --mode consumer"
+    deploy:
+      replicas: 2
+    depends_on:
+      - erigon_proxy

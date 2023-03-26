@@ -76,12 +76,13 @@ services:
     build:
       context: ./src/data_collection
     profiles: ["eth", "all"]
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
       - kafka
       - redis
       - db
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
+
   data_producer_etc:
     build:
       context: ./src/data_collection
@@ -90,6 +91,9 @@ services:
       - kafka
       - redis
       - db
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
+
   data_producer_bsc:
     build:
       context: ./src/data_collection
@@ -98,18 +102,21 @@ services:
       - kafka
       - redis
       - db
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
 
   # Data consumers
   data_consumer_eth:
     build:
       context: ./src/data_collection
     profiles: ["eth", "all"]
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
       - kafka
       - redis
       - db
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
+
   data_consumer_etc:
     build:
       context: ./src/data_collection
@@ -118,6 +125,9 @@ services:
       - kafka
       - redis
       - db
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
+
   data_consumer_bsc:
     build:
       context: ./src/data_collection
@@ -126,6 +136,9 @@ services:
       - kafka
       - redis
       - db
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
+
 
 # Kafka related config
 # see: https://github.com/bitnami/bitnami-docker-kafka/blob/a576f9847c9ed455645d6540a7f32e7935e6b4d7/docker-compose.yml#L24
