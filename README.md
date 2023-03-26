@@ -19,9 +19,9 @@ Consumers are blockchain agnostic (EVM compatible), thus only require a configur
 ├── docker-compose.prod.yml
 ├── docker-compose.tests.yml
 ├── docker-compose.yml
-├── etc
-│   ├── img
-│   └── scripts                 # scripts for running the stack and tests
+├── etc                         # misc. files and images
+│   └── img
+├── scripts                     # scripts for running the stack and tests
 └── src                         # code for containers / services
     ├── data_collection         # producer + consumer code
     ├── db                      # dataschema definitions
