@@ -37,7 +37,7 @@ class NodeConnector:
         # JSON RPC API through an SSH tunnel. Abacus only allows hostname to
         # be "localhost" otherwise it returns a 403 response code.
         headers = {
-            "Host": "localhost:8545",
+            "Host": "localhost",
             "Content-Type": "application/json"
         }
         self.w3 = Web3(

@@ -1,48 +1,26 @@
 version: "3.9"
 services:
-  # PostgreSQL only on dev
-  db:
-    build:
-      context: ./src/db
-    ports:
-      - 5432:5432
-    env_file:
-      - ./src/db/.env
-    # Persistent storage
-    volumes:
-      - ./data/postgresql-data:/var/lib/postgresql/data
-
   # Different configuration files for data producers
   data_producer_eth:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/eth.json --mode producer"
-    depends_on:
-      - db
 
   data_producer_etc:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/etc.json --mode producer"
-    depends_on:
-      - db
 
   data_producer_bsc:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/bsc.json --mode producer"
-    depends_on:
-      - db
 
   data_consumer_eth:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/eth.json --mode consumer"
     deploy:
       replicas: 2
-    environment:
-      - LOG_LEVEL=DEBUG
-    depends_on:
-      - db
 
   data_consumer_etc:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/etc.json --mode consumer"
-    depends_on:
-      - db
+    deploy:
+      replicas: 2
 
   data_consumer_bsc:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/bsc.json --mode consumer"
-    depends_on:
-      - db
+    deploy:
+      replicas: 2

@@ -1,8 +1,13 @@
-#!/bin/sh
+#!/bin/bash
 
-# Start the containers in detached mode and
-# attach the logs only to the data producers
+set -e
+source scripts/util/prepare-env.sh
+source scripts/util/compose-cleanup.sh
+source scripts/util/prepare-data-dir.sh
+
+# Start the containers in detached mode
 docker compose \
+    -p $PROJECT_NAME \
     -f docker-compose.yml \
     -f docker-compose.prod.yml \
     --profile all up \
@@ -10,7 +15,10 @@ docker compose \
     --build \
     --remove-orphans \
     -d && \
-    docker compose logs \
+    # connect the erigon proxy (on default bridge network) to the created compose network
+    docker network connect ${PROJECT_NAME}_default ${PROJECT_NAME}-erigon_proxy && \
+    # attach the logs only to the data producers and consumers
+    docker compose -p $PROJECT_NAME logs \
     -f data_producer_eth data_producer_etc data_producer_bsc \
     data_consumer_eth data_consumer_etc data_consumer_bsc
 
