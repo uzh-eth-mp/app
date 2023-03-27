@@ -6,13 +6,13 @@ from web3.net import AsyncNet
 from web3.geth import Geth, AsyncGethTxPool, AsyncGethAdmin, AsyncGethPersonal
 from web3.exceptions import ABIFunctionNotFound
 
-node_url = "http://localhost:8545"
+node_url = "http://localhost:8547"
 # node_url = "https://mainnet.infura.io/v3/5ac780e50f2d4c48aedf160d077963ce"
 usdt_contract_address = "0xdAC17F958D2ee523a2206206994597C13D831ec7"
 bayc_contract_address = "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D"
 erc1155_contract_address = "0x9cA3A9a3aA59C7ddd61C29f6b0540ad9988AeDE6"
 
-headers = {"Host": "localhost:8545", "Content-Type": "application/json"}
+headers = {"Host": "localhost", "Content-Type": "application/json"}
 w3 = Web3(
     provider=Web3.AsyncHTTPProvider(
         endpoint_uri=node_url, request_kwargs={"headers": headers}
@@ -32,7 +32,7 @@ w3 = Web3(
     middlewares=[],
 )
 
-abi_json = json.load(open("src/data_collection/etc/abi.json"))
+abi_json = json.load(open("src/data_collection/etc/contract_abi.json"))
 
 import asyncio
 from eth_hash.auto import keccak
@@ -70,4 +70,19 @@ async def test(contract_address):
     print(f"{is_erc20} {is_erc721} {is_erc1155}")
 
 
-asyncio.run(test(erc1155_contract_address))
+# asyncio.run(test(erc1155_contract_address))
+async def test_make_request():
+    payload = {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "method": "trace_block",
+        "params": [432000],
+    }
+
+    data_kek = Web3.HTTPProvider(node_url).make_request("trace_block", [432000])
+    print(data_kek)
+    data = await w3.provider.make_request("trace_block", [432000])
+    print(data)
+
+
+asyncio.run(test_make_request())

@@ -5,7 +5,6 @@ from web3.eth import AsyncEth
 from web3.net import AsyncNet
 from web3.geth import Geth, AsyncGethTxPool, AsyncGethAdmin, AsyncGethPersonal
 from web3.types import TxData, TxReceipt
-import aiohttp
 
 from app.model.block import BlockData
 from app.model.transaction import (
@@ -32,9 +31,7 @@ class NodeConnector:
         # Workaround with headers allows to connect to the Abacus
         # JSON RPC API through an SSH tunnel. Abacus only allows hostname to
         # be "localhost" otherwise it returns a 403 response code.
-        headers = {"Host": "localhost:8545", "Content-Type": "application/json"}
-
-        self.session = aiohttp.ClientSession()
+        headers = {"Host": "localhost", "Content-Type": "application/json"}
 
         self.w3 = Web3(
             provider=Web3.AsyncHTTPProvider(
@@ -93,33 +90,13 @@ class NodeConnector:
 
     async def get_block_reward(self, block_id="latest") -> dict[str, Any]:
         """Get block reward of a specific block"""
-
-        payload = {
-            "id": 1,
-            "jsonrpc": "2.0",
-            "method": "trace_block",
-            "params": [block_id],
-        }
-
-        headers = {"accept": "application/json", "content-type": "application/json"}
-
-        response = await self.session.post(node_url, data=payload, headers=headers)
-        data = await response.json()
+        data = await self.w3.provider.make_request("trace_block", [block_id])
         return data["result"][0]["action"]["value"]
 
     async def get_internal_transactions(self, tx_hash: str) -> InternalTransactionData:
         """Get internal transaction data by hash"""
-
-        payload = {
-            "id": 1,
-            "jsonrpc": "2.0",
-            "method": "trace_replayTransaction",
-            "params": [tx_hash, ["trace"]],
-        }
-
-        headers = {"accept": "application/json", "content-type": "application/json"}
-
-        response = await self.session.post(node_url, data=payload, headers=headers)
-        data = await response.json()
+        data = await self.w3.provider.make_request(
+            "trace_replayTransaction", [tx_hash, ["trace"]]
+        )
         internal_tx_data = InternalTransactionData(**data["result"])
         return internal_tx_data
