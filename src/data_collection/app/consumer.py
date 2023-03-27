@@ -127,17 +127,15 @@ class DataConsumer(DataCollector):
                 await self.db_manager.insert_transaction_logs(**tx_log.dict())
 
         # check for AND insert internal transactions if needed
-        internal_tx_data: InternalTransactionData = await self.node_connector.get_internal_transactions(self._tx_hash)
-            if internal_tx_data:
-                async with self.db_manager.db.transaction():
-                    for internal_tx in internal_tx_data:
-                        await self.db_manager.insert_internal_transaction(
-                            **internal_tx.dict(),
-                            transaction_hash = tx_data.transaction_hash
-
-                        )
-
-
+        internal_tx_data = await self.node_connector.get_internal_transactions(
+            self._tx_hash
+        )
+        if internal_tx_data:
+            async with self.db_manager.db.transaction():
+                for internal_tx in internal_tx_data:
+                    await self.db_manager.insert_internal_transaction(
+                        **internal_tx.dict(), transaction_hash=tx_data.transaction_hash
+                    )
 
     async def _handle_transaction_events(
         self,
