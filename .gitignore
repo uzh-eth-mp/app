@@ -19,6 +19,7 @@ node_modules/
 .tox/
 htmlcov/
 .coverage
+.pytest_cache
 
 # Data folder
 data/
