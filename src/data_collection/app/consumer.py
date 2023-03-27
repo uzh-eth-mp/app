@@ -38,11 +38,16 @@ class DataConsumer(DataCollector):
         self.kafka_manager: KafkaConsumerManager = KafkaConsumerManager(
             kafka_url=config.kafka_url, topic=config.kafka_topic
         )
+        # Create a set from all the contracts (we want to save any of these transactions)
+        contracts = set()
+        for data_cfg in config.data_collection:
+            contracts = contracts.union(set(data_cfg.contracts))
+
         # Extracts data from web3 smart contracts
         self.contract_parser = ContractParser(
             web3=self.node_connector.w3,
             contract_abi=contract_abi,
-            contracts=config.data_collection.contracts,
+            contracts=contracts,
         )
 
         # Transaction hash of the currently processed transaction

@@ -1,6 +1,6 @@
 aiokafka
-aioredis
 asyncpg
 pip-tools
 pydantic
-web3==6.0.0b5
+redis
+web3==6.0.0b10

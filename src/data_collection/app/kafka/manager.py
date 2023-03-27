@@ -221,7 +221,7 @@ class KafkaConsumerManager(KafkaManager):
 
         except TimeoutError:
             # Raised when no message is received within the specified time
-            log.debug(
+            log.info(
                 f"No event received for {self.EVENT_RETRIEVAL_TIMEOUT} seconds - timed out"
             )
             raise KafkaConsumerTopicEmptyError

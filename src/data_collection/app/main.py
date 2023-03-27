@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import sys
 
 from app import init_logger
 from app.config import Config
@@ -19,6 +20,7 @@ async def main(args: argparse.Namespace):
     app_name = f"{args.mode.value}-{config.kafka_topic}"
 
     log.info(f"Starting {app_name}")
+    exit_code = 0
 
     # Start the app in the correct mode
     if args.mode == DataCollectionMode.CONSUMER:
@@ -30,9 +32,10 @@ async def main(args: argparse.Namespace):
     elif args.mode == DataCollectionMode.PRODUCER:
         # Producer
         async with DataProducer(config) as data_producer:
-            await data_producer.start_producing_data()
+            exit_code = await data_producer.start_producing_data()
 
-    log.info(f"Exiting {app_name}")
+    log.info(f"Exiting {app_name} with code {exit_code}")
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

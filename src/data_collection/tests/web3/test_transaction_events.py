@@ -6,12 +6,12 @@ from web3.types import TxReceipt, EventData
 
 from app.web3 import transaction_events as te
 from app.model.contract import ContractCategory
-from web3.contract import (
-    Contract,
-    ContractEvents,
+from web3.contract import Contract
+from web3.contract.contract import (
     ContractEvent,
+    ContractEvents,
     ContractFunction,
-    ContractFunctions,
+    ContractFunctions
 )
 
 from app.web3.transaction_events.types import (
