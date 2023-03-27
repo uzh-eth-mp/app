@@ -13,7 +13,7 @@ def init_logger(name):
     else:
         formatter = logging.Formatter(
             fmt="%(asctime)s.%(msecs)03d %(name)s %(levelname)-8s %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S"
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
         handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(formatter)

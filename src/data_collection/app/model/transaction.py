@@ -7,6 +7,7 @@ from app.model import Web3BaseModel
 
 class TransactionData(Web3BaseModel):
     """Describes a transaction given by `get_transaction`"""
+
     transaction_hash: str = Field(..., alias="hash")
     block_number: int = Field(..., alias="blockNumber")
     from_address: str = Field(..., alias="from")
@@ -19,6 +20,7 @@ class TransactionData(Web3BaseModel):
 
 class TransactionLogsData(Web3BaseModel):
     """Describes transaction receipt logs given by `get_transaction_receipt`"""
+
     address: str
     data: str
     removed: bool
@@ -29,6 +31,7 @@ class TransactionLogsData(Web3BaseModel):
 
 class TransactionReceiptData(Web3BaseModel):
     """Describes a transaction receipt given by `get_transaction_receipt`"""
+
     gas_used: float = Field(..., alias="gasUsed")
     logs: List[TransactionLogsData]
     transaction_type: str = Field(..., alias="type")
@@ -38,4 +41,5 @@ class TransactionReceiptData(Web3BaseModel):
 # TODO: finish InternalTransactionData
 class InternalTransactionData(Web3BaseModel):
     """Describes an internal transaction given by `debug_traceTransaction`"""
+
     pass

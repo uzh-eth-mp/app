@@ -10,7 +10,6 @@ from app.web3.block_explorer import BlockExplorer
 from app.utils.data_collector import DataCollector
 
 
-
 log = init_logger(__name__)
 
 
@@ -21,15 +20,15 @@ class DataProducer(DataCollector):
     This class also updates the database with block data and saves the state
     of processing (latest_processed_block).
     """
+
     # The maximum amount of allowed transactions in a single kafka topic
-    MAX_ALLOWED_TRANSACTIONS=50000
+    MAX_ALLOWED_TRANSACTIONS = 50000
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
         self.config = config
         self.kafka_manager: KafkaProducerManager = KafkaProducerManager(
-            kafka_url=config.kafka_url,
-            topic=config.kafka_topic
+            kafka_url=config.kafka_url, topic=config.kafka_topic
         )
 
     async def start_producing_data(self) -> None:
@@ -41,7 +40,7 @@ class DataProducer(DataCollector):
         block_explorer = BlockExplorer(
             data_collection_cfg=self.config.data_collection,
             db=self.db_manager,
-            w3=self.node_connector
+            w3=self.node_connector,
         )
         start_block, end_block = await block_explorer.get_exploration_bounds()
 
@@ -58,11 +57,17 @@ class DataProducer(DataCollector):
         end_block_str = f"block #{end_block}" if end_block else "'latest' block"
 
         # Log information about the producer
-        pretty_config = self.config.dict(exclude={"node_url", "db_dsn", "redis_url", "kafka_url"})
-        log.info(f'Using config: {pretty_config}')
+        pretty_config = self.config.dict(
+            exclude={"node_url", "db_dsn", "redis_url", "kafka_url"}
+        )
+        log.info(f"Using config: {pretty_config}")
         n_partitions = await self.kafka_manager.number_of_partitions
-        log.info(f"Found {n_partitions} partition(s) on topic '{self.kafka_manager.topic}'")
-        log.info(f"Starting from block #{start_block}, expecting to finish at {end_block_str}")
+        log.info(
+            f"Found {n_partitions} partition(s) on topic '{self.kafka_manager.topic}'"
+        )
+        log.info(
+            f"Starting from block #{start_block}, expecting to finish at {end_block_str}"
+        )
 
         # Start producing transactions
         try:
@@ -77,9 +82,12 @@ class DataProducer(DataCollector):
                 log.debug(f"Block #{i_block}")
 
                 # query the node for current block data
-                block_data: BlockData = await self.node_connector.get_block_data(i_block)
+                block_data: BlockData = await self.node_connector.get_block_data(
+                    i_block
+                )
 
                 # Insert new block
+                # FIXME: block reward
                 await self._insert_block(block_data=block_data, block_reward=0)
 
                 # Send all the transaction hashes to Kafka so consumers can process them
@@ -117,5 +125,5 @@ class DataProducer(DataCollector):
             **block_data_dict,
             # TODO: need to calculate the block reward
             # https://ethereum.stackexchange.com/questions/5958/how-to-query-the-amount-of-mining-reward-from-a-certain-block
-            block_reward=block_reward
+            block_reward=block_reward,
         )

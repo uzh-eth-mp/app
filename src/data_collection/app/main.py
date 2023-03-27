@@ -7,10 +7,11 @@ from app.producer import DataProducer
 from app.consumer import DataConsumer
 from app.utils.enum_action import EnumAction
 from app.model import DataCollectionMode
-from app.model.abi import ERCABI
+from app.model.abi import ContractABI
 
 
 log = init_logger(__name__)
+
 
 async def main(args: argparse.Namespace):
     # Load the config file
@@ -22,9 +23,9 @@ async def main(args: argparse.Namespace):
     # Start the app in the correct mode
     if args.mode == DataCollectionMode.CONSUMER:
         # Load the ABIs
-        erc_abi = ERCABI.parse_file(args.abi_file)
+        contract_abi = ContractABI.parse_file(args.abi_file)
         # Consumer
-        async with DataConsumer(config, erc_abi) as data_consumer:
+        async with DataConsumer(config, contract_abi) as data_consumer:
             await data_consumer.start_consuming_data()
     elif args.mode == DataCollectionMode.PRODUCER:
         # Producer
@@ -38,23 +39,20 @@ if __name__ == "__main__":
     # CLI arguments parser
     parser = argparse.ArgumentParser(description="EVM-node Data Collector")
     parser.add_argument(
-        "--cfg",
-        help="The configuration file path",
-        type=str,
-        required=True
+        "--cfg", help="The configuration file path", type=str, required=True
     )
     parser.add_argument(
         "--abi-file",
         help="The path to a file that contains ERC ABIs",
         type=str,
-        default="etc/abi.json"
+        default="etc/contract_abi.json",
     )
     parser.add_argument(
         "--mode",
         help="The data collection mode (producing or consuming data)",
         type=DataCollectionMode,
         action=EnumAction,
-        required=True
+        required=True,
     )
     args = parser.parse_args()
 

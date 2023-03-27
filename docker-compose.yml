@@ -1,21 +1,58 @@
 version: "3.9"
 services:
-  # Kafka
-  zookeeper:
-    image: zookeeper:3.8.0
+  # PostgreSQL
+  db:
+    user: "${DATA_UID}:${DATA_GID}"
+    build:
+      context: ./src/db
+      # PostgreSQL data dir permissions (user + bdlt group)
+      args:
+        UID: "${DATA_UID}"
+        GID: "${DATA_GID}"
+    group_add:
+      - ${DATA_GID}
     ports:
-      - "2181:2181"
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    # 'environment' has priority over 'env_file'
+    env_file:
+      - ./src/db/.env
+    # Persistent storage
+    volumes:
+      - ${DATA_DIR}/postgresql-data:/var/lib/postgresql/data
+
+  # Kafka (zookeeper)
+  zookeeper:
+    build:
+      context: ./src/zookeeper
+      args:
+        # Zookeeper data dir permissions (user + bdlt group)
+        ZOO_USER: ${USER}
+        ZOO_UID: ${DATA_UID}
+        ZOO_GID: ${DATA_GID}
+    user: "${USER}:${DATA_GID}"
+    ports:
+      - "2181"
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
     volumes:
-      - ./data/zookeeper-data/data:/data
-      - ./data/zookeeper-data/datalog:/datalog
+      - ${DATA_DIR}/zookeeper-data/data:/data
+      - ${DATA_DIR}/zookeeper-data/datalog:/datalog
   kafka:
     build:
       context: ./src/kafka
+      args:
+        # Kafka data dir permissions (user + bdlt group)
+        KAFKA_USER: ${USER}
+        KAFKA_UID: ${DATA_UID}
+        KAFKA_GID: ${DATA_GID}
     ports:
-      - "9092:9092"
+      - "9092"
     environment:
+      # Kafka specific environment variables
       - KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS=6000
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
       - KAFKA_LISTENERS=PLAINTEXT://kafka:9092
@@ -24,15 +61,15 @@ services:
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
       - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
       - KAFKA_LOG_DIRS=/kafka/kafka-logs
-      - KAFKA_CREATE_TOPICS=eth:100:1,etc:100:1,bsc:100:1
+      - KAFKA_CREATE_TOPICS=eth:${KAFKA_N_PARTITIONS}:1,etc:${KAFKA_N_PARTITIONS}:1,bsc:${KAFKA_N_PARTITIONS}:1
     volumes:
-      - ./data/kafka-data:/kafka
+      - ${DATA_DIR}/kafka-data:/kafka
 
   # Redis
   redis:
     image: redis
     ports:
-      - "6379:6379"
+      - "6379"
 
   # Data producers
   data_producer_eth:
@@ -42,6 +79,10 @@ services:
     depends_on:
       - kafka
       - redis
+      - db
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
+
   data_producer_etc:
     build:
       context: ./src/data_collection
@@ -49,6 +90,10 @@ services:
     depends_on:
       - kafka
       - redis
+      - db
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
+
   data_producer_bsc:
     build:
       context: ./src/data_collection
@@ -56,6 +101,9 @@ services:
     depends_on:
       - kafka
       - redis
+      - db
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
 
   # Data consumers
   data_consumer_eth:
@@ -65,6 +113,10 @@ services:
     depends_on:
       - kafka
       - redis
+      - db
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
+
   data_consumer_etc:
     build:
       context: ./src/data_collection
@@ -72,6 +124,10 @@ services:
     depends_on:
       - kafka
       - redis
+      - db
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
+
   data_consumer_bsc:
     build:
       context: ./src/data_collection
@@ -79,6 +135,10 @@ services:
     depends_on:
       - kafka
       - redis
+      - db
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
+
 
 # Kafka related config
 # see: https://github.com/bitnami/bitnami-docker-kafka/blob/a576f9847c9ed455645d6540a7f32e7935e6b4d7/docker-compose.yml#L24

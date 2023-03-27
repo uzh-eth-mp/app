@@ -31,9 +31,7 @@ class DatabaseManager:
 
     async def connect(self):
         """Connects to the PostgreSQL database."""
-        self.db = await asyncpg.connect(
-            dsn=self.dsn
-        )
+        self.db = await asyncpg.connect(dsn=self.dsn)
         log.debug("Connected to PostgreSQL")
 
     async def disconnect(self):
@@ -42,9 +40,17 @@ class DatabaseManager:
         log.debug("Disconnected from PostgreSQL")
 
     async def insert_block(
-        self, block_number: int, block_hash: str, nonce: str, difficulty: int,
-        gas_limit: int, gas_used: int, timestamp: datetime, miner: str, parent_hash: str,
-        block_reward: float
+        self,
+        block_number: int,
+        block_hash: str,
+        nonce: str,
+        difficulty: int,
+        gas_limit: int,
+        gas_used: int,
+        timestamp: datetime,
+        miner: str,
+        parent_hash: str,
+        block_reward: float,
     ):
         """
         Insert block data into <node>_block table.
@@ -58,14 +64,31 @@ class DatabaseManager:
             VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9, $10)
             ON CONFLICT (block_number) DO NOTHING;
             """,
-            block_number, block_hash, nonce, difficulty, gas_limit, gas_used,
-            timestamp, miner, parent_hash, block_reward
+            block_number,
+            block_hash,
+            nonce,
+            difficulty,
+            gas_limit,
+            gas_used,
+            timestamp,
+            miner,
+            parent_hash,
+            block_reward,
         )
 
     async def insert_transaction(
-        self, transaction_hash: str, block_number: int, from_address: str, to_address: str,
-        value: float, transaction_fee: float, gas_price: float, gas_limit: int, gas_used: int,
-        is_token_tx: bool, input_data: str
+        self,
+        transaction_hash: str,
+        block_number: int,
+        from_address: str,
+        to_address: str,
+        value: float,
+        transaction_fee: float,
+        gas_price: float,
+        gas_limit: int,
+        gas_used: int,
+        is_token_tx: bool,
+        input_data: str,
     ):
         """
         Insert transaction data into <node>_transaction table.
@@ -79,15 +102,32 @@ class DatabaseManager:
             VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9, $10, $11)
             ON CONFLICT (transaction_hash) DO NOTHING;
             """,
-            transaction_hash, block_number, from_address, to_address, value, transaction_fee,
-            gas_price, gas_limit, gas_used, is_token_tx, input_data
+            transaction_hash,
+            block_number,
+            from_address,
+            to_address,
+            value,
+            transaction_fee,
+            gas_price,
+            gas_limit,
+            gas_used,
+            is_token_tx,
+            input_data,
         )
 
     # FIXME: not really sure about the data schema here, might be quite different
     # for example the gas stuff might not be needed
     async def insert_internal_transaction(
-        self, transaction_hash: str, from_address: str, to_address: str, value: float,
-        gas_price: float, gas_limit: int, gas_used: int, input_data: str, function_type: str
+        self,
+        transaction_hash: str,
+        from_address: str,
+        to_address: str,
+        value: float,
+        gas_price: float,
+        gas_limit: int,
+        gas_used: int,
+        input_data: str,
+        function_type: str,
     ):
         """
         Insert internal transaction data into <node>_internal_transaction table.
@@ -100,12 +140,25 @@ class DatabaseManager:
             VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9)
             ON CONFLICT (unique_id) DO NOTHING;
             """,
-            transaction_hash, from_address, to_address, value, gas_price,
-            gas_limit, gas_used, input_data, function_type
+            transaction_hash,
+            from_address,
+            to_address,
+            value,
+            gas_price,
+            gas_limit,
+            gas_used,
+            input_data,
+            function_type,
         )
 
     async def insert_transaction_logs(
-        self, transaction_hash: str, address: str, log_index: int, data: str, removed: bool, topics: list[str]
+        self,
+        transaction_hash: str,
+        address: str,
+        log_index: int,
+        data: str,
+        removed: bool,
+        topics: list[str],
     ):
         """
         Insert transaction logs data into <node>_transaction_logs table.
@@ -118,73 +171,128 @@ class DatabaseManager:
             INSERT INTO {table} (transaction_hash, address, log_index, data, removed, topics)
             VALUES ($1, $2, $3,$4, $5, $6)
             ON CONFLICT (unique_id) DO NOTHING;
-            """, transaction_hash, address, log_index, data, removed, topics
+            """,
+            transaction_hash,
+            address,
+            log_index,
+            data,
+            removed,
+            topics,
         )
 
-    async def insert_contract(self, address: str, transaction_hash: str, is_pair_contract: bool):
+    async def insert_contract(
+        self, address: str, transaction_hash: str, is_pair_contract: bool
+    ):
         """
         Insert contract data into <node>_contract table.
         """
         table = f"{self.node_name}_contract"
 
-        await self.db.execute(f"""
+        await self.db.execute(
+            f"""
             INSERT INTO {table} (address, transaction_hash, is_pair_contract)
             VALUES ($1, $2, $3)
             ON CONFLICT (address) DO NOTHING;
-        """, address, transaction_hash, is_pair_contract)
+        """,
+            address,
+            transaction_hash,
+            is_pair_contract,
+        )
 
     async def insert_token_contract(
-        self, address: str, symbol: str, name: str,
-        decimals: int, total_supply: int, token_category: str
+        self,
+        address: str,
+        symbol: str,
+        name: str,
+        decimals: int,
+        total_supply: int,
+        token_category: str,
     ):
         """
         Insert token contract data into <node>_token_contract table.
         """
         table = f"{self.node_name}_token_contract"
 
-        await self.db.execute(f"""
+        await self.db.execute(
+            f"""
             INSERT INTO {table} (address, symbol, name, decimals, total_supply, token_category)
             VALUES ($1, $2, $3, $4, $5, $6)
             ON CONFLICT (address) DO NOTHING;
-        """, address, symbol, name, decimals, total_supply, token_category)
+        """,
+            address,
+            symbol,
+            name,
+            decimals,
+            total_supply,
+            token_category,
+        )
 
-    async def insert_contract_supply_change(self, address: str, amount_changed: int, transaction_hash: str):
+    async def insert_contract_supply_change(
+        self, address: str, amount_changed: int, transaction_hash: str
+    ):
         """
         Insert token contract supply change data into <node>_token_contract_supply_change table.
         """
         table = f"{self.node_name}_contract_supply_change"
 
-        await self.db.execute(f"""
+        await self.db.execute(
+            f"""
             INSERT INTO {table} (address, amount_changed, transaction_hash)
             VALUES ($1, $2, $3)
             ON CONFLICT (address, transaction_hash) DO NOTHING;
-        """, address, amount_changed, transaction_hash)
+        """,
+            address,
+            amount_changed,
+            transaction_hash,
+        )
 
-    async def insert_pair_contract(self, address: str, token0_address: str, token1_address: str, reserve0: int, 
-                                         reserve1: int, factory: str):
+    async def insert_pair_contract(
+        self,
+        address: str,
+        token0_address: str,
+        token1_address: str,
+        reserve0: int,
+        reserve1: int,
+        factory: str,
+    ):
         """
         Insert pair contract data into <node>_pair_contract table.
         """
         table = f"{self.node_name}_pair_contract"
 
-        await self.db.execute(f"""
+        await self.db.execute(
+            f"""
             INSERT INTO {table} (address, token0_address, token1_address, reserve0, reserve1, factory)
             VALUES ($1, $2, $3, $4, $5, $6)
             ON CONFLICT (address) DO NOTHING;
-        """, address, token0_address, token1_address, reserve0, reserve1, factory)
+        """,
+            address,
+            token0_address,
+            token1_address,
+            reserve0,
+            reserve1,
+            factory,
+        )
 
-    async def insert_pair_liquidity_change(self, address: str, amount0: int, amount1: int, transaction_hash: str):
+    async def insert_pair_liquidity_change(
+        self, address: str, amount0: int, amount1: int, transaction_hash: str
+    ):
         """
         Insert pair liquidity change data into <node>_token_contract_supply_change table.
         """
         table = f"{self.node_name}_pair_liquidity_change"
 
-        await self.db.execute(f"""
+        await self.db.execute(
+            f"""
             INSERT INTO {table} (address, amount0, amount1, transaction_hash)
             VALUES ($1, $2, $3, $4)
             ON CONFLICT (address, transaction_hash) DO NOTHING;
-        """, address, amount0, amount1, transaction_hash)   
-
+        """,
+            address,
+            amount0,
+            amount1,
+            transaction_hash,
+        )
 
     async def get_block(
         self, block_identifier: Optional[Union[str, int]] = None
