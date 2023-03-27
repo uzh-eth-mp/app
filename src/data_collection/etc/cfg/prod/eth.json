@@ -541,13 +541,6 @@
                     "category": "UniSwapV2Pair"
                 }
             ]
-        },
-        {
-            "producer_type": "log_filter",
-            "start_block": 4634748,
-            "end_block": 4634749,
-            "contracts": [],
-            "topics": []
         }
     ]
 }

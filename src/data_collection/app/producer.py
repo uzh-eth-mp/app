@@ -32,10 +32,32 @@ class DataProducer(DataCollector):
             kafka_url=config.kafka_url, topic=config.kafka_topic
         )
 
-    async def _start_logfilter_producer(self):
-        await asyncio.sleep(10)
+    async def _start_logfilter_producer(self, data_collection_cfg: DataCollectionConfig):
+        """Start a log filter producer that sends only filtered transactions to kafka"""
+        # TODO: Finish this method
+        # as of now (March 2023) `eth_getFilterLogs` RPC method of the erigon node is unavailable
+        # (https://github.com/ledgerwatch/erigon/issues/5092#issuecomment-1218133784)
+
+        # Get list of addresses
+        # addresses = list(map(lambda c: c.address, data_collection_cfg.contracts))
+        # w3_filter = await self.node_connector.w3.eth.filter(
+        #     {
+        #         "address": addresses,
+        #         "topics": data_collection_cfg.topics,
+        #         "fromBlock": data_collection_cfg.start_block,
+        #         "toBlock": data_collection_cfg.end_block
+        #     }
+        # )
+        # result = await w3_filter.get_all_entries()
+        # Continue in a similar fashion as in the full" producer method below
+        # 1. Insert block if needed
+        # 2. Send batch of txs to kafka
+        # 3. Iterate until the end
+        pass
+
 
     async def _start_full_producer(self, data_collection_cfg: DataCollectionConfig):
+        """Start a regular (full) producer that goes through every block and sends all txs to kafka"""
         # Get block exploration bounds (start and end block number)
         block_explorer = BlockExplorer(
             data_collection_cfg=data_collection_cfg,
@@ -57,10 +79,6 @@ class DataProducer(DataCollector):
         end_block_str = f"block #{end_block}" if end_block else "'latest' block"
 
         # Log information about the producer
-        pretty_config = self.config.dict(
-            exclude={"node_url", "db_dsn", "redis_url", "kafka_url"}
-        )
-        log.info(f"Using config: {pretty_config}")
         n_partitions = await self.kafka_manager.number_of_partitions
         log.info(
             f"Found {n_partitions} partition(s) on topic '{self.kafka_manager.topic}'"
@@ -117,31 +135,51 @@ class DataProducer(DataCollector):
 
     async def _start_producer_task(self, data_collection_cfg: DataCollectionConfig) -> asyncio.Task:
         """
-        Start a while loop that collects either all block data from Web3
-        or only log filtered transactions, based on producer_type.
+        Start a producer task depending on the data collection config producer type.
         """
-        log.info(f'Creating data collection producer task ("{data_collection_cfg.producer_type}")')
+        pretty_config = data_collection_cfg.dict(exclude={"contracts"})
+        pretty_config["contracts"] = list(map(lambda c: c.symbol, data_collection_cfg.contracts))
+        log.info(f"Creating data collection producer task ({pretty_config})")
+
         match data_collection_cfg.producer_type:
             case ProducerType.FULL:
                 return asyncio.create_task(self._start_full_producer(data_collection_cfg))
             case ProducerType.LOG_FILTER:
-                return asyncio.create_task(self._start_logfilter_producer())
+                return asyncio.create_task(self._start_logfilter_producer(data_collection_cfg))
 
-    async def start_producing_data(self) -> None:
+    async def start_producing_data(self) -> int:
         """
-        Start a subproducer for each data collection config object that collects
-        block and transaction data from Web3 and inserts transactions into a Kafka topic.
+        Start a subproducer for each data collection config object and wait until they all finish.
+
+        Returns:
+            exit_code: 0 if no exceptions encountered during data collection, 1 otherwise
         """
         producer_tasks = []
+        data_collection_configs = self.config.data_collection
 
-        for data_collection_cfg in self.config.data_collection:
+        log.info(f"Using config: {self.config.dict(exclude={'data_collection'})}")
+
+        # Create asyncio tasks for each data collection config
+        for data_collection_cfg in data_collection_configs:
             producer_tasks.append(
                 await self._start_producer_task(data_collection_cfg)
             )
 
         # Wait until all tasks finish
-        await asyncio.gather(*producer_tasks, return_exceptions=True)
+        result = await asyncio.gather(*producer_tasks, return_exceptions=True)
+        exit_code = 0
+
+        # Log exceptions if they occurred
+        for (return_value, cfg) in zip(result, data_collection_configs):
+            if isinstance(return_value, Exception):
+                log.error(
+                    f"Data collection for \"producer_type\"=\"{cfg.producer_type}\" with {len(cfg.contracts)} contracts resulted in an exception:",
+                    exc_info=(type(return_value), return_value, return_value.__traceback__)
+                )
+                exit_code = 1
+
         log.info("Finished producing data from all data collection tasks.")
+        return exit_code
 
     async def _insert_block(self, block_data: BlockData, block_reward: int):
         """Insert new block data into the block table"""
