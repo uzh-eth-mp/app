@@ -52,6 +52,6 @@ services:
   data_consumer_bsc:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/bsc.json --mode consumer"
     deploy:
-      replicas:
+      replicas: ${N_CONSUMERS}
     depends_on:
       - erigon_proxy
