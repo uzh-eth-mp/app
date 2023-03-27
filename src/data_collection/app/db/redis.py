@@ -1,6 +1,6 @@
 from typing import Optional
 
-import aioredis
+from redis import asyncio as aioredis
 
 from app import init_logger
 
