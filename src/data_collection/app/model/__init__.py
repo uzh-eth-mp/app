@@ -2,14 +2,12 @@ from enum import Enum
 from typing import List
 
 from hexbytes import HexBytes
-from pydantic import (
-    BaseModel,
-    root_validator
-)
+from pydantic import BaseModel, root_validator
 
 
 class DataCollectionMode(Enum):
     """The mode of the application: producing or consuming data"""
+
     PRODUCER = "producer"
     CONSUMER = "consumer"
 
@@ -32,9 +30,6 @@ class Web3BaseModel(BaseModel):
                 # If the value is a list, recursively transform
                 # potential hexbytes values
                 values[key] = list(
-                    map(
-                        lambda v: v.hex() if isinstance(v, HexBytes) else v,
-                        value
-                    )
+                    map(lambda v: v.hex() if isinstance(v, HexBytes) else v, value)
                 )
         return values

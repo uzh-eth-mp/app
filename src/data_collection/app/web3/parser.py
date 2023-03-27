@@ -1,12 +1,6 @@
 import collections
 
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-    Tuple
-)
+from typing import Any, Dict, List, Optional, Tuple
 
 from eth_hash.auto import keccak
 from web3 import Web3
@@ -20,16 +14,22 @@ from app.model.contract import ContractCategory, PairContractData, TokenContract
 class ContractParser:
     """Parse contract data"""
 
-    def __init__(self, web3: Web3, contracts: List[ContractConfig], contract_abi: ContractABI) -> None:
+    def __init__(
+        self, web3: Web3, contracts: List[ContractConfig], contract_abi: ContractABI
+    ) -> None:
         self.w3 = web3
         self.contract_abi = contract_abi
 
         # Load contract categories dict
         self._contract_categories = dict()
         for contract in contracts:
-            self._contract_categories[contract.address.lower()] = ContractCategory(contract.category)
+            self._contract_categories[contract.address.lower()] = ContractCategory(
+                contract.category
+            )
 
-    def get_contract_category(self, contract_address: str) -> Optional[ContractCategory]:
+    def get_contract_category(
+        self, contract_address: str
+    ) -> Optional[ContractCategory]:
         """Get the contract category by contract address
 
         Returns:
@@ -65,7 +65,9 @@ class ContractParser:
         """
         return self.get_contract_category(contract_address) is not None
 
-    def get_contract(self, contract_address: str, category: ContractCategory) -> Contract:
+    def get_contract(
+        self, contract_address: str, category: ContractCategory
+    ) -> Contract:
         """
         Returns:
             contract: web3 Contract instance for a given contract address
@@ -74,10 +76,7 @@ class ContractParser:
         abi = self._get_contract_abi(contract_category=category)
 
         # Create a w3 contract instance
-        contract = self.w3.eth.contract(
-            address=contract_address,
-            abi=abi
-        )
+        contract = self.w3.eth.contract(address=contract_address, abi=abi)
 
         return contract
 
@@ -108,7 +107,7 @@ class ContractParser:
             name=name,
             decimals=decimals,
             total_supply=total_supply,
-            token_category=category.value
+            token_category=category.value,
         )
 
     async def get_pair_contract_data(
@@ -135,5 +134,5 @@ class ContractParser:
             token1=token1,
             reserve0=reserve0,
             reserve1=reserve1,
-            factory=factory
+            factory=factory,
         )

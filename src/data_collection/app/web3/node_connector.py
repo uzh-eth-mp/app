@@ -3,19 +3,14 @@ from typing import Tuple
 from web3 import Web3
 from web3.eth import AsyncEth
 from web3.net import AsyncNet
-from web3.geth import (
-    Geth,
-    AsyncGethTxPool,
-    AsyncGethAdmin,
-    AsyncGethPersonal
-)
+from web3.geth import Geth, AsyncGethTxPool, AsyncGethAdmin, AsyncGethPersonal
 from web3.types import TxData, TxReceipt
 
 from app.model.block import BlockData
 from app.model.transaction import (
     TransactionData,
     TransactionReceiptData,
-    InternalTransactionData
+    InternalTransactionData,
 )
 
 
@@ -36,30 +31,27 @@ class NodeConnector:
         # Workaround with headers allows to connect to the Abacus
         # JSON RPC API through an SSH tunnel. Abacus only allows hostname to
         # be "localhost" otherwise it returns a 403 response code.
-        headers = {
-            "Host": "localhost",
-            "Content-Type": "application/json"
-        }
+        headers = {"Host": "localhost", "Content-Type": "application/json"}
         self.w3 = Web3(
             provider=Web3.AsyncHTTPProvider(
-                endpoint_uri=node_url,
-                request_kwargs={
-                    "headers": headers
-                }
+                endpoint_uri=node_url, request_kwargs={"headers": headers}
             ),
             modules={
                 "eth": (AsyncEth,),
                 "net": (AsyncNet,),
-                "geth": (Geth, {
-                    "txpool": (AsyncGethTxPool,),
-                    "perosnal": (AsyncGethPersonal,),
-                    "admin": (AsyncGethAdmin,)
-                })
+                "geth": (
+                    Geth,
+                    {
+                        "txpool": (AsyncGethTxPool,),
+                        "perosnal": (AsyncGethPersonal,),
+                        "admin": (AsyncGethAdmin,),
+                    },
+                ),
             },
-            middlewares=[]
+            middlewares=[],
         )
 
-    async def get_block_data(self, block_id: str="latest") -> BlockData:
+    async def get_block_data(self, block_id: str = "latest") -> BlockData:
         """Get block data by number/hash"""
         block_data_dict = await self.w3.eth.get_block(block_id)
         block_data = BlockData(**block_data_dict, w3_data=block_data_dict)
@@ -69,7 +61,9 @@ class NodeConnector:
         """Get latest block number"""
         return await self.w3.eth.block_number
 
-    async def get_transaction_data(self, tx_hash: str) -> Tuple[TransactionData, TxData]:
+    async def get_transaction_data(
+        self, tx_hash: str
+    ) -> Tuple[TransactionData, TxData]:
         """Get transaction data by hash
 
         Returns:
@@ -80,7 +74,9 @@ class NodeConnector:
         tx_data = TransactionData(**tx_data_dict)
         return tx_data, tx_data_dict
 
-    async def get_transaction_receipt_data(self, tx_hash: str) -> Tuple[TransactionReceiptData, TxReceipt]:
+    async def get_transaction_receipt_data(
+        self, tx_hash: str
+    ) -> Tuple[TransactionReceiptData, TxReceipt]:
         """Get transaction receipt data by hash
 
         Returns:

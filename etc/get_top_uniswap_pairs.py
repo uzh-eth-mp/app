@@ -1,18 +1,25 @@
 import requests
 import json
+
+
 # function to use requests.post to make an API call to the subgraph url
 def run_query(query):
     # endpoint where you are making the request
-    request = requests.post('https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2'
-                            '',
-                            json={'query': query})
+    request = requests.post(
+        "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2" "",
+        json={"query": query},
+    )
     if request.status_code == 200:
         return request.json()
     else:
-        raise Exception('Query failed. return code is {}.      {}'.format(request.status_code, query))
+        raise Exception(
+            "Query failed. return code is {}.      {}".format(
+                request.status_code, query
+            )
+        )
 
 
-query_init = '''
+query_init = """
 {
  pairs(first: 100, orderBy: reserveUSD, orderDirection: desc) {
    id
@@ -42,7 +49,7 @@ query_init = '''
    createdAtBlockNumber
  }
 }
-'''
+"""
 query_result = run_query(query_init)
 
 # Create the result json that will be used in our config
@@ -54,7 +61,7 @@ for pair in query_result["data"]["pairs"]:
         dict(
             address=pair["id"],
             symbol=f"UniSwap V2 Pair {token0['symbol']}-{token1['symbol']}",
-            category="UniSwapV2Pair"
+            category="UniSwapV2Pair",
         )
     )
 

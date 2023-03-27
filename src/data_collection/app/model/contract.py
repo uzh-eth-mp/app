@@ -3,6 +3,7 @@ from enum import Enum
 
 from typing import Optional
 
+
 class ContractCategory(Enum):
     UNKNOWN = "unknown"
     ERC20 = "erc20"
@@ -21,8 +22,10 @@ class ContractCategory(Enum):
         """Return True if contract category is UniswapPair"""
         return self.value == self.UNI_SWAP_V2_PAIR
 
+
 class TokenContractData(BaseModel):
     """Wrapper for web3 contract data that gets inserted into the db"""
+
     # contract address
     address: str
     symbol: Optional[str]
@@ -31,8 +34,10 @@ class TokenContractData(BaseModel):
     total_supply: Optional[float]
     token_category: str
 
+
 class PairContractData(BaseModel):
     """Wrapper for web3 pair contract data that gets inserted into the db"""
+
     # The contract address (used as PK)
     address: str
     # Address of token0

@@ -1,12 +1,6 @@
 from typing import List, Optional
 
-from pydantic import (
-    AnyUrl,
-    BaseModel,
-    BaseSettings,
-    root_validator,
-    PostgresDsn
-)
+from pydantic import AnyUrl, BaseModel, BaseSettings, root_validator, PostgresDsn
 
 
 class ContractConfig(BaseModel):
@@ -25,6 +19,7 @@ class ContractConfig(BaseModel):
 
 class DataCollectionConfig(BaseSettings):
     """Store data collection configuration settings."""
+
     # The starting block number. Takes precedence over the setting in the db.
     start_block: Optional[int]
     # The ending block number. Takes precedence over the setting in the db.
@@ -43,9 +38,12 @@ class DataCollectionConfig(BaseSettings):
         if start_block is not None and end_block is not None:
             # Verify that the end block is larger than start_block
             if start_block > end_block:
-                raise ValueError(f"start_block ({start_block}) must be equal or smaller than end_block ({end_block})")
+                raise ValueError(
+                    f"start_block ({start_block}) must be equal or smaller than end_block ({end_block})"
+                )
 
         return values
+
 
 class Config(BaseSettings):
     """Store an app configuration file"""

@@ -10,11 +10,13 @@ from typing import (
 )
 from .types import ContractEvent
 
+
 def get_transaction_events(
-        contract_category: ContractCategory,
-        contract: Union[Type[Contract], Contract],
-        receipt: TxReceipt,
-        block_hash: HexBytes) -> Generator[ContractEvent, None, None]:
+    contract_category: ContractCategory,
+    contract: Union[Type[Contract], Contract],
+    receipt: TxReceipt,
+    block_hash: HexBytes,
+) -> Generator[ContractEvent, None, None]:
     """
     It returns all the contract events found in the given contract with the given receipt.
     """

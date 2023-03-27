@@ -3,21 +3,14 @@ import asyncio
 from asyncio import TimeoutError
 from typing import Awaitable, Callable, List
 
-from aiokafka import (
-    AIOKafkaConsumer,
-    AIOKafkaProducer
-)
-from aiokafka.errors import (
-    KafkaError,
-    KafkaTimeoutError,
-    KafkaConnectionError
-)
+from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
+from aiokafka.errors import KafkaError, KafkaTimeoutError, KafkaConnectionError
 
 from app import init_logger
 from app.kafka.exceptions import (
     KafkaManagerError,
     KafkaConsumerTopicEmptyError,
-    KafkaConsumerTimeoutError
+    KafkaConsumerTimeoutError,
 )
 
 
@@ -29,6 +22,7 @@ class KafkaManager:
     Manage the Kafka cluster connection.
     Base class for KafkaProducerManager and KafkaConsumerManager.
     """
+
     # The delay between connection attempts (in seconds)
     LINEAR_BACKOFF_DELAY = 5
     # The maximum allowed initial connection attempts before the app exits
@@ -70,7 +64,9 @@ class KafkaManager:
                 connected = True
             except KafkaConnectionError as err:
                 # Retry if we get an exception
-                log.info(f"Connection failed - retrying in {self.LINEAR_BACKOFF_DELAY}s")
+                log.info(
+                    f"Connection failed - retrying in {self.LINEAR_BACKOFF_DELAY}s"
+                )
                 await asyncio.sleep(self.LINEAR_BACKOFF_DELAY)
                 continue
         log.debug("Connected to Kafka")
@@ -83,11 +79,11 @@ class KafkaManager:
 
 class KafkaProducerManager(KafkaManager):
     """Manage producing events to a given Kafka topic"""
+
     def __init__(self, kafka_url: str, topic: str) -> None:
         super().__init__(kafka_url, topic)
         self._client = AIOKafkaProducer(
-            bootstrap_servers=kafka_url,
-            enable_idempotence=True
+            bootstrap_servers=kafka_url, enable_idempotence=True
         )
         # The currently selected partition that will receive the next batch
         self.i_partition = 0
@@ -102,10 +98,7 @@ class KafkaProducerManager(KafkaManager):
         """Send message to a Kafka broker"""
         try:
             # Send the message
-            send_future = await self._client.send(
-                topic=self.topic,
-                value=msg.encode()
-            )
+            send_future = await self._client.send(topic=self.topic, value=msg.encode())
             # Message will either be delivered or an unrecoverable
             # error will occur.
             _ = await send_future
@@ -129,20 +122,14 @@ class KafkaProducerManager(KafkaManager):
 
             for msg in msgs:
                 # key and timestamp arguments are required
-                kafka_batch.append(
-                    key=None,
-                    value=msg.encode(),
-                    timestamp=None
-                )
+                kafka_batch.append(key=None, value=msg.encode(), timestamp=None)
 
             kafka_batch.close()
 
             # Add the batch to the first partition's submission queue. If this method
             # times out, we can say for sure that batch will never be sent.
             send_fut = await self._client.send_batch(
-                kafka_batch,
-                self.topic,
-                partition=self.i_partition
+                kafka_batch, self.topic, partition=self.i_partition
             )
 
             # Batch will either be delivered or an unrecoverable error will occur.
@@ -163,11 +150,13 @@ class KafkaProducerManager(KafkaManager):
             # present in the database
             log.error(f"KafkaTimeoutError on batch")
 
+
 class KafkaConsumerManager(KafkaManager):
     """Manage consuming events from a given Kafka topic"""
+
     # How much time (in seconds) to wait for the next event / message
     # from a Kafka topic before exiting
-    EVENT_RETRIEVAL_TIMEOUT=120
+    EVENT_RETRIEVAL_TIMEOUT = 120
 
     def __init__(self, kafka_url: str, topic: str) -> None:
         super().__init__(kafka_url, topic)
@@ -175,7 +164,7 @@ class KafkaConsumerManager(KafkaManager):
             topic,
             bootstrap_servers=kafka_url,
             group_id=topic,
-            auto_offset_reset="earliest"
+            auto_offset_reset="earliest",
         )
         # True if an event was received. False otherwise.
         self._event_received = False
@@ -189,8 +178,9 @@ class KafkaConsumerManager(KafkaManager):
             event.clear()
 
     async def _start_listening_on_topic(
-        self, on_event_callback: Callable[[str], Awaitable[None]],
-        wait_event: asyncio.Event
+        self,
+        on_event_callback: Callable[[str], Awaitable[None]],
+        wait_event: asyncio.Event,
     ):
         """Listen for new Kafka messages on a predefined topic"""
         try:
@@ -203,11 +193,15 @@ class KafkaConsumerManager(KafkaManager):
         except TimeoutError as e:
             raise KafkaConsumerTopicEmptyError from e
 
-    async def start_consuming(self, on_event_callback: Callable[[str], Awaitable[None]]):
+    async def start_consuming(
+        self, on_event_callback: Callable[[str], Awaitable[None]]
+    ):
         """Consume messages from a given topic and generate (yield) events"""
         try:
             partitions = list(map(lambda p: p.partition, self._client.assignment()))
-            log.info(f"Consuming events in topic '{self.topic}' for partitions: {partitions}")
+            log.info(
+                f"Consuming events in topic '{self.topic}' for partitions: {partitions}"
+            )
 
             # Create an asyncio Event that is used for timing out
             # when no message from Kafka is received for some time
@@ -223,14 +217,13 @@ class KafkaConsumerManager(KafkaManager):
 
             # Wait for consuming to finish
             # (with a timeout task that can interrupt the consume task by raising an exception)
-            await asyncio.gather(
-                timeout_task,
-                consume_task
-            )
+            await asyncio.gather(timeout_task, consume_task)
 
         except TimeoutError:
             # Raised when no message is received within the specified time
-            log.debug(f"No event received for {self.EVENT_RETRIEVAL_TIMEOUT} seconds - timed out")
+            log.debug(
+                f"No event received for {self.EVENT_RETRIEVAL_TIMEOUT} seconds - timed out"
+            )
             raise KafkaConsumerTopicEmptyError
         finally:
             # Disconnect from Kafka

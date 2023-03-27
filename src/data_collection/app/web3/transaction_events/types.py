@@ -6,6 +6,7 @@ class ContractEvent(BaseModel):
     Contract events are the emitted events by the contract included in the transaction receipt (output of the
     interaction with a smart contract).
     """
+
     contract_address: str
 
 
@@ -13,6 +14,7 @@ class MintFungibleEvent(ContractEvent):
     """
     This represents mint event.
     """
+
     account: str
     value: int
 
@@ -21,6 +23,7 @@ class BurnFungibleEvent(ContractEvent):
     """
     This represents burn event.
     """
+
     account: str
     value: int
 
@@ -29,6 +32,7 @@ class TransferFungibleEvent(ContractEvent):
     """
     This represents transfer event between two addreses.
     """
+
     src: str
     dst: str
     value: int
@@ -38,6 +42,7 @@ class PairCreatedEvent(ContractEvent):
     """
     This represents the creation a contract for trading the token pair.
     """
+
     pair_address: str
     token0: str
     token1: str
@@ -70,6 +75,7 @@ class MintNonFungibleEvent(ContractEvent):
     """
     This represents mint event.
     """
+
     account: str
     tokenId: str
 
@@ -82,6 +88,7 @@ class BurnNonFungibleEvent(ContractEvent):
 
 
     """
+
     account: str
     tokenId: int
 
@@ -90,6 +97,7 @@ class TransferNonFungibleEvent(ContractEvent):
     """
     This represents transfer event of NFTs between two addresses.
     """
+
     src: str
     dst: str
     tokenId: int

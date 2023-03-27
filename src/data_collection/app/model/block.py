@@ -8,6 +8,7 @@ from app.model import Web3BaseModel
 
 class BlockData(Web3BaseModel):
     """Describes a block given by `get_block`"""
+
     block_number: int = Field(..., alias="number")
     block_hash: str = Field(..., alias="hash")
     nonce: str

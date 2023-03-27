@@ -12,6 +12,7 @@ from app.model.abi import ContractABI
 
 log = init_logger(__name__)
 
+
 async def main(args: argparse.Namespace):
     # Load the config file
     config: Config = Config.parse_file(args.cfg)
@@ -38,23 +39,20 @@ if __name__ == "__main__":
     # CLI arguments parser
     parser = argparse.ArgumentParser(description="EVM-node Data Collector")
     parser.add_argument(
-        "--cfg",
-        help="The configuration file path",
-        type=str,
-        required=True
+        "--cfg", help="The configuration file path", type=str, required=True
     )
     parser.add_argument(
         "--abi-file",
         help="The path to a file that contains ERC ABIs",
         type=str,
-        default="etc/contract_abi.json"
+        default="etc/contract_abi.json",
     )
     parser.add_argument(
         "--mode",
         help="The data collection mode (producing or consuming data)",
         type=DataCollectionMode,
         action=EnumAction,
-        required=True
+        required=True,
     )
     args = parser.parse_args()
 
