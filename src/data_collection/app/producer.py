@@ -23,7 +23,7 @@ class DataProducer(DataCollector):
     """
 
     # The maximum amount of allowed transactions in a single kafka topic
-    MAX_ALLOWED_TRANSACTIONS = 50000
+    MAX_ALLOWED_TRANSACTIONS = 200000
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
@@ -89,14 +89,19 @@ class DataProducer(DataCollector):
 
         # Start producing transactions
         try:
+            # Keep track of how many times the producer has 'stalled'
+            stall_counter = 0
             while should_continue(i_block):
                 # Verify that there is space in the Kafka topic for more transaction hashes
-                if n_txs := await self.redis_manager.get_n_transactions():
+                if n_txs := await self.redis_manager.get_n_transactions() or 0:
                     if n_txs > self.MAX_ALLOWED_TRANSACTIONS:
+                        stall_counter += 1
                         # Sleep if there are many transactions in the kafka topic
                         await asyncio.sleep(1)
                         # Try again after sleeping
                         continue
+                    # Reset the stall counter
+                    stall_counter = 0
                 # query the node for current block data
                 block_data: BlockData = await self.node_connector.get_block_data(
                     i_block
@@ -121,8 +126,9 @@ class DataProducer(DataCollector):
                 # Continue from the next block
                 i_block += 1
 
-                if (i_block - start_block) % 100 == 0:
-                    log.info(f"Current block: #{i_block}")
+                # Log a status message every 1k blocks
+                if (i_block - start_block) % 1000 == 0:
+                    log.info(f"Current block: #{i_block} | n_txs in topic {n_txs}")
         except BlockNotFound:
             # OK, BlockNotFound exception is raised when the latest block is reached
             pass
@@ -173,7 +179,7 @@ class DataProducer(DataCollector):
         for (return_value, cfg) in zip(result, data_collection_configs):
             if isinstance(return_value, Exception):
                 log.error(
-                    f"Data collection for \"producer_type\"=\"{cfg.producer_type}\" with {len(cfg.contracts)} contracts resulted in an exception:",
+                    f"Data collection for producer_type=\"{cfg.producer_type}\" with {len(cfg.contracts)} contracts resulted in an exception:",
                     exc_info=(type(return_value), return_value, return_value.__traceback__)
                 )
                 exit_code = 1

@@ -1,9 +1,0 @@
-server {
-  listen *:${PROXY_PORT};
-  location / {
-    proxy_pass http://${ERIGON_HOST}:${ERIGON_PORT};       # pass every request to the erigon node
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header Host localhost;        # substitute host header for "localhost"
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-  }
-}

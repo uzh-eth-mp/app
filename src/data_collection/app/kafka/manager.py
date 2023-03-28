@@ -5,13 +5,10 @@ from typing import Awaitable, Callable, List
 
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from aiokafka.errors import KafkaError, KafkaTimeoutError, KafkaConnectionError
+from aiokafka.structs import RecordMetadata
 
 from app import init_logger
-from app.kafka.exceptions import (
-    KafkaManagerError,
-    KafkaConsumerTopicEmptyError,
-    KafkaConsumerTimeoutError,
-)
+from app.kafka.exceptions import KafkaManagerError, KafkaConsumerTopicEmptyError
 
 
 log = init_logger(__name__)
@@ -85,8 +82,11 @@ class KafkaProducerManager(KafkaManager):
         self._client = AIOKafkaProducer(
             bootstrap_servers=kafka_url, enable_idempotence=True
         )
-        # The currently selected partition that will receive the next batch
+        # The currently selected partition that will receive the next batch of messages
         self.i_partition = 0
+        # Dictionary to hold partition offsets,
+        # used to calculate the current # of messages in this topic
+        self.partition_offsets = {}
 
     @property
     async def number_of_partitions(self) -> int:
@@ -94,14 +94,20 @@ class KafkaProducerManager(KafkaManager):
         partitions = await self._client.partitions_for(self.topic)
         return len(partitions)
 
-    async def send_message(self, msg: str):
+    @property
+    def number_of_messages(self) -> int:
+        """Return number of messages in this topic (by summing the lag of all partitions)"""
+        return sum(self.partition_offsets.values())
+
+    async def send_message(self, msg: str) -> RecordMetadata:
         """Send message to a Kafka broker"""
         try:
             # Send the message
             send_future = await self._client.send(topic=self.topic, value=msg.encode())
             # Message will either be delivered or an unrecoverable
             # error will occur.
-            _ = await send_future
+            record = await send_future
+            return record
         except KafkaTimeoutError:
             # Producer request timeout, message could have been sent to
             # the broker but there is no ack
@@ -115,7 +121,7 @@ class KafkaProducerManager(KafkaManager):
             log.error(f"{err} on {msg}")
             raise err
 
-    async def send_batch(self, msgs: List[str]):
+    async def send_batch(self, msgs: List[str]) -> RecordMetadata:
         """Send a batch of messages to a Kafka broker"""
         try:
             kafka_batch = self._client.create_batch()
@@ -134,13 +140,16 @@ class KafkaProducerManager(KafkaManager):
 
             # Batch will either be delivered or an unrecoverable error will occur.
             # Cancelling this future will not cancel the send.
-            _ = await send_fut
+            record = await send_fut
+            if record:
+                self.partition_offsets[record.partition] = record.offset
 
             # Increment the partition counter so that the next batch will be sent onto another partition
             self.i_partition += 1
             if self.i_partition == await self.number_of_partitions:
                 # Roll over to partition 0 if we reach the last partition
                 self.i_partition = 0
+            return record
         except KafkaTimeoutError:
             # Producer request timeout, message could have been sent to
             # the broker but there is no ack
@@ -156,7 +165,7 @@ class KafkaConsumerManager(KafkaManager):
 
     # How much time (in seconds) to wait for the next event / message
     # from a Kafka topic before exiting
-    EVENT_RETRIEVAL_TIMEOUT = 120
+    EVENT_RETRIEVAL_TIMEOUT = 300
 
     def __init__(self, kafka_url: str, topic: str) -> None:
         super().__init__(kafka_url, topic)
