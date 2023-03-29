@@ -7,7 +7,7 @@ on:
       - 'main'
     paths:
       - '.github/workflows/test-database.yaml'
-      - 'scripts/tests/**''
+      - 'scripts/tests/**'
       # SQL
       - 'src/db/**'
       # Python
