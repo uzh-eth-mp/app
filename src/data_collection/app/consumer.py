@@ -36,7 +36,9 @@ class DataConsumer(DataCollector):
     def __init__(self, config: Config, contract_abi: ContractABI) -> None:
         super().__init__(config)
         self.kafka_manager: KafkaConsumerManager = KafkaConsumerManager(
-            kafka_url=config.kafka_url, topic=config.kafka_topic
+            kafka_url=config.kafka_url,
+            redis_url=config.redis_url,
+            topic=config.kafka_topic,
         )
         # Create a set from all the contracts (we want to save any of these transactions)
         contracts = set()
@@ -206,9 +208,6 @@ class DataConsumer(DataCollector):
         # Select the address that this transaction interacts with or creates
         contract_address = tx_data.to_address or tx_receipt_data.contract_address
         contract_category = self.contract_parser.get_contract_category(contract_address)
-
-        # Decrement the number of transactions in the queue by one
-        await self.redis_manager.decr_n_transactions()
 
         log.debug(f"Received tx {tx_data.transaction_hash} in #{tx_data.block_number}")
 

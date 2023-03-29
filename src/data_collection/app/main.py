@@ -26,9 +26,15 @@ async def main(args: argparse.Namespace):
     if args.mode == DataCollectionMode.CONSUMER:
         # Load the ABIs
         contract_abi = ContractABI.parse_file(args.abi_file)
+        consumer_tasks = []
         # Consumer
-        async with DataConsumer(config, contract_abi) as data_consumer:
-            await data_consumer.start_consuming_data()
+        async def start_consumer():
+            async with DataConsumer(config, contract_abi) as data_consumer:
+                await data_consumer.start_consuming_data()
+
+        for _ in range(5):
+            consumer_tasks.append(asyncio.create_task(start_consumer()))
+        await asyncio.gather(*consumer_tasks)
     elif args.mode == DataCollectionMode.PRODUCER:
         # Producer
         async with DataProducer(config) as data_producer:

@@ -112,7 +112,7 @@ Currently, only the `DatabaseManager` class is tested. These database manager te
 
 To start the tests:
 ```
-$ bash scripts/run-tests-db.sh
+$ bash scripts/tests/run-tests-db.sh
 ```
 
 > Note: When running the tests locally, it might sometimes be necessary to `docker volume prune` in order for the database to restart properly.

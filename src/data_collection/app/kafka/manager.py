@@ -1,13 +1,14 @@
 import asyncio
 
 from asyncio import TimeoutError
-from typing import Awaitable, Callable, List
+from typing import Awaitable, Callable, List, Optional
 
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from aiokafka.errors import KafkaError, KafkaTimeoutError, KafkaConnectionError
 from aiokafka.structs import RecordMetadata
 
 from app import init_logger
+from app.db.redis import RedisManager
 from app.kafka.exceptions import KafkaManagerError, KafkaConsumerTopicEmptyError
 
 
@@ -25,7 +26,7 @@ class KafkaManager:
     # The maximum allowed initial connection attempts before the app exits
     INITIAL_CONNECTION_MAX_ATTEMPTS = 10
 
-    def __init__(self, kafka_url: str, topic: str) -> None:
+    def __init__(self, kafka_url: str, topic: str, redis_url: str) -> None:
         """
         Args:
             kafka_url: the url of the Kafka cluster
@@ -33,6 +34,7 @@ class KafkaManager:
         """
         self.topic = topic
         self._client = None
+        self.redis_manager = RedisManager(redis_url=redis_url, topic=topic)
 
     async def connect(self):
         """Connect (with linear backoff) to the kafka cluster.
@@ -77,16 +79,27 @@ class KafkaManager:
 class KafkaProducerManager(KafkaManager):
     """Manage producing events to a given Kafka topic"""
 
-    def __init__(self, kafka_url: str, topic: str) -> None:
-        super().__init__(kafka_url, topic)
+    MESSAGES_PER_BATCH = 1024
+    """
+    Maximum amount of messages (events) in a single batch
+
+    Note:   Even though the `AIOKafkaProducer` class contains a max_batch_size parameter, it is not very useful. This
+            parameter refers to the *byte* size of the kafka batch, not the message / event count. Currently the default
+            value of '16384' for max_batch_size caps the total message count in one batch to circa 210 messages. To get
+            around this we have to create multiple batches in the size of `MESSAGES_PER_BATCH`. Or increase
+            `max_batch_size` along with `message.max.bytes` in Kafka directly.
+    """
+
+    def __init__(self, kafka_url: str, redis_url: str, topic: str) -> None:
+        super().__init__(kafka_url=kafka_url, redis_url=redis_url, topic=topic)
         self._client = AIOKafkaProducer(
-            bootstrap_servers=kafka_url, enable_idempotence=True
+            bootstrap_servers=kafka_url,
+            enable_idempotence=True,
+            max_batch_size=1024 * 128,  # 128 KB
         )
         # The currently selected partition that will receive the next batch of messages
-        self.i_partition = 0
-        # Dictionary to hold partition offsets,
-        # used to calculate the current # of messages in this topic
-        self.partition_offsets = {}
+        # Start at 0
+        self._i_partition = 0
 
     @property
     async def number_of_partitions(self) -> int:
@@ -94,12 +107,22 @@ class KafkaProducerManager(KafkaManager):
         partitions = await self._client.partitions_for(self.topic)
         return len(partitions)
 
-    @property
-    def number_of_messages(self) -> int:
-        """Return number of messages in this topic (by summing the lag of all partitions)"""
-        return sum(self.partition_offsets.values())
+    async def _choose_partition(self) -> int:
+        """Return the partition that should receive the next batch of messages (events)"""
+        # Choose partition
+        partition = self._i_partition
+        if self._i_partition != -1:
+            # Increment
+            self._i_partition += 1
+            # If the _i_partition is the last partition,
+            # continue using the mechanism that chooses a partition with the smallest amount of present txs
+            if self._i_partition == await self.number_of_partitions:
+                self._i_partition = -1
+        else:
+            partition = await self.redis_manager.get_lowest_score_partition() or 0
+        return partition
 
-    async def send_message(self, msg: str) -> RecordMetadata:
+    async def send_message(self, msg: str) -> Optional[RecordMetadata]:
         """Send message to a Kafka broker"""
         try:
             # Send the message
@@ -107,7 +130,15 @@ class KafkaProducerManager(KafkaManager):
             # Message will either be delivered or an unrecoverable
             # error will occur.
             record = await send_future
-            return record
+
+            if record:
+                # Increment the appropriate partition by 1
+                await self.redis_manager.incrby_n_transactions(
+                    record.partition, incr_by=1
+                )
+
+                return record
+            return None
         except KafkaTimeoutError:
             # Producer request timeout, message could have been sent to
             # the broker but there is no ack
@@ -121,35 +152,71 @@ class KafkaProducerManager(KafkaManager):
             log.error(f"{err} on {msg}")
             raise err
 
-    async def send_batch(self, msgs: List[str]) -> RecordMetadata:
+    async def send_batch(self, msgs: List[str]) -> List[RecordMetadata]:
         """Send a batch of messages to a Kafka broker"""
+        if not msgs:
+            log.warning("Attempted to send an empty list of messages.")
+            return []
         try:
-            kafka_batch = self._client.create_batch()
-
-            for msg in msgs:
-                # key and timestamp arguments are required
-                kafka_batch.append(key=None, value=msg.encode(), timestamp=None)
-
-            kafka_batch.close()
-
-            # Add the batch to the first partition's submission queue. If this method
-            # times out, we can say for sure that batch will never be sent.
-            send_fut = await self._client.send_batch(
-                kafka_batch, self.topic, partition=self.i_partition
+            # Split messages into chunks of size MESSAGES_PER_BATCH
+            n_messages_per_batch = max(1, self.MESSAGES_PER_BATCH)
+            chunks = (
+                msgs[i : i + n_messages_per_batch]
+                for i in range(0, len(msgs), n_messages_per_batch)
             )
 
-            # Batch will either be delivered or an unrecoverable error will occur.
-            # Cancelling this future will not cancel the send.
-            record = await send_fut
-            if record:
-                self.partition_offsets[record.partition] = record.offset
+            # Save `RecordMetadata` for each batch that was sent successfully
+            batches_recordmetadata = []
 
-            # Increment the partition counter so that the next batch will be sent onto another partition
-            self.i_partition += 1
-            if self.i_partition == await self.number_of_partitions:
-                # Roll over to partition 0 if we reach the last partition
-                self.i_partition = 0
-            return record
+            # Send each chunk in a separate batch
+            for chunk in chunks:
+                kafka_batch = self._client.create_batch()
+                # Keep count of messages that were appended to the current Kafka Batch
+                n_appended_messages = 0
+                for msg in chunk:
+                    # key and timestamp arguments are required
+                    metadata = kafka_batch.append(
+                        value=msg.encode(), key=None, timestamp=None
+                    )
+                    if metadata:
+                        # Increase the counter if a Metadata object is returned
+                        n_appended_messages += 1
+                    else:
+                        # Otherwise log a warning that Kafka might be misconfigured
+                        log.warning(
+                            (
+                                f"No metadata found for tx ({msg}) while inserting into a batch."
+                                f"This transaction has not been added to a kafka topic."
+                                f"Decrease the value of MESSAGES_PER_BATCH or increase `AIOKafkaProducer.max_batch_size`"
+                                f" to avoid losing further messages!"
+                            )
+                        )
+
+                kafka_batch.close()
+                partition = await self._choose_partition()
+
+                # Add the batch to the partition's submission queue. If this method
+                # times out, we can say for sure that batch will never be sent.
+                send_fut = await self._client.send_batch(
+                    kafka_batch, self.topic, partition=partition
+                )
+
+                # Batch will either be delivered or an unrecoverable error will occur.
+                # Cancelling this future will not cancel the send.
+                record = await send_fut
+
+                if record:
+                    # Increment the appropriate partition by the number of messages that were present in this batch
+                    await self.redis_manager.incrby_n_transactions(
+                        record.partition, incr_by=n_appended_messages
+                    )
+                    batches_recordmetadata.append(record)
+                else:
+                    log.warning(
+                        f"Couldn't increment partition {partition} by {len(chunk)} because RecordMetadata doesn't exist."
+                    )
+
+            return batches_recordmetadata
         except KafkaTimeoutError:
             # Producer request timeout, message could have been sent to
             # the broker but there is no ack
@@ -167,8 +234,8 @@ class KafkaConsumerManager(KafkaManager):
     # from a Kafka topic before exiting
     EVENT_RETRIEVAL_TIMEOUT = 300
 
-    def __init__(self, kafka_url: str, topic: str) -> None:
-        super().__init__(kafka_url, topic)
+    def __init__(self, kafka_url: str, redis_url: str, topic: str) -> None:
+        super().__init__(kafka_url=kafka_url, redis_url=redis_url, topic=topic)
         self._client = AIOKafkaConsumer(
             topic,
             bootstrap_servers=kafka_url,
@@ -197,6 +264,9 @@ class KafkaConsumerManager(KafkaManager):
             async for event in self._client:
                 # Notify the wait_event that we've received a new Kafka topic event
                 wait_event.set()
+                # Decrement the amount of events / messages in the partition
+                # this event was retrieved from
+                await self.redis_manager.decr_transactions(event.partition)
                 # Await the async callback
                 await on_event_callback(event)
         except TimeoutError as e:

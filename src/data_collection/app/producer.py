@@ -29,7 +29,7 @@ class DataProducer(DataCollector):
         super().__init__(config)
         self.config = config
         self.kafka_manager: KafkaProducerManager = KafkaProducerManager(
-            kafka_url=config.kafka_url, topic=config.kafka_topic
+            kafka_url=config.kafka_url, redis_url=config.redis_url, topic=config.kafka_topic
         )
 
     async def _start_logfilter_producer(self, data_collection_cfg: DataCollectionConfig):
@@ -93,15 +93,20 @@ class DataProducer(DataCollector):
             stall_counter = 0
             while should_continue(i_block):
                 # Verify that there is space in the Kafka topic for more transaction hashes
-                if n_txs := await self.redis_manager.get_n_transactions() or 0:
+                if n_txs := await self.kafka_manager.redis_manager.get_n_transactions():
                     if n_txs > self.MAX_ALLOWED_TRANSACTIONS:
+                        if stall_counter % 60 == 0 and stall_counter:
+                            log.info(f"Producing stalled for {stall_counter} seconds.")
                         stall_counter += 1
                         # Sleep if there are many transactions in the kafka topic
                         await asyncio.sleep(1)
                         # Try again after sleeping
                         continue
                     # Reset the stall counter
+                    if stall_counter >= 60:
+                        log.info(f"Continuing producing after stalling for {stall_counter} seconds.")
                     stall_counter = 0
+
                 # query the node for current block data
                 block_data: BlockData = await self.node_connector.get_block_data(
                     i_block
@@ -111,17 +116,14 @@ class DataProducer(DataCollector):
                 # FIXME: block reward
                 await self._insert_block(block_data=block_data, block_reward=0)
 
-                # Send all the transaction hashes to Kafka so consumers can process them
-                await self.kafka_manager.send_batch(msgs=block_data.transactions)
+                if block_data.transactions:
+                    # Send all the transaction hashes to Kafka so consumers can process them
+                    await self.kafka_manager.send_batch(msgs=block_data.transactions)
+                else:
+                    log.debug(f"Skipped sending block #{block_data.block_number} to kafka as it contains no transactions.")
 
                 # Update the processed block variable with current block index
                 i_processed_block = i_block
-
-                # Increment the number of messages in a topic by the number of
-                # transactions hashes in this block
-                await self.redis_manager.incrby_n_transactions(
-                    incr_by=len(block_data.transactions)
-                )
 
                 # Continue from the next block
                 i_block += 1
@@ -136,7 +138,8 @@ class DataProducer(DataCollector):
             if i_processed_block is None:
                 log.info("Finished before collecting any block data!")
             else:
-                log.info(f"Finished at block #{i_processed_block}")
+                n_txs = await self.kafka_manager.redis_manager.get_n_transactions()
+                log.info(f"Finished at block #{i_processed_block} | n_txs {n_txs}")
 
 
     async def _start_producer_task(self, data_collection_cfg: DataCollectionConfig) -> asyncio.Task:

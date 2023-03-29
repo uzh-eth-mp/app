@@ -16,7 +16,7 @@ services:
     build:
       context: ./src/data_collection
       dockerfile: Dockerfile.tests
-    command: bash -c "bash wait-for-db.sh && sleep 10 && pytest tests/db"
+    command: bash -c "bash wait-for-db.sh && sleep 10 && pytest tests/db/test_manager.py"
     environment:
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
@@ -25,6 +25,13 @@ services:
       - POSTGRES_DB=postgres
     depends_on:
       - db
+
+  # Test redis
+  test_redis:
+    build:
+      context: ./src/data_collection
+      dockerfile: Dockerfile.tests
+    command: ["pytest", "tests/db/test_redis.py"]
 
   # Tests for web3 code
   test_web3:

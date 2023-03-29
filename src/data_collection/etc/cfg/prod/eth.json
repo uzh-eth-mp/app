@@ -7,8 +7,8 @@
     "data_collection": [
         {
             "producer_type": "full",
-            "start_block": 4634748,
-            "end_block": 5000000,
+            "start_block": 14634748,
+            "end_block": 14654748,
             "contracts": [
                 {
                     "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",

@@ -21,9 +21,6 @@ class DataCollector:
         self.db_manager = DatabaseManager(
             postgresql_dsn=config.db_dsn, node_name=config.kafka_topic
         )
-        self.redis_manager = RedisManager(
-            redis_url=config.redis_url, topic=config.kafka_topic
-        )
 
     async def __aenter__(self) -> DataCollector:
         # Connect to Kafka

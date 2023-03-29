@@ -23,10 +23,10 @@ docker network connect ${PROJECT_NAME}_default ${PROJECT_NAME}-data_producer_eth
 docker ps --format '{{.Names}}' \
     | grep "consumer" \
     | while read c ; do {(docker network connect ${PROJECT_NAME}_default $c) &}; done
-echo "Done; following logs"
+echo "Done; following container logs..."
 
 # attach the logs only to the data producers and consumers
 docker compose \
     -p $PROJECT_NAME \
     logs \
-    -f data_producer_eth data_consumer_eth erigon_proxy
+    -f data_producer_eth data_consumer_eth
