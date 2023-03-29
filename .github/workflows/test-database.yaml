@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Run docker-compose.tests.yml test_db
         run: docker compose -f docker-compose.tests.yml up test_db --build --abort-on-container-exit
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Run redis tests
         run: bash scripts/tests/run-tests-redis.sh
