@@ -5,9 +5,10 @@ from typing import Any
 
 import pytest
 import pytest_asyncio
-
+from fakeredis import aioredis as fakeaioredis
 
 from app.db.manager import DatabaseManager
+from app.db.redis import RedisManager
 
 
 @pytest.fixture(scope="session")
@@ -57,6 +58,21 @@ async def clean_db(db_manager):
     # query_args = ",".join([ f"${i+1}" for i in range(len(table_names)) ])
     query_args = ", ".join(list(map(lambda n: n["table_name"], table_names)))
     await db_manager.db.execute(f"TRUNCATE {query_args};")
+
+
+@pytest_asyncio.fixture(scope="session")
+async def redis_manager():
+    rm = RedisManager(redis_url="redis://localhost", topic="any")
+    rm.redis = fakeaioredis.FakeRedis()
+    return rm
+
+
+@pytest_asyncio.fixture
+async def clean_redis(redis_manager):
+    """
+    Performs a FLUSHALL on the fake redis server.
+    """
+    await redis_manager.redis.flushall()
 
 
 shared_tx_hash = "0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822"

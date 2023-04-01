@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Run docker-compose.tests.yml
         run: docker compose -f docker-compose.tests.yml up test_web3 --build --abort-on-container-exit

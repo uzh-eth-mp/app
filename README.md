@@ -25,7 +25,6 @@ Consumers are blockchain agnostic (EVM compatible), thus only require a configur
 └── src                         # code for containers / services
     ├── data_collection         # producer + consumer code
     ├── db                      # dataschema definitions
-    ├── erigon_proxy            # reverse proxy service for accessing nodes
     ├── kafka                   # kafka setup code
     └── zookeeper               # kafka orchestration service
 ```
@@ -33,9 +32,14 @@ Consumers are blockchain agnostic (EVM compatible), thus only require a configur
 ## Running the stack
 The application stack is managed by [docker compose](https://docs.docker.com/compose/#compose-v2-and-the-new-docker-compose-command). Each compose configuration file targets a different environment (dev, prod, tests).
 
-> App has been tested on `Docker Compose version v2.14.0`.
+> App has been tested on `Docker Compose version v2.14.0`. In case of using it on abacus-3, you will need to [install the compose plugin manually.](https://docs.docker.com/compose/install/linux/#install-the-plugin-manually).
 
-Compose files should be started with run scripts that can be found in the `scripts/` directory. For long running tasks, you can start the run scripts in the background and keep the logs with:
+Compose files should be started with run scripts that can be found in the `scripts/` directory. For this you also need to have an `.env` file present. If you are cloning this directory, use `cp .env.default .env` and check all the env vars that you want to edit. Then:
+```
+$ bash scripts/run-prod-eth.sh
+```
+
+For long running tasks, you can start the run scripts in the background and keep the logs with:
 ```
 $ bash scripts/run-prod-eth.sh > prod-eth.log 2>&1 &
 ```
@@ -52,7 +56,7 @@ To create an `.env` file you can copy the provided [`.env.default`](.env.default
 | ENV_VAR | Description | Default value |
 |---|---|---|
 | `PROJECT_NAME` | Prefix for docker network and container names | "bdc" |
-| `DATA_DIR` | Destination directory for the data (PostgreSQL, Kafka, Zookeeper) | "/local/scratch/bdc/data" |
+| `DATA_DIR` | Persistent data destination directory (PostgreSQL, Kafka, Zookeeper) | "./data" |
 | `LOG_LEVEL` | logging level of consumers and producers | "INFO" |
 | `N_CONSUMERS` | number of consumers to use for each blockchain | 2 |
 | `DATA_UID` | Data directory owner ID (can be left blank) | `id -u` |
@@ -113,7 +117,7 @@ Currently, only the `DatabaseManager` class is tested. These database manager te
 
 To start the tests:
 ```
-$ bash scripts/run-tests-db.sh
+$ bash scripts/tests/run-tests-db.sh
 ```
 
 > Note: When running the tests locally, it might sometimes be necessary to `docker volume prune` in order for the database to restart properly.
@@ -121,15 +125,20 @@ $ bash scripts/run-tests-db.sh
 ---
 ## TLDR / FAQ
 * How do I **start** this *locally* on my pc?
-  1. configure `.env`
+  1. create and confgure an `.env` file. You can copy the default one as a starter `cp .env.default .env`.
   2. configure `src/data_collection/etc/cfg/dev/<blockchain>.json` (depending on your blockchain)
   3. run `bash scripts/run-dev-<blockchain>.sh`
 * How do I **start** this on *Abacus-3*?
-  1. configure `.env`
+  1. create and confgure an `.env` file. You can copy the default one as a starter `cp .env.default .env`.
   2. configure `src/data_collection/etc/cfg/prod/<blockchain>.json` (depending on your blockchain)
   3. run `bash scripts/run-prod-<blockchain>.sh`
-* Does the run script **stop** / **cleanup** all the containers after the configured data collection is finished?
-  * Yes. The consumers wait 2 minutes after the last received event before shutting themselves down. Producer closes immediately after the collection process has been finished. Other containers close when consumers and producers are down.
+* How do I stop the process?
+  * Use `KeyboardInterrupt` (`Ctrl+C`). Or `kill` if used in the bg.
+  * After stopping, all the containers are stopped, but volume data is preserved.
+* Is it possible to start multiple of these at the same time?
+  * Yes, simply change the data directory (`DATA_DIR`) and the prefix of the containers (`PROJECT_NAME`) in the `.env` file.
+* Does the run script **stop** / **cleanup** all the containers when the configured data collection is finished?
+  * Yes. The consumers wait 5 minutes after the last received event before shutting themselves down. Producer closes immediately after the collection process has been finished. Other containers close when consumers and producers are down.
 * **How many topics and consumers** should I use?
   * Depends on the machine you're running on, but generally the more consumers and topics, the faster the processing.
 * Why does the production environment add an **Erigon proxy service** instead of just using `host.docker.internal` within the consumers / producers?
@@ -138,3 +147,5 @@ $ bash scripts/run-tests-db.sh
   * The producers and consumers attempt to connect to the Kafka container as soon as they're started. However the Kafka container takes some time and is usually <15s but sometimes it takes a bit longer. These messages are generated by the internal kafka library that is used within the project and can be ignored.
 * Why am I seeing `Group Coordinator Request failed: [Error 15] CoordinatorNotAvailableError` in the logs?
   * Another Kafka internal log that can be ignored, the coordinator is eventually selected and this error is irrelevant.
+* Why am I seeing `Heartbeat failed for group eth because it is rebalancing` in the logs?
+  * Another Kafka internal log that can be ignored. Happens when the number of consumers changes because kafka has to rebalance the partitions for a topic.

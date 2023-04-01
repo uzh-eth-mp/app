@@ -1,5 +1,8 @@
 import argparse
 import asyncio
+import sys
+
+import uvloop
 
 from app import init_logger
 from app.config import Config
@@ -19,20 +22,33 @@ async def main(args: argparse.Namespace):
     app_name = f"{args.mode.value}-{config.kafka_topic}"
 
     log.info(f"Starting {app_name}")
+    exit_code = 0
 
     # Start the app in the correct mode
     if args.mode == DataCollectionMode.CONSUMER:
         # Load the ABIs
         contract_abi = ContractABI.parse_file(args.abi_file)
+        consumer_tasks = []
         # Consumer
-        async with DataConsumer(config, contract_abi) as data_consumer:
-            await data_consumer.start_consuming_data()
+        async def start_consumer():
+            async with DataConsumer(config, contract_abi) as data_consumer:
+                await data_consumer.start_consuming_data()
+
+        # Start N_CONSUMER_INSTANCES asyncio tasks
+        for _ in range(config.number_of_consumer_tasks):
+            # TODO: # of consumers can be increased by using a asyncpg connection_pool across
+            # all the tasks within this process
+            consumer_tasks.append(asyncio.create_task(start_consumer()))
+        result = await asyncio.gather(*consumer_tasks)
+        # Return erroneous exit code if needed
+        exit_code = int(any(result))
     elif args.mode == DataCollectionMode.PRODUCER:
         # Producer
         async with DataProducer(config) as data_producer:
-            await data_producer.start_producing_data()
+            exit_code = await data_producer.start_producing_data()
 
-    log.info(f"Exiting {app_name}")
+    log.info(f"Exiting {app_name} with code {exit_code}")
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":
@@ -57,4 +73,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Run the app
-    asyncio.run(main(args))
+    # requires python 3.11+
+    with asyncio.Runner(loop_factory=uvloop.new_event_loop) as runner:
+        runner.run(main(args))
