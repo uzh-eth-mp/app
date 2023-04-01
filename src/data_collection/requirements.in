@@ -3,4 +3,5 @@ asyncpg
 pip-tools
 pydantic
 redis
+uvloop
 web3==6.0.0b10

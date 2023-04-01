@@ -2,6 +2,8 @@ import argparse
 import asyncio
 import sys
 
+import uvloop
+
 from app import init_logger
 from app.config import Config
 from app.producer import DataProducer
@@ -71,4 +73,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Run the app
-    asyncio.run(main(args))
+    # requires python 3.11+
+    with asyncio.Runner(loop_factory=uvloop.new_event_loop) as runner:
+        runner.run(main(args))
