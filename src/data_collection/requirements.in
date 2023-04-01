@@ -1,4 +1,4 @@
-aiokafka
+aiokafka==0.8.0
 asyncpg
 pip-tools
 pydantic

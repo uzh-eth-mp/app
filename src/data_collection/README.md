@@ -42,4 +42,4 @@ The app requires a configuration file to be passed into the main module with an 
 
 The tests can be found in the `tests/` directory. Currently only the `db/manager.py` class is tested.
 
-The recommended way to start the tests is to use the `scripts/run-tests-db.sh` script in the root of this repository.
+The recommended way to start the tests is to use the `scripts/tests/run-tests-db.sh` script in the root of this repository.

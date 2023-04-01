@@ -4,7 +4,14 @@ Modified entrypoint for Kafka to allow the previous zookeper session to expire. 
 
 Refer to [this link for more info](https://github.com/wurstmeister/kafka-docker/issues/389#issuecomment-800814529).
 
+## Development scripts
+A collection of commands useful for development purposes.
 
-## Deleting data
+### Get number of events per partition
+This command shows the amount of events / messages sent to and present in each partition for a given topic (group).
 
-To delete the local data, just delete `data/kafka-data` and `data/zookeeper-data` in the root directory of this repo.
+The `LAG` column shows the amount of messages left unconsumed in a given partition.
+
+```
+$ docker exec -it bdc-kafka-1 /bin/bash -c '${KAFKA_HOME}/bin/kafka-consumer-groups.sh --describe --bootstrap-server kafka:9092 --group eth'
+```

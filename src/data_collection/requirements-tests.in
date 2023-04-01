@@ -1,4 +1,5 @@
 asyncpg
+fakeredis
 pydantic
 pytest
 pytest-asyncio

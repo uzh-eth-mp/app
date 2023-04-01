@@ -26,9 +26,20 @@ async def main(args: argparse.Namespace):
     if args.mode == DataCollectionMode.CONSUMER:
         # Load the ABIs
         contract_abi = ContractABI.parse_file(args.abi_file)
+        consumer_tasks = []
         # Consumer
-        async with DataConsumer(config, contract_abi) as data_consumer:
-            await data_consumer.start_consuming_data()
+        async def start_consumer():
+            async with DataConsumer(config, contract_abi) as data_consumer:
+                await data_consumer.start_consuming_data()
+
+        # Start N_CONSUMER_INSTANCES asyncio tasks
+        for _ in range(config.number_of_consumer_tasks):
+            # TODO: # of consumers can be increased by using a asyncpg connection_pool across
+            # all the tasks within this process
+            consumer_tasks.append(asyncio.create_task(start_consumer()))
+        result = await asyncio.gather(*consumer_tasks)
+        # Return erroneous exit code if needed
+        exit_code = int(any(result))
     elif args.mode == DataCollectionMode.PRODUCER:
         # Producer
         async with DataProducer(config) as data_producer:

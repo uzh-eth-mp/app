@@ -23,13 +23,13 @@ class DataProducer(DataCollector):
     """
 
     # The maximum amount of allowed transactions in a single kafka topic
-    MAX_ALLOWED_TRANSACTIONS = 50000
+    MAX_ALLOWED_TRANSACTIONS = 200000
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
         self.config = config
         self.kafka_manager: KafkaProducerManager = KafkaProducerManager(
-            kafka_url=config.kafka_url, topic=config.kafka_topic
+            kafka_url=config.kafka_url, redis_url=config.redis_url, topic=config.kafka_topic
         )
 
     async def _start_logfilter_producer(self, data_collection_cfg: DataCollectionConfig):
@@ -89,14 +89,24 @@ class DataProducer(DataCollector):
 
         # Start producing transactions
         try:
+            # Keep track of how many times the producer has 'stalled'
+            stall_counter = 0
             while should_continue(i_block):
                 # Verify that there is space in the Kafka topic for more transaction hashes
-                if n_txs := await self.redis_manager.get_n_transactions():
+                if n_txs := await self.kafka_manager.redis_manager.get_n_transactions():
                     if n_txs > self.MAX_ALLOWED_TRANSACTIONS:
+                        if stall_counter % 60 == 0 and stall_counter:
+                            log.info(f"Producing stalled for {stall_counter} seconds.")
+                        stall_counter += 1
                         # Sleep if there are many transactions in the kafka topic
                         await asyncio.sleep(1)
                         # Try again after sleeping
                         continue
+                    # Reset the stall counter
+                    if stall_counter >= 60:
+                        log.info(f"Continuing producing after stalling for {stall_counter} seconds.")
+                    stall_counter = 0
+
                 # query the node for current block data
                 block_data: BlockData = await self.node_connector.get_block_data(
                     i_block
@@ -106,23 +116,21 @@ class DataProducer(DataCollector):
                 # FIXME: block reward
                 await self._insert_block(block_data=block_data, block_reward=0)
 
-                # Send all the transaction hashes to Kafka so consumers can process them
-                await self.kafka_manager.send_batch(msgs=block_data.transactions)
+                if block_data.transactions:
+                    # Send all the transaction hashes to Kafka so consumers can process them
+                    await self.kafka_manager.send_batch(msgs=block_data.transactions)
+                else:
+                    log.debug(f"Skipped sending block #{block_data.block_number} to kafka as it contains no transactions.")
 
                 # Update the processed block variable with current block index
                 i_processed_block = i_block
 
-                # Increment the number of messages in a topic by the number of
-                # transactions hashes in this block
-                await self.redis_manager.incrby_n_transactions(
-                    incr_by=len(block_data.transactions)
-                )
-
                 # Continue from the next block
                 i_block += 1
 
-                if (i_block - start_block) % 100 == 0:
-                    log.info(f"Current block: #{i_block}")
+                # Log a status message every 1k blocks
+                if (i_block - start_block) % 1000 == 0:
+                    log.info(f"Current block: #{i_block} | n_txs in topic {n_txs}")
         except BlockNotFound:
             # OK, BlockNotFound exception is raised when the latest block is reached
             pass
@@ -130,7 +138,8 @@ class DataProducer(DataCollector):
             if i_processed_block is None:
                 log.info("Finished before collecting any block data!")
             else:
-                log.info(f"Finished at block #{i_processed_block}")
+                n_txs = await self.kafka_manager.redis_manager.get_n_transactions()
+                log.info(f"Finished at block #{i_processed_block} | n_txs {n_txs}")
 
 
     async def _start_producer_task(self, data_collection_cfg: DataCollectionConfig) -> asyncio.Task:
@@ -173,7 +182,7 @@ class DataProducer(DataCollector):
         for (return_value, cfg) in zip(result, data_collection_configs):
             if isinstance(return_value, Exception):
                 log.error(
-                    f"Data collection for \"producer_type\"=\"{cfg.producer_type}\" with {len(cfg.contracts)} contracts resulted in an exception:",
+                    f"Data collection for producer_type=\"{cfg.producer_type}\" with {len(cfg.contracts)} contracts resulted in an exception:",
                     exc_info=(type(return_value), return_value, return_value.__traceback__)
                 )
                 exit_code = 1

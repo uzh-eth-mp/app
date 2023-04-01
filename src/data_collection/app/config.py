@@ -5,6 +5,7 @@ from pydantic import (
     BaseModel,
     BaseSettings,
     conlist,
+    Field,
     root_validator,
     PostgresDsn,
 )
@@ -83,20 +84,24 @@ class DataCollectionConfig(BaseSettings):
 
 
 class Config(BaseSettings):
-    """Store an app configuration file"""
+    """App configuration file"""
 
-    # The blockchain node RPC API URL
     node_url: AnyUrl
+    """The blockchain node RPC API URL"""
 
-    # PostgreSQL
     db_dsn: PostgresDsn
+    """DSN for PostgreSQL"""
 
-    # Redis URL
     redis_url: AnyUrl
+    """URL for Redis (needs to have a 'redis://' scheme)"""
 
-    # Kafka
     kafka_url: str
+    """URL for Kafka"""
     kafka_topic: str
+    """The Kafka topic, also used in Redis and the database to distinguish tables."""
 
-    # Constrained list of datacollection configurations
     data_collection: conlist(DataCollectionConfig, min_items=1)
+    """(constrained) list of datacollection configurations"""
+
+    number_of_consumer_tasks: int = Field(..., env="N_CONSUMER_INSTANCES")
+    """The number of consumer (`DataConsumer`) tasks that will be started"""

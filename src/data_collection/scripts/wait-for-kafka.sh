@@ -5,7 +5,7 @@ MAX_RETRIES=40
 
 echo "Waiting for Kafka container to start...";
 
-# Wait for PostgreSQL to start
+# Wait for Kafka to start
 while ! curl http://kafka:9092/ 2>&1 | grep '52' >/dev/null;
 do
   sleep 1;
