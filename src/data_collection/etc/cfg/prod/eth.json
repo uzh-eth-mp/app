@@ -1,14 +1,14 @@
 {
     "node_url": "http://host.docker.internal:8547",
-    "db_dsn": "postgres://user:postgres@db:5432/db",
+    "db_dsn": "postgres://user:postgres@db_pool:6432/db",
     "redis_url": "redis://redis",
     "kafka_url": "kafka:9092",
     "kafka_topic": "eth",
     "data_collection": [
         {
             "producer_type": "full",
-            "start_block": 14634748,
-            "end_block": 14654748,
+            "start_block": 14635807,
+            "end_block": 14645807,
             "contracts": [
                 {
                     "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",

@@ -32,9 +32,14 @@ async def main(args: argparse.Namespace):
             async with DataConsumer(config, contract_abi) as data_consumer:
                 await data_consumer.start_consuming_data()
 
-        for _ in range(5):
+        # Start N_CONSUMER_INSTANCES asyncio tasks
+        for _ in range(config.number_of_consumer_tasks):
+            # TODO: # of consumers can be increased by using a asyncpg connection_pool across
+            # all the tasks within this process
             consumer_tasks.append(asyncio.create_task(start_consumer()))
-        await asyncio.gather(*consumer_tasks)
+        result = await asyncio.gather(*consumer_tasks)
+        # Return erroneous exit code if needed
+        exit_code = int(any(result))
     elif args.mode == DataCollectionMode.PRODUCER:
         # Producer
         async with DataProducer(config) as data_producer:

@@ -209,14 +209,14 @@ class DataConsumer(DataCollector):
         contract_address = tx_data.to_address or tx_receipt_data.contract_address
         contract_category = self.contract_parser.get_contract_category(contract_address)
 
-        log.debug(f"Received tx {tx_data.transaction_hash} in #{tx_data.block_number}")
+        # log.debug(f"Received tx {tx_data.transaction_hash} in #{tx_data.block_number}")
 
         # Check if we should process this transaction or skip it
         if contract_category is None:
             # Skip this transaction because it doesn't interact with
             # a known contract
             return
-        log.debug(f"Handling tx {tx_data.transaction_hash} in #{tx_data.block_number}")
+        # log.debug(f"Handling tx {tx_data.transaction_hash} in #{tx_data.block_number}")
 
         # Check if transaction is creating a contract or calling it
         contract = self.contract_parser.get_contract(
@@ -240,11 +240,14 @@ class DataConsumer(DataCollector):
             w3_block_hash=w3_tx_data["blockHash"],
         )
 
-    async def start_consuming_data(self):
+    async def start_consuming_data(self) -> int:
         """
         Start an infinite loop of consuming data from a given topic.
+
+        Returns:
+            exit_code: 0 if no exceptions encountered during data collection, 1 otherwise
         """
-        tx_hash = None
+        exit_code = 0
         try:
             # Start consuming events from a Kafka topic and
             # handle them in _on_kafka_event
@@ -256,9 +259,15 @@ class DataConsumer(DataCollector):
             log.info(
                 f"Finished processing topic '{self.kafka_manager.topic}'. Shutting down..."
             )
+            # exit_code doesn't change, 0 = success
         except Exception as e:
             # Global handler for any exception, logs the transaction where this occurred
-            # and reraises the exception.
+            # and returns exit code 1
             tx_hash = self._tx_hash or "first transaction"
-            log.error(f"Caught exception during handling of {tx_hash}")
-            raise e
+            log.error(
+                f"Caught exception during handling of {tx_hash}",
+                exc_info=(type(e), e, e.__traceback__),
+            )
+            exit_code = 1
+        finally:
+            return exit_code

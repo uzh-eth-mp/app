@@ -51,7 +51,7 @@ To create an `.env` file you can copy the provided [`.env.default`](.env.default
 | ENV_VAR | Description | Default value |
 |---|---|---|
 | `PROJECT_NAME` | Prefix for docker network and container names | "bdc" |
-| `DATA_DIR` | Destination directory for the data (PostgreSQL, Kafka, Zookeeper) | "/local/scratch/bdc/data" |
+| `DATA_DIR` | Persistent data destination directory (PostgreSQL, Kafka, Zookeeper) | "./data" |
 | `LOG_LEVEL` | logging level of consumers and producers | "INFO" |
 | `N_CONSUMERS` | number of consumers to use for each blockchain | 2 |
 | `DATA_UID` | Data directory owner ID (can be left blank) | `id -u` |
@@ -127,8 +127,13 @@ $ bash scripts/tests/run-tests-db.sh
   1. configure `.env`
   2. configure `src/data_collection/etc/cfg/prod/<blockchain>.json` (depending on your blockchain)
   3. run `bash scripts/run-prod-<blockchain>.sh`
-* Does the run script **stop** / **cleanup** all the containers after the configured data collection is finished?
-  * Yes. The consumers wait 2 minutes after the last received event before shutting themselves down. Producer closes immediately after the collection process has been finished. Other containers close when consumers and producers are down.
+* How do I stop the process?
+  * Use `KeyboardInterrupt` (`Ctrl+C`). Or `kill` if used in the bg.
+  * After stopping, all the containers are stopped, but volume data is preserved.
+* Is it possible to start multiple of these at the same time?
+  * Yes, simply change the data directory (`DATA_DIR`) and the prefix of the containers (`PROJECT_NAME`) in the `.env` file.
+* Does the run script **stop** / **cleanup** all the containers when the configured data collection is finished?
+  * Yes. The consumers wait 5 minutes after the last received event before shutting themselves down. Producer closes immediately after the collection process has been finished. Other containers close when consumers and producers are down.
 * **How many topics and consumers** should I use?
   * Depends on the machine you're running on, but generally the more consumers and topics, the faster the processing.
 * Why does the production environment add an **Erigon proxy service** instead of just using `host.docker.internal` within the consumers / producers?
@@ -138,4 +143,4 @@ $ bash scripts/tests/run-tests-db.sh
 * Why am I seeing `Group Coordinator Request failed: [Error 15] CoordinatorNotAvailableError` in the logs?
   * Another Kafka internal log that can be ignored, the coordinator is eventually selected and this error is irrelevant.
 * Why am I seeing `Heartbeat failed for group eth because it is rebalancing` in the logs?
-  * Another Kafka internal log that can be ignored.
+  * Another Kafka internal log that can be ignored. Happens when the number of consumers changes because kafka has to rebalance the partitions for a topic.

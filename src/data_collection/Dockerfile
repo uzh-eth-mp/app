@@ -1,6 +1,7 @@
 FROM python:3.11
 
 ENV LOG_LEVEL INFO
+ENV N_CONSUMER_INSTANCES 5
 
 # Set working directory
 WORKDIR /app

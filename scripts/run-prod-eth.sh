@@ -5,6 +5,8 @@ source scripts/util/prepare-env.sh
 source scripts/util/compose-cleanup.sh
 source scripts/util/prepare-data-dir.sh
 
+echo "Building containers..."
+
 # Start the containers in detached mode
 docker compose \
     -p $PROJECT_NAME \
@@ -16,7 +18,9 @@ docker compose \
     --remove-orphans \
     -d
 
-echo "Adding containers to ${PROJECT_NAME}_default network"
+echo "Data collection starting..."
+
+echo "Adding containers to network '${PROJECT_NAME}_default'"
 docker network connect ${PROJECT_NAME}_default ${PROJECT_NAME}-data_producer_eth-1
 
 # Connect producer and each consumer (currently on the default 'bridge' network) to the compose network

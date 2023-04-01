@@ -9,10 +9,26 @@ services:
       args:
         UID: "${DATA_UID}"
         GID: "${DATA_GID}"
+    command:
+      - postgres
+      # the following lines tell pg server to adjust the TCP keepalive settings explicitly
+      # instead of reading from the container default, which is likely idle=7200 (seconds).
+      # The default value in the container is usually much larger than docker-swarm's IPVS default,
+      # which is 900. (And this is the culprit of the connection will be closed after ~15mins)
+      - -c
+      - 'tcp_keepalives_idle=600'
+      - -c
+      - 'tcp_keepalives_interval=30'
+      - -c
+      - 'tcp_keepalives_count=10'
+      - -c
+      - 'max_connections=${POSTGRES_MAX_CONNECTIONS}'
+      - -c
+      - 'listen_addresses=*'
     group_add:
       - ${DATA_GID}
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "${POSTGRES_HOST_PORT}:${POSTGRES_CONTAINER_PORT}"
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -23,6 +39,20 @@ services:
     # Persistent storage
     volumes:
       - ${DATA_DIR}/postgresql-data:/var/lib/postgresql/data
+
+  db_pool:
+    image: bitnami/pgbouncer
+    environment:
+      POSTGRESQL_USERNAME: ${POSTGRES_USER}
+      POSTGRESQL_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRESQL_DATABASE: ${POSTGRES_DB}
+      POSTGRESQL_HOST: db
+      POSTGRESQL_PORT: ${POSTGRES_CONTAINER_PORT}
+      PGBOUNCER_PORT: ${POSTGRES_POOL_PORT}
+      PGBOUNCER_DATABASE: ${POSTGRES_DB}
+      PGBOUNCER_MAX_DB_CONNECTIONS: ${POSTGRES_MAX_CONNECTIONS}
+      PGBOUNCER_DEFAULT_POOL_SIZE: ${POSTGRES_POOL_SIZE}    # Total amount of connections to db/user database
+      PGBOUNCER_MAX_CLIENT_CONN: ${POSTGRES_POOL_SIZE}      # Total amount of connections to postgres
 
   # Kafka (zookeeper)
   zookeeper:
@@ -116,6 +146,7 @@ services:
       - db
     environment:
       - LOG_LEVEL=${LOG_LEVEL}
+      - N_CONSUMER_INSTANCES=${N_CONSUMER_INSTANCES}
 
   data_consumer_etc:
     build:
@@ -127,6 +158,7 @@ services:
       - db
     environment:
       - LOG_LEVEL=${LOG_LEVEL}
+      - N_CONSUMER_INSTANCES=${N_CONSUMER_INSTANCES}
 
   data_consumer_bsc:
     build:
@@ -138,6 +170,7 @@ services:
       - db
     environment:
       - LOG_LEVEL=${LOG_LEVEL}
+      - N_CONSUMER_INSTANCES=${N_CONSUMER_INSTANCES}
 
 
 # Kafka related config
