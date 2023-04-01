@@ -32,9 +32,14 @@ Consumers are blockchain agnostic (EVM compatible), thus only require a configur
 ## Running the stack
 The application stack is managed by [docker compose](https://docs.docker.com/compose/#compose-v2-and-the-new-docker-compose-command). Each compose configuration file targets a different environment (dev, prod, tests).
 
-> App has been tested on `Docker Compose version v2.14.0`.
+> App has been tested on `Docker Compose version v2.14.0`. In case of using it on abacus-3, you will need to [install the compose plugin manually.](https://docs.docker.com/compose/install/linux/#install-the-plugin-manually).
 
-Compose files should be started with run scripts that can be found in the `scripts/` directory. For long running tasks, you can start the run scripts in the background and keep the logs with:
+Compose files should be started with run scripts that can be found in the `scripts/` directory. For this you also need to have an `.env` file present. If you are cloning this directory, use `cp .env.default .env` and check all the env vars that you want to edit. Then:
+```
+$ bash scripts/run-prod-eth.sh
+```
+
+For long running tasks, you can start the run scripts in the background and keep the logs with:
 ```
 $ bash scripts/run-prod-eth.sh > prod-eth.log 2>&1 &
 ```
@@ -120,11 +125,11 @@ $ bash scripts/tests/run-tests-db.sh
 ---
 ## TLDR / FAQ
 * How do I **start** this *locally* on my pc?
-  1. configure `.env`
+  1. create and confgure an `.env` file. You can copy the default one as a starter `cp .env.default .env`.
   2. configure `src/data_collection/etc/cfg/dev/<blockchain>.json` (depending on your blockchain)
   3. run `bash scripts/run-dev-<blockchain>.sh`
 * How do I **start** this on *Abacus-3*?
-  1. configure `.env`
+  1. create and confgure an `.env` file. You can copy the default one as a starter `cp .env.default .env`.
   2. configure `src/data_collection/etc/cfg/prod/<blockchain>.json` (depending on your blockchain)
   3. run `bash scripts/run-prod-<blockchain>.sh`
 * How do I stop the process?
