@@ -181,12 +181,12 @@ class DatabaseManager:
                 topics,
                 )
         except asyncpg.exceptions.StringDataRightTruncationError as e:
-            log.error("transaction_hash: " + transaction_hash + \
-                      "address: " + address + \
-                      "log_index: " + log_index + \
-                      "data: " + data + \
-                      "removed: " + removed + \
-                      "topics: " + topics
+            log.error("transaction_hash: " + str(transaction_hash) + \
+                      "address: " + str(address) + \
+                      "log_index: " + str(log_index) + \
+                      "data: " + str(data) + \
+                      "removed: " + str(removed) + \
+                      "topics: " + str(topics)
                       )
             raise e
 
