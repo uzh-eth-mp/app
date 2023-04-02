@@ -98,5 +98,5 @@ class NodeConnector:
         data = await self.w3.provider.make_request(
             "trace_replayTransaction", [tx_hash, ["trace"]]
         )
-        internal_tx_data = InternalTransactionData(**data["result"])
+        internal_tx_data = InternalTransactionData(**data)
         return internal_tx_data
