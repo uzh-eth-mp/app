@@ -1,6 +1,5 @@
 name: "Mypy"
 on:
-  pull_request: {}
   push:
       branches-ignore:
         - 'main'
@@ -15,12 +14,10 @@ jobs:
       # To use this repository's private action,
       # you must check out the repository
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Run Mypy
-        uses: jashparekh/mypy-action@v2
+        uses: actions/checkout@v3
+      - name: Run Mypy checks
+        uses: actions/setup-python@v4
         with:
-          path: '.'
-          mypy_version: '0.910'
-          #mypy_flags: '--verbose'
-          #mypy_config_file: 'mypy.ini'
-          requirement_files: 'src/data_collection/requirements.txt src/data_collection/requirements-tests.txt'
+          python-version: '3.11'
+      - run: pip install mypy==1.1.1
+      - run: mypy --strict $(git ls-files '*.py')
