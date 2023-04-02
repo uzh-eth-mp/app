@@ -6,7 +6,8 @@ on:
     branches-ignore:
       - 'main'
     paths:
-      - .github/workflows/test-database.yaml
+      - '.github/workflows/test-database.yaml'
+      - 'scripts/tests/**'
       # SQL
       - 'src/db/**'
       # Python
@@ -23,13 +24,24 @@ env:
   GHCR: ghcr.io
 
 jobs:
-  test:
-    name: Run tests
+  test_postgres:
+    name: PostgreSQL integration tests
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Run docker-compose.tests.yml
+      - name: Run docker-compose.tests.yml test_db
         run: docker compose -f docker-compose.tests.yml up test_db --build --abort-on-container-exit
+        shell: bash
+
+  test_redis:
+    name: Redis integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: Run redis tests
+        run: bash scripts/tests/run-tests-redis.sh
         shell: bash

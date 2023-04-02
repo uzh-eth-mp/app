@@ -1,6 +1,6 @@
 from typing import Optional
 
-import aioredis
+from redis import asyncio as aioredis
 
 from app import init_logger
 
@@ -22,19 +22,29 @@ class RedisManager:
         """
         # The redis database instance
         self.redis = aioredis.from_url(redis_url, decode_responses=True)
-        # The key used for storing the number of transactions in Redis
-        self.key = f"{topic}_n_transactions"
+        # The key used for storing the number of transactions per partition in Redis
+        self._sorted_set_key = f"{topic}_n_transactions"
 
-    async def get_n_transactions(self) -> Optional[int]:
-        """Return the number of unprocessed transactions."""
-        if res := await self.redis.get(self.key):
-            return int(res)
+    async def get_n_transactions(self) -> int:
+        """Return the total number of unprocessed transactions from all partitions"""
+        if sorted_partitions := await self.redis.zrange(
+            name=self._sorted_set_key, start=0, end=-1, withscores=True
+        ):
+            return sum([int(pair[1]) for pair in sorted_partitions])
+        return 0
+
+    async def get_lowest_score_partition(self) -> Optional[int]:
+        """Return the name of the partition with the lowest score"""
+        if sorted_partitions := await self.redis.zrange(
+            name=self._sorted_set_key, start=0, end=-1
+        ):
+            return int(sorted_partitions[0])
         return None
 
-    async def incrby_n_transactions(self, incr_by: int = 1):
-        """Increment the number of transactions by the given argument"""
-        await self.redis.incrby(self.key, incr_by)
+    async def decr_transactions(self, partition: int):
+        """Decrement the number of transactions by one for the given partition"""
+        await self.incrby_n_transactions(partition=partition, incr_by=-1)
 
-    async def decr_n_transactions(self):
-        """Decrement the number of transactions by one"""
-        await self.redis.decr(self.key)
+    async def incrby_n_transactions(self, partition: int, incr_by: int = 1):
+        """Increment the number of transactions for a given partition"""
+        await self.redis.zincrby(self._sorted_set_key, incr_by, partition)

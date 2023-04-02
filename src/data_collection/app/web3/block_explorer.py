@@ -10,12 +10,18 @@ ExplorationBounds = namedtuple("ExplorationBounds", ["start_block", "end_block"]
 
 class BlockExplorer:
     """Decide the start and end block numbers of the data collection process"""
+
     # Start from the genesis block by default
     DEFAULT_START_BLOCK = 0
     # End with the latest block by default
     DEFAULT_END_BLOCK = None
 
-    def __init__(self, data_collection_cfg: DataCollectionConfig, db: DatabaseManager, w3: NodeConnector) -> None:
+    def __init__(
+        self,
+        data_collection_cfg: DataCollectionConfig,
+        db: DatabaseManager,
+        w3: NodeConnector,
+    ) -> None:
         self.cfg_start_block = data_collection_cfg.start_block
         self.cfg_end_block = data_collection_cfg.end_block
         self.db = db
@@ -63,7 +69,4 @@ class BlockExplorer:
         if self.cfg_end_block is not None:
             end_block = self.cfg_end_block
 
-        return ExplorationBounds(
-            start_block=start_block,
-            end_block=end_block
-        )
+        return ExplorationBounds(start_block=start_block, end_block=end_block)

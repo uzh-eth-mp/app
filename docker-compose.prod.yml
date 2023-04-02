@@ -1,20 +1,44 @@
 version: "3.9"
 services:
-  # Different configuration files for data producers
+  # Updated network settings for data producers and consumers
   data_producer_eth:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/eth.json", "--mode", "producer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/eth.json --mode producer"
+    network_mode: "bridge"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   data_producer_etc:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/etc.json", "--mode", "producer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/etc.json --mode producer"
+    network_mode: "bridge"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   data_producer_bsc:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/bsc.json", "--mode", "producer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/bsc.json --mode producer"
+    network_mode: "bridge"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   data_consumer_eth:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/eth.json", "--mode", "consumer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/eth.json --mode consumer"
+    network_mode: "bridge"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      replicas: ${N_CONSUMERS}
 
   data_consumer_etc:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/etc.json", "--mode", "consumer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/etc.json --mode consumer"
+    network_mode: "bridge"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      replicas: ${N_CONSUMERS}
 
   data_consumer_bsc:
-    command: [ "python3", "-m", "app.main", "--cfg", "etc/cfg/prod/bsc.json", "--mode", "consumer" ]
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/bsc.json --mode consumer"
+    network_mode: "bridge"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      replicas: ${N_CONSUMERS}
