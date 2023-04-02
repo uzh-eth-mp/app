@@ -1,12 +1,12 @@
 #!/bin/bash
 
 set -e
-
-# Cleanup
-trap "docker compose down --volumes --remove-orphans" EXIT
-
-# Env vars
-source scripts/prepare-env.sh
+source scripts/util/prepare-env.sh
+source scripts/util/compose-cleanup.sh
 
 # Start the db
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build db
+docker compose \
+    -p $PROJECT_NAME \
+    -f docker-compose.yml \
+    -f docker-compose.prod.yml \
+    up --build db
