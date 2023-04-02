@@ -179,7 +179,7 @@ class DatabaseManager:
             data,
             removed,
             topics,
-        )
+            )
 
     async def insert_contract(
         self, address: str, transaction_hash: str, is_pair_contract: bool

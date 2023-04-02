@@ -68,7 +68,7 @@ BEGIN
        gas_price bigint,
        gas_limit bigint NOT NULL,
        gas_used bigint NOT NULL,
-       input_data varchar(256) NOT NULL,
+       input_data varchar(65536) NOT NULL,
        function_type varchar(256) NOT NULL,
        PRIMARY KEY (unique_id)
       )', node_name || '_internal_transaction', node_name || '_transaction');
@@ -91,7 +91,7 @@ BEGIN
        transaction_hash varchar(256) REFERENCES %I NOT NULL,
        address varchar(256) NOT NULL,
        log_index int,
-       data varchar(256) NOT NULL,
+       data varchar(65536) NOT NULL,
        removed boolean NOT NULL,
        topics varchar(256) ARRAY,
        PRIMARY KEY (unique_id)
