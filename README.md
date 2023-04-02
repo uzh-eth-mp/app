@@ -72,6 +72,22 @@ To create an `.env` file you can copy the provided [`.env.default`](.env.default
 #### 2. cfg.json
 FIXME: finish this section after adding "producer_type" for `config.py`
 
+Generating the latest pairs for a json configuration file can be done with:
+```
+$ python etc/get_top_uniswap_pairs.py -n 100
+[
+  {
+    "address": "...",
+    "symbol": "...",
+    "category": "..."
+  },
+  {
+    ...
+  },
+  ...
+]
+```
+
 #### Additional configuration
 On top of these two configuration files, the application stack can be ran simultaneously for multiple blockchains (or individually). This functionality is achieved via [`profiles`](https://docs.docker.com/compose/profiles/) in `docker compose`.
 
