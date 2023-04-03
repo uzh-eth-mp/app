@@ -137,7 +137,7 @@ urllib3==1.26.12
     # via requests
 uvloop==0.17.0
     # via -r src/data_collection/requirements.in
-web3==6.0.0b10
+web3==6.0.0b5
     # via -r src/data_collection/requirements.in
 websockets==10.3
     # via web3

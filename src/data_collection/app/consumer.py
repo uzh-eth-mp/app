@@ -144,6 +144,9 @@ class DataConsumer(DataCollector):
         w3_block_hash: HexBytes,
     ):
         """Insert transaction events (supply changes) into the database"""
+        if contract.address.lower() == "0xB20bd5D04BE54f870D5C0d3cA85d82b34B836405".lower():
+            log.error("Weeeeeeeeeeeeeeeow")
+            log.error(category)
         # Supply Change = mints - burns
         amount_changed = 0
         pair_amount0_changed = 0
@@ -152,7 +155,8 @@ class DataConsumer(DataCollector):
             category, contract, tx_receipt, w3_block_hash
         ):
             # FIXME: Remove log?
-            log.debug(f"Caught event ({event.__class__.__name__})")
+            if contract.address.lower() == "0xB20bd5D04BE54f870D5C0d3cA85d82b34B836405".lower():
+                log.error(f"Caught event ({event.__class__.__name__})")
             if isinstance(event, BurnFungibleEvent):
                 amount_changed -= event.value
             elif isinstance(event, MintFungibleEvent):

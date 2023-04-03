@@ -2,6 +2,7 @@ from hexbytes import HexBytes
 from web3.contract import Contract
 from web3.types import TxReceipt
 from app.model.contract import ContractCategory
+from app import init_logger
 from . import erc20, erc721, uniswap_pair, uniswapv2_factory, decorator
 from typing import (
     Generator,
@@ -10,6 +11,7 @@ from typing import (
 )
 from .types import ContractEvent
 
+logger = init_logger("EVENT_EXTRACTOR")
 
 def get_transaction_events(
     contract_category: ContractCategory,
@@ -20,7 +22,12 @@ def get_transaction_events(
     """
     It returns all the contract events found in the given contract with the given receipt.
     """
-    if not isinstance(contract, Contract):
-        return None
+    logger.error(f"Starting event extractor for {contract_category}")
+    # FIXME: types are broken, but we ignore mypy
+    #if not isinstance(contract, Contract):
+    #    logger.error(f"{contract} is not of type Contract!")
+    #    return None
+    logger.error("Continue event extractor")
+    logger.error(decorator.__event_mappers[contract_category])
     for mapper in decorator.__event_mappers[contract_category]:
         yield from mapper(contract, receipt, block_hash)

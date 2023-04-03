@@ -4,9 +4,9 @@
     "redis_url": "redis://redis",
     "kafka_url": "kafka:9092",
     "kafka_topic": "eth",
-    "data_collection": {
-        "start_block": 4634748,
-        "end_block": 4634849,
+0    "data_collection": {
+        "start_block": 16658163,
+        "end_block": 16658164,
         "contracts": [
             {
                 "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",

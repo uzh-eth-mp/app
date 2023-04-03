@@ -1,6 +1,7 @@
 from hexbytes import HexBytes
 from web3.contract import Contract
 from web3.types import TxReceipt
+from app import init_logger
 
 from app.model.contract import ContractCategory
 from .decorator import _event_mapper
@@ -12,6 +13,8 @@ from app.web3.transaction_events.types import (
     SwapPairEvent,
     ContractEvent,
 )
+
+log = init_logger(__name__)
 
 
 @_event_mapper(ContractCategory.UNI_SWAP_V2_PAIR)
@@ -55,6 +58,7 @@ def _swap(
     contract: Contract, receipt: TxReceipt, block_hash: HexBytes
 ) -> Generator[ContractEvent, None, None]:
     # https://github.com/Uniswap/v2-core/blob/master/contracts/UniswapV2Pair.sol#L51
+    log.error("Extracting swaps!")
     for eventLog in contract.events.Swap().processReceipt(receipt):
         sender = eventLog["args"]["sender"]
         amount_0_in = eventLog["args"]["amount0In"]
@@ -62,6 +66,7 @@ def _swap(
         amount_0_out = eventLog["args"]["amount0Out"]
         amount_1_out = eventLog["args"]["amount1Out"]
         to = eventLog["args"]["to"]
+        log.error("Swap found!")
         yield SwapPairEvent(
             contract_address=receipt["contractAddress"],
             src=sender,
