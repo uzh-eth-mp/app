@@ -166,29 +166,20 @@ class DatabaseManager:
         """
 
         table = f"{self.node_name}_transaction_logs"
-        try:
-            await self.db.execute(
-                f"""
-                INSERT INTO {table} (transaction_hash, address, log_index, data, removed, topics)
-                VALUES ($1, $2, $3,$4, $5, $6)
-                ON CONFLICT (unique_id) DO NOTHING;
-                """,
-                transaction_hash,
-                address,
-                log_index,
-                data,
-                removed,
-                topics,
-                )
-        except asyncpg.exceptions.StringDataRightTruncationError as e:
-            log.error("transaction_hash: " + str(transaction_hash) + \
-                      "address: " + str(address) + \
-                      "log_index: " + str(log_index) + \
-                      "data: " + str(data) + \
-                      "removed: " + str(removed) + \
-                      "topics: " + str(topics)
-                      )
-            raise e
+
+        await self.db.execute(
+            f"""
+            INSERT INTO {table} (transaction_hash, address, log_index, data, removed, topics)
+            VALUES ($1, $2, $3,$4, $5, $6)
+            ON CONFLICT (unique_id) DO NOTHING;
+            """,
+            transaction_hash,
+            address,
+            log_index,
+            data,
+            removed,
+            topics,
+            )
 
     async def insert_contract(
         self, address: str, transaction_hash: str, is_pair_contract: bool
