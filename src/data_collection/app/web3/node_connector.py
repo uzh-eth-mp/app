@@ -5,6 +5,8 @@ from web3.eth import AsyncEth
 from web3.net import AsyncNet
 from web3.geth import Geth, AsyncGethTxPool, AsyncGethAdmin, AsyncGethPersonal
 from web3.types import TxData, TxReceipt
+from app import init_logger
+
 
 from app.model.block import BlockData
 from app.model.transaction import (
@@ -12,6 +14,9 @@ from app.model.transaction import (
     TransactionReceiptData,
     InternalTransactionData,
 )
+
+log = init_logger(__name__)
+
 
 
 class NodeConnector:
@@ -98,5 +103,13 @@ class NodeConnector:
         data = await self.w3.provider.make_request(
             "trace_replayTransaction", [tx_hash, ["trace"]]
         )
-        internal_tx_data = InternalTransactionData(**data)
+        
+        data_dict = []
+        for i in data["result"]["trace"]:
+            tx_data = i["action"] | i["result"]
+            data_dict.append(tx_data)
+        
+        log.info(data_dict)
+
+        internal_tx_data = list(map(lambda data: InternalTransactionData(**data), data_dict))
         return internal_tx_data

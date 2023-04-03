@@ -68,7 +68,7 @@ BEGIN
        gas_limit bigint NOT NULL,
        gas_used bigint NOT NULL,
        input_data varchar(256) NOT NULL,
-       function_type varchar(256) NOT NULL,
+       call_type varchar(256) NOT NULL,
        PRIMARY KEY (unique_id)
       )', node_name || '_internal_transaction', node_name || '_transaction');
 END
