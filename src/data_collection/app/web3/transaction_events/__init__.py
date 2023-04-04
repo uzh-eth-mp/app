@@ -25,5 +25,6 @@ def get_transaction_events(
     # if not isinstance(contract, Contract):
     #    logger.error(f"{contract} is not of type Contract!")
     #    return None
+    #assert isinstance(contract, Contract)
     for mapper in decorator.__event_mappers[contract_category]:
         yield from mapper(contract, receipt, block_hash)

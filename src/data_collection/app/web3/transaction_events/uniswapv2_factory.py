@@ -7,14 +7,16 @@ from web3.types import TxReceipt
 from app.model.contract import ContractCategory
 from .decorator import _event_mapper
 from app.web3.transaction_events.types import ContractEvent, PairCreatedEvent
-
+# Discarding errors on filtered events is expected
+# https://github.com/oceanprotocol/ocean.py/issues/348#issuecomment-875128102
+from web3.logs import DISCARD
 
 @_event_mapper(ContractCategory.UNI_SWAP_V2_FACTORY)
 def _pair_created(
     contract: Contract, receipt: TxReceipt, block_hash: HexBytes
 ) -> Generator[ContractEvent, None, None]:
     # PairCreation -> https://github.com/Uniswap/v2-core/blob/master/contracts/UniswapV2Factory.sol#L13
-    for eventLog in contract.events.PairCreated().process_receipt(receipt):
+    for eventLog in contract.events.PairCreated().process_receipt(receipt, errors=DISCARD):
         if eventLog["event"] == "PairCreated":
             token0 = eventLog["args"]["token0"]
             token1 = eventLog["args"]["token1"]

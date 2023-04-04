@@ -3,7 +3,9 @@ from typing import Generator
 from hexbytes import HexBytes
 from web3.contract import Contract
 from web3.types import TxReceipt
-
+# Discarding errors on filtered events is expected
+# https://github.com/oceanprotocol/ocean.py/issues/348#issuecomment-875128102
+from web3.logs import DISCARD
 from app.model.contract import ContractCategory
 from .decorator import _event_mapper
 from app.web3.transaction_events.types import (
@@ -31,7 +33,7 @@ def _transaction(
     # there might be multiple emits in the contract, that's why we're looping, and use yield.
     # contract.events.Transfer() represents the transfer event defined in the ABI. when a receipt is passed, we get the
     # actual transfers contained in that receipt.
-    for eventLog in contract.events.Transfer().process_receipt(receipt):
+    for eventLog in contract.events.Transfer().process_receipt(receipt, errors=DISCARD):
         if eventLog["event"] == "Transfer":
             src = eventLog["args"]["from"]
             dst = eventLog["args"]["to"]
@@ -63,7 +65,7 @@ def _issue(
 ) -> Generator[ContractEvent, None, None]:
     # USDT -> https://etherscan.io/address/0xdac17f958d2ee523a2206206994597c13d831ec7#code#L444
     # Issue = USDT owner creates tokens.
-    for eventLog in contract.events.Issue().process_receipt(receipt):
+    for eventLog in contract.events.Issue().process_receipt(receipt, errors=DISCARD):
         val = eventLog["args"]["amount"]
         yield MintFungibleEvent(
             contract_address=contract.address,
@@ -78,7 +80,7 @@ def _redeem(
 ) -> Generator[ContractEvent, None, None]:
     # Redeem = USDT owner makes tokens dissapear - no null address. if they transfer to null address, still burn.
     # getOwner -> https://etherscan.io/address/0xdac17f958d2ee523a2206206994597c13d831ec7#code#L275
-    for eventLog in contract.events.Redeem().process_receipt(receipt):
+    for eventLog in contract.events.Redeem().process_receipt(receipt, errors=DISCARD):
         val = eventLog["args"]["amount"]
         yield BurnFungibleEvent(
             contract_address=contract.address,

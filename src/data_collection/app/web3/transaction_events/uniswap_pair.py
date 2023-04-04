@@ -1,6 +1,9 @@
 from hexbytes import HexBytes
 from web3.contract import Contract
 from web3.types import TxReceipt
+# Discarding errors on filtered events is expected
+# https://github.com/oceanprotocol/ocean.py/issues/348#issuecomment-875128102
+from web3.logs import DISCARD
 from app import init_logger
 
 from app.model.contract import ContractCategory
@@ -21,7 +24,7 @@ log = init_logger(__name__)
 def _mint(
     contract: Contract, receipt: TxReceipt, block_hash: HexBytes
 ) -> Generator[ContractEvent, None, None]:
-    for eventLog in contract.events.Mint().process_receipt(receipt):
+    for eventLog in contract.events.Mint().process_receipt(receipt, errors=DISCARD):
         sender = eventLog["args"]["sender"]
         amount0 = eventLog["args"]["amount0"]
         amount1 = eventLog["args"]["amount1"]
@@ -39,7 +42,7 @@ def _burn(
 ) -> Generator[ContractEvent, None, None]:
     # https://github.com/Uniswap/v2-core/blob/master/contracts/UniswapV2Pair.sol#L134
     # Burn of pairs in Uniswap -> taking back liquidity from the pool "to" their address or another one.
-    for eventLog in contract.events.Burn().process_receipt(receipt):
+    for eventLog in contract.events.Burn().process_receipt(receipt, errors=DISCARD):
         sender = eventLog["args"]["sender"]
         amount0 = eventLog["args"]["amount0"]
         amount1 = eventLog["args"]["amount1"]
@@ -58,7 +61,7 @@ def _swap(
     contract: Contract, receipt: TxReceipt, block_hash: HexBytes
 ) -> Generator[ContractEvent, None, None]:
     # https://github.com/Uniswap/v2-core/blob/master/contracts/UniswapV2Pair.sol#L51
-    for eventLog in contract.events.Swap().process_receipt(receipt):
+    for eventLog in contract.events.Swap().process_receipt(receipt, errors=DISCARD):
         sender = eventLog["args"]["sender"]
         amount_0_in = eventLog["args"]["amount0In"]
         amount_1_in = eventLog["args"]["amount1In"]
