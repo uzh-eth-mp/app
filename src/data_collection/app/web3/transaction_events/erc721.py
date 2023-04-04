@@ -23,7 +23,7 @@ def _transaction(
         "0x000000000000000000000000000000000000dead",
     }
 
-    for eventLog in contract.events.Transfer().processReceipt(receipt):
+    for eventLog in contract.events.Transfer().process_receipt(receipt):
         if eventLog["event"] == "Transfer":
             src = eventLog["args"]["from"]
             dst = eventLog["args"]["to"]
@@ -32,19 +32,19 @@ def _transaction(
                 pass
             if dst in burn_addresses:
                 yield BurnNonFungibleEvent(
-                    contract_address=receipt["contractAddress"],
+                    contract_address=contract.address,
                     account=src,
                     tokenId=token_id,
                 )
             elif src in burn_addresses:
                 yield MintNonFungibleEvent(
-                    contract_address=receipt["contractAddress"],
+                    contract_address=contract.address,
                     account=dst,
                     tokenId=token_id,
                 )
             else:
                 yield TransferNonFungibleEvent(
-                    contract_address=receipt["contractAddress"],
+                    contract_address=contract.address,
                     src=src,
                     dst=dst,
                     tokenId=token_id,

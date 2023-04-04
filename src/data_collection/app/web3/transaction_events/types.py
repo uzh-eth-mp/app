@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -7,7 +9,7 @@ class ContractEvent(BaseModel):
     interaction with a smart contract).
     """
 
-    contract_address: str
+    contract_address: Optional[str]
 
 
 class MintFungibleEvent(ContractEvent):

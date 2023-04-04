@@ -4,4 +4,4 @@ pip-tools
 pydantic
 redis
 uvloop
-web3==6.0.0b5
+web3==6.0.0b10

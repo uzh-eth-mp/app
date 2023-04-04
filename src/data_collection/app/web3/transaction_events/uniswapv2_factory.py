@@ -14,7 +14,7 @@ def _pair_created(
     contract: Contract, receipt: TxReceipt, block_hash: HexBytes
 ) -> Generator[ContractEvent, None, None]:
     # PairCreation -> https://github.com/Uniswap/v2-core/blob/master/contracts/UniswapV2Factory.sol#L13
-    for eventLog in contract.events.PairCreated().processReceipt(receipt):
+    for eventLog in contract.events.PairCreated().process_receipt(receipt):
         if eventLog["event"] == "PairCreated":
             token0 = eventLog["args"]["token0"]
             token1 = eventLog["args"]["token1"]
