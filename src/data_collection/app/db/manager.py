@@ -124,11 +124,10 @@ class DatabaseManager:
         from_address: str,
         to_address: str,
         value: float,
-        gas_price: float,
-        gas_limit: int,
+        gas_limit: float,
         gas_used: int,
         input_data: str,
-        function_type: str,
+        call_type: str,
     ):
         """
         Insert internal transaction data into <node>_internal_transaction table.
@@ -137,19 +136,18 @@ class DatabaseManager:
 
         await self.db.execute(
             f"""
-            INSERT INTO {table} (transaction_hash, from_address, to_address, value, gas_price, gas_limit, gas_used, input_data, function_type)
-            VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9)
+            INSERT INTO {table} (transaction_hash, from_address, to_address, value, gas_limit, gas_used, input_data, call_type)
+            VALUES ($1, $2, $3,$4, $5, $6,$7,$8)
             ON CONFLICT (unique_id) DO NOTHING;
             """,
             transaction_hash,
             from_address,
             to_address,
             value,
-            gas_price,
             gas_limit,
             gas_used,
             input_data,
-            function_type,
+            call_type,
         )
 
     async def insert_transaction_logs(

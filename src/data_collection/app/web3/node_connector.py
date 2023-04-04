@@ -96,7 +96,15 @@ class NodeConnector:
     async def get_block_reward(self, block_id="latest") -> dict[str, Any]:
         """Get block reward of a specific block"""
         data = await self.w3.provider.make_request("trace_block", [block_id])
-        return data["result"][0]["action"]["value"]
+
+        blockReward = 0
+        for i in data["result"]:
+            if i["type"] == "reward":
+                blockReward = i["action"]["value"]
+                break
+           
+        log.info(int(blockReward,16))        
+        return blockReward
 
     async def get_internal_transactions(self, tx_hash: str) -> InternalTransactionData:
         """Get internal transaction data by hash"""
@@ -109,7 +117,6 @@ class NodeConnector:
             tx_data = i["action"] | i["result"]
             data_dict.append(tx_data)
         
-        log.info(data_dict)
-
         internal_tx_data = list(map(lambda data: InternalTransactionData(**data), data_dict))
         return internal_tx_data
+

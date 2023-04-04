@@ -37,6 +37,11 @@ abi_json = json.load(open("src/data_collection/etc/contract_abi.json"))
 import asyncio
 from eth_hash.auto import keccak
 
+async def calculateGasFees(block_number:int):
+    trxHash = await w3.eth.get_block(block_number)
+    print(trxHash)
+
+
 
 async def has_function(contract_address, fn_signature: str) -> bool:
     """Check if a contract contains a function signature"""
@@ -85,4 +90,4 @@ async def test_make_request():
     print(data)
 
 
-asyncio.run(test_make_request())
+asyncio.run(calculateGasFees(14635910))

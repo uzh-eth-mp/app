@@ -122,7 +122,7 @@ def internal_transaction_data() -> dict[str, Any]:
         gas_limit=21000,
         gas_used=21000,
         input_data="xd",
-        function_type="CREATE",
+        call_type="CREATE",
     )
 
 
