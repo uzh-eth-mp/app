@@ -67,12 +67,8 @@ class ERC20Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
+        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        receipt.__getitem__ = (
-            lambda _, x: "0x000000000000000000000000000000000000AAAA"
-            if x == "contractAddress"
-            else None
-        )
         block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
@@ -114,12 +110,8 @@ class ERC20Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
+        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        receipt.__getitem__ = (
-            lambda _, x: "0x000000000000000000000000000000000000AAAA"
-            if x == "contractAddress"
-            else None
-        )
         block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
@@ -152,12 +144,8 @@ class ERC20Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
+        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        receipt.__getitem__ = (
-            lambda _, x: "0x000000000000000000000000000000000000AAAA"
-            if x == "contractAddress"
-            else None
-        )
         block_hash = MagicMock(spec=HexBytes)
         contract.functions = MagicMock(spec=ContractFunctions)
         getOwner_function = MagicMock(spec=ContractFunction)
@@ -205,12 +193,8 @@ class ERC20Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
+        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        receipt.__getitem__ = (
-            lambda _, x: "0x000000000000000000000000000000000000AAAA"
-            if x == "contractAddress"
-            else None
-        )
         block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
@@ -252,12 +236,8 @@ class ERC20Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
+        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        receipt.__getitem__ = (
-            lambda _, x: "0x000000000000000000000000000000000000AAAA"
-            if x == "contractAddress"
-            else None
-        )
         block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
@@ -290,12 +270,8 @@ class ERC20Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
+        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        receipt.__getitem__ = (
-            lambda _, x: "0x000000000000000000000000000000000000AAAA"
-            if x == "contractAddress"
-            else None
-        )
         block_hash = MagicMock(spec=HexBytes)
         contract.functions = MagicMock(spec=ContractFunctions)
         getOwner_function = MagicMock(spec=ContractFunction)
@@ -343,12 +319,8 @@ class ERC20Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
+        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        receipt.__getitem__ = (
-            lambda _, x: "0x000000000000000000000000000000000000AAAA"
-            if x == "contractAddress"
-            else None
-        )
         block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
@@ -387,12 +359,8 @@ class ERC721Tests(unittest.TestCase):
             ]
         )
         contract.events.Transfer = MagicMock(return_value=transfer_event)
+        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        receipt.__getitem__ = (
-            lambda _, x: "0x000000000000000000000000000000000000AAAA"
-            if x == "contractAddress"
-            else None
-        )
         block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
@@ -434,12 +402,8 @@ class ERC721Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
+        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        receipt.__getitem__ = (
-            lambda _, x: "0x000000000000000000000000000000000000AAAA"
-            if x == "contractAddress"
-            else None
-        )
         block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
@@ -481,12 +445,8 @@ class ERC721Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
+        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        receipt.__getitem__ = (
-            lambda _, x: "0x000000000000000000000000000000000000AAAA"
-            if x == "contractAddress"
-            else None
-        )
         block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
@@ -528,12 +488,8 @@ class ERC721Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
+        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        receipt.__getitem__ = (
-            lambda _, x: "0x000000000000000000000000000000000000AAAA"
-            if x == "contractAddress"
-            else None
-        )
         block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
@@ -575,12 +531,8 @@ class ERC721Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
+        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        receipt.__getitem__ = (
-            lambda _, x: "0x000000000000000000000000000000000000AAAA"
-            if x == "contractAddress"
-            else None
-        )
         block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
@@ -667,12 +619,8 @@ class UniSwapV2Tests(unittest.TestCase):
         Swap_event = MagicMock(spec=ContractEvent)
         Swap_event.process_receipt = MagicMock(return_value=[])
         contract.events.Swap = MagicMock(return_value=Swap_event)
+        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        receipt.__getitem__ = (
-            lambda _, x: "0x000000000000000000000000000000000000AAAA"
-            if x == "contractAddress"
-            else None
-        )
         block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
@@ -716,12 +664,8 @@ class UniSwapV2Tests(unittest.TestCase):
         Swap_event = MagicMock(spec=ContractEvent)
         Swap_event.process_receipt = MagicMock(return_value=[])
         contract.events.Swap = MagicMock(return_value=Swap_event)
+        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        receipt.__getitem__ = (
-            lambda _, x: "0x000000000000000000000000000000000000AAAA"
-            if x == "contractAddress"
-            else None
-        )
         block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
@@ -768,12 +712,8 @@ class UniSwapV2Tests(unittest.TestCase):
             ]
         )
         contract.events.Swap = MagicMock(return_value=Swap_event)
+        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        receipt.__getitem__ = (
-            lambda _, x: "0x000000000000000000000000000000000000AAAA"
-            if x == "contractAddress"
-            else None
-        )
         block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
