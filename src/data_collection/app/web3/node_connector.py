@@ -102,9 +102,8 @@ class NodeConnector:
             if i["type"] == "reward":
                 blockReward = i["action"]["value"]
                 break
-           
-        log.info(int(blockReward,16))        
-        return blockReward
+                
+        return int(blockReward,16)
 
     async def get_internal_transactions(self, tx_hash: str) -> InternalTransactionData:
         """Get internal transaction data by hash"""
@@ -114,8 +113,12 @@ class NodeConnector:
         
         data_dict = []
         for i in data["result"]["trace"]:
-            tx_data = i["action"] | i["result"]
-            data_dict.append(tx_data)
+            if i["result"] == None:
+                tx_data = i["action"]
+                data_dict.append(tx_data)
+            else:
+                tx_data = i["action"] | i["result"]
+                data_dict.append(tx_data)
         
         internal_tx_data = list(map(lambda data: InternalTransactionData(**data), data_dict))
         return internal_tx_data

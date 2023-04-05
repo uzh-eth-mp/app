@@ -46,7 +46,7 @@ class InternalTransactionData(Web3BaseModel):
     from_address: str = Field(..., alias="from")
     to_address: str = Field(..., alias="to")
     value: float
-    gas_used: float = Field(..., alias="gasUsed")
+    gas_used: Optional[float] = Field(None, alias="gasUsed")
     gas_limit: float = Field(..., alias="gas")
     input_data: str = Field(..., alias="input")
     call_type: str = Field(..., alias="callType")

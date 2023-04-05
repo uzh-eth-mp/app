@@ -66,7 +66,7 @@ BEGIN
        to_address varchar(256) NOT NULL,
        value numeric(78,18),
        gas_limit bigint NOT NULL,
-       gas_used bigint NOT NULL,
+       gas_used bigint,
        input_data varchar(256) NOT NULL,
        call_type varchar(256) NOT NULL,
        PRIMARY KEY (unique_id)

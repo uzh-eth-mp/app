@@ -38,10 +38,26 @@ import asyncio
 from eth_hash.auto import keccak
 
 async def calculateGasFees(block_number:int):
-    trxHash = await w3.eth.get_block(block_number)
-    print(trxHash)
+    block = await w3.eth.get_block(block_number)
+    print(block)
+    transactions = block.transactions
+    gasPrice = []
+    txfeeSum = 0
+    for i in transactions:
+        tx = await w3.eth.get_transaction(i)
+        gasPrice = tx.gasPrice
+        gasU = await w3.eth.get_transaction_receipt(i)
+        gasUsed = gasU.gasUsed
+        txfee = (gasPrice * gasUsed) / 1000000000000000000
+        txfeeSum+= txfee
+    
+    print(txfeeSum)
 
-
+async def calculateBurntFees(block_number:int):
+    block = await w3.eth.get_block(block_number)
+    burntFees = (block.gasUsed * block.baseFeePerGas) / 1000000000000000000
+    print(burntFees)
+  
 
 async def has_function(contract_address, fn_signature: str) -> bool:
     """Check if a contract contains a function signature"""
@@ -90,4 +106,4 @@ async def test_make_request():
     print(data)
 
 
-asyncio.run(calculateGasFees(14635910))
+asyncio.run(calculateGasFees2(14935917))
