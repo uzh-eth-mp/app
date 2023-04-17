@@ -3,7 +3,9 @@ from typing import Generator
 from hexbytes import HexBytes
 from web3.contract import Contract
 from web3.types import TxReceipt
-
+# Discarding errors on filtered events is expected
+# https://github.com/oceanprotocol/ocean.py/issues/348#issuecomment-875128102
+from web3.logs import DISCARD
 from app.model.contract import ContractCategory
 from .decorator import _event_mapper
 from app.web3.transaction_events.types import (
@@ -31,7 +33,7 @@ def _transaction(
     # there might be multiple emits in the contract, that's why we're looping, and use yield.
     # contract.events.Transfer() represents the transfer event defined in the ABI. when a receipt is passed, we get the
     # actual transfers contained in that receipt.
-    for eventLog in contract.events.Transfer().processReceipt(receipt):
+    for eventLog in contract.events.Transfer().process_receipt(receipt, errors=DISCARD):
         if eventLog["event"] == "Transfer":
             src = eventLog["args"]["from"]
             dst = eventLog["args"]["to"]
@@ -41,16 +43,16 @@ def _transaction(
             # https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol#L298
             if dst in burn_addresses:
                 yield BurnFungibleEvent(
-                    contract_address=receipt["contractAddress"], account=src, value=val
+                    contract_address=contract.address, account=src, value=val
                 )
             # https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol#L269
             elif src in burn_addresses:
                 yield MintFungibleEvent(
-                    contract_address=receipt["contractAddress"], account=dst, value=val
+                    contract_address=contract.address, account=dst, value=val
                 )
             else:
                 yield TransferFungibleEvent(
-                    contract_address=receipt["contractAddress"],
+                    contract_address=contract.address,
                     src=src,
                     dst=dst,
                     value=val,
@@ -63,10 +65,10 @@ def _issue(
 ) -> Generator[ContractEvent, None, None]:
     # USDT -> https://etherscan.io/address/0xdac17f958d2ee523a2206206994597c13d831ec7#code#L444
     # Issue = USDT owner creates tokens.
-    for eventLog in contract.events.Issue().processReceipt(receipt):
+    for eventLog in contract.events.Issue().process_receipt(receipt, errors=DISCARD):
         val = eventLog["args"]["amount"]
         yield MintFungibleEvent(
-            contract_address=receipt["contractAddress"],
+            contract_address=contract.address,
             account=contract.functions.getOwner().call(block_identifier=block_hash),
             value=val,
         )
@@ -78,10 +80,10 @@ def _redeem(
 ) -> Generator[ContractEvent, None, None]:
     # Redeem = USDT owner makes tokens dissapear - no null address. if they transfer to null address, still burn.
     # getOwner -> https://etherscan.io/address/0xdac17f958d2ee523a2206206994597c13d831ec7#code#L275
-    for eventLog in contract.events.Redeem().processReceipt(receipt):
+    for eventLog in contract.events.Redeem().process_receipt(receipt, errors=DISCARD):
         val = eventLog["args"]["amount"]
         yield BurnFungibleEvent(
-            contract_address=receipt["contractAddress"],
+            contract_address=contract.address,
             account=contract.functions.getOwner().call(block_identifier=block_hash),
             value=val,
         )

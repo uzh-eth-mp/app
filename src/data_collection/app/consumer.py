@@ -144,6 +144,7 @@ class DataConsumer(DataCollector):
         w3_block_hash: HexBytes,
     ):
         """Insert transaction events (supply changes) into the database"""
+        #log.debug(f"Extracting transaction events from contract {contract.address}")
         # Supply Change = mints - burns
         amount_changed = 0
         pair_amount0_changed = 0
@@ -152,7 +153,7 @@ class DataConsumer(DataCollector):
             category, contract, tx_receipt, w3_block_hash
         ):
             # FIXME: Remove log?
-            log.debug(f"Caught event ({event.__class__.__name__})")
+            #log.debug(f"Caught event ({event.__class__.__name__}): {event}")
             if isinstance(event, BurnFungibleEvent):
                 amount_changed -= event.value
             elif isinstance(event, MintFungibleEvent):
@@ -185,6 +186,7 @@ class DataConsumer(DataCollector):
                 transaction_hash=tx_data.transaction_hash,
                 amount_changed=amount_changed,
             )
+        #log.debug(f"pair_amount0_changed= {pair_amount0_changed} pair_amount1_changed= {pair_amount1_changed}")
         if pair_amount0_changed != 0 or pair_amount1_changed != 0:
             await self.db_manager.insert_pair_liquidity_change(
                 address=contract.address,

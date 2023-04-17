@@ -3,7 +3,9 @@ from typing import Generator
 from hexbytes import HexBytes
 from web3.contract import Contract
 from web3.types import TxReceipt
-
+# Discarding errors on filtered events is expected
+# https://github.com/oceanprotocol/ocean.py/issues/348#issuecomment-875128102
+from web3.logs import DISCARD
 from app.model.contract import ContractCategory
 from .decorator import _event_mapper
 from app.web3.transaction_events.types import (
@@ -23,7 +25,7 @@ def _transaction(
         "0x000000000000000000000000000000000000dead",
     }
 
-    for eventLog in contract.events.Transfer().processReceipt(receipt):
+    for eventLog in contract.events.Transfer().process_receipt(receipt, errors=DISCARD):
         if eventLog["event"] == "Transfer":
             src = eventLog["args"]["from"]
             dst = eventLog["args"]["to"]
@@ -32,19 +34,19 @@ def _transaction(
                 pass
             if dst in burn_addresses:
                 yield BurnNonFungibleEvent(
-                    contract_address=receipt["contractAddress"],
+                    contract_address=contract.address,
                     account=src,
                     tokenId=token_id,
                 )
             elif src in burn_addresses:
                 yield MintNonFungibleEvent(
-                    contract_address=receipt["contractAddress"],
+                    contract_address=contract.address,
                     account=dst,
                     tokenId=token_id,
                 )
             else:
                 yield TransferNonFungibleEvent(
-                    contract_address=receipt["contractAddress"],
+                    contract_address=contract.address,
                     src=src,
                     dst=dst,
                     tokenId=token_id,
