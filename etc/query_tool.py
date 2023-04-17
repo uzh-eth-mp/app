@@ -31,6 +31,16 @@ async def cmd_supply(conn, args):
         cur = await conn.cursor(
             "SELECT * FROM eth_contract_supply_change WHERE address = $1", args.address
         )
+        """
+        SELECT S.supply_change, B.timestamp
+        FROM eth_contract_supply_change AS S
+        INNER JOIN eth_transaction AS T
+          ON S.transaction_hash=T.transaction_hash
+          AND S.address='0xdAC17F958D2ee523a2206206994597C13D831ec7'
+        INNER JOIN eth_block AS B 
+          ON T.block_number=B.block_number
+        ORDER BY B.timestamp ASC;
+        """
 
         # Move the cursor 10 rows forward
         await cur.forward(10)
