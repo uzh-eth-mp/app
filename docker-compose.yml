@@ -141,6 +141,7 @@ services:
       context: ./src/data_collection
     profiles: ["eth", "all"]
     depends_on:
+      - data_producer_eth
       - kafka
       - redis
       - db
@@ -153,6 +154,7 @@ services:
       context: ./src/data_collection
     profiles: ["etc", "all"]
     depends_on:
+      - data_producer_etc
       - kafka
       - redis
       - db
@@ -165,6 +167,7 @@ services:
       context: ./src/data_collection
     profiles: ["bsc", "all"]
     depends_on:
+      - data_producer_bsc
       - kafka
       - redis
       - db
