@@ -177,7 +177,7 @@ class DatabaseManager:
             data,
             removed,
             topics,
-        )
+            )
 
     async def insert_contract(
         self, address: str, transaction_hash: str, is_pair_contract: bool
@@ -280,6 +280,10 @@ class DatabaseManager:
         Insert pair liquidity change data into <node>_token_contract_supply_change table.
         """
         table = f"{self.node_name}_pair_liquidity_change"
+        #log.debug(f"Inserting into pair_liquidity_change:{table}:\n"+
+                  #f"""INSERT INTO {table} (address, amount0, amount1, transaction_hash)
+                   #   VALUES ({address}, {amount0}, {amount1}, {transaction_hash})
+                    #  ON CONFLICT (address, transaction_hash) DO NOTHING;""")
 
         await self.db.execute(
             f"""

@@ -66,9 +66,15 @@ BEGIN
        to_address varchar(256) NOT NULL,
        value numeric(78,18),
        gas_limit bigint NOT NULL,
+<<<<<<< HEAD
        gas_used bigint,
        input_data varchar(256) NOT NULL,
        call_type varchar(256) NOT NULL,
+=======
+       gas_used bigint NOT NULL,
+       input_data varchar(65536) NOT NULL,
+       function_type varchar(256) NOT NULL,
+>>>>>>> dev
        PRIMARY KEY (unique_id)
       )', node_name || '_internal_transaction', node_name || '_transaction');
 END
@@ -90,7 +96,7 @@ BEGIN
        transaction_hash varchar(256) REFERENCES %I NOT NULL,
        address varchar(256) NOT NULL,
        log_index int,
-       data varchar(256) NOT NULL,
+       data varchar(65536) NOT NULL,
        removed boolean NOT NULL,
        topics varchar(256) ARRAY,
        PRIMARY KEY (unique_id)

@@ -112,13 +112,9 @@ class DataProducer(DataCollector):
                     i_block
                 )
 
-                block_reward: BlockReward = await self.node_connector.get_block_reward(
-                    i_block
-                )
-
                 # Insert new block
                 # FIXME: block reward
-                await self._insert_block(block_data=block_data, block_reward=block_reward)
+                await self._insert_block(block_data=block_data, block_reward=0)
 
                 if block_data.transactions:
                     # Send all the transaction hashes to Kafka so consumers can process them
