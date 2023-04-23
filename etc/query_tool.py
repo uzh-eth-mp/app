@@ -21,37 +21,30 @@ async def cmd_supply(conn, args):
         conn (asyncpg.Connection): connection to the database
         args (argparse.args): command line arguments
     """
-    # TODO: fix this method, needs to compute the total supply for a given address
 
     async with conn.transaction():
         # Postgres requires non-scrollable cursors to be created
         # and used in a transaction.
 
-        # Create a Cursor object
-        cur = await conn.cursor(
-            "SELECT * FROM eth_contract_supply_change WHERE address = $1", args.address
-        )
+        # Create a Cursor object - Total supply change vs time in a given block interval
+        #https://magicstack.github.io/asyncpg/current/api/index.html?highlight=fetch#cursors
+        cur = conn.cursor(
         """
-        SELECT S.supply_change, B.timestamp
+        SELECT S.amount_changed, B.timestamp
         FROM eth_contract_supply_change AS S
         INNER JOIN eth_transaction AS T
           ON S.transaction_hash=T.transaction_hash
-          AND S.address='0xdAC17F958D2ee523a2206206994597C13D831ec7'
+          AND S.address=$1
         INNER JOIN eth_block AS B 
           ON T.block_number=B.block_number
-        ORDER BY B.timestamp ASC;
-        """
+          AND T.block_number >= $2
+          AND T.block_number < $3
+        ORDER BY B.timestamp ASC
+        """, args.address, args.start_block, args.end_block
+        )
 
-        # Move the cursor 10 rows forward
-        await cur.forward(10)
-
-        # Fetch one row and print it
-        print(await cur.fetchrow())
-
-        # Fetch a list of 5 rows and print it
-        print(await cur.fetch(5))
-
-    raise NotImplementedError()
+        async for record in cur:
+            print(record)
 
 
 async def main():
@@ -82,6 +75,21 @@ async def main():
     parser_event.set_defaults(func=cmd_supply)
     parser_event.add_argument(
         "-a", "--address", help="Contract address to compute supply for", required=True
+    )
+
+    parser_event.add_argument(
+        "-s", 
+        "--start_block", 
+        help="Starting block, included.", 
+        type=int, 
+        required=True
+    )
+    parser_event.add_argument(
+        "-e", 
+        "--end_block", 
+        help="Ending block, not included.", 
+        type=int,
+        required=True
     )
 
     # Get the CLI arguments
