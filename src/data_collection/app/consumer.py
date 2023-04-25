@@ -1,3 +1,5 @@
+import logging
+
 from web3.contract import Contract
 from web3.types import TxReceipt, HexBytes
 
@@ -54,6 +56,17 @@ class DataConsumer(DataCollector):
 
         # Transaction hash of the currently processed transaction
         self._tx_hash = None
+
+        # Filter out some kafka logs
+        def kafka_logs_filter(record) -> bool:
+            msg = record.getMessage()
+            should_filter = msg.startswith(
+                "Heartbeat failed for group"
+            ) or msg.startswith("Group Coordinator Request failed:")
+            return not should_filter
+
+        kafka_logger = logging.getLogger("aiokafka.consumer.group_coordinator")
+        kafka_logger.addFilter(kafka_logs_filter)
 
     async def _handle_contract_creation(
         self, contract: Contract, tx_data: TransactionData, category: ContractCategory
@@ -144,7 +157,7 @@ class DataConsumer(DataCollector):
         w3_block_hash: HexBytes,
     ):
         """Insert transaction events (supply changes) into the database"""
-        #log.debug(f"Extracting transaction events from contract {contract.address}")
+        # log.debug(f"Extracting transaction events from contract {contract.address}")
         # Supply Change = mints - burns
         amount_changed = 0
         pair_amount0_changed = 0
@@ -153,7 +166,7 @@ class DataConsumer(DataCollector):
             category, contract, tx_receipt, w3_block_hash
         ):
             # FIXME: Remove log?
-            #log.debug(f"Caught event ({event.__class__.__name__}): {event}")
+            # log.debug(f"Caught event ({event.__class__.__name__}): {event}")
             if isinstance(event, BurnFungibleEvent):
                 amount_changed -= event.value
             elif isinstance(event, MintFungibleEvent):
@@ -186,7 +199,7 @@ class DataConsumer(DataCollector):
                 transaction_hash=tx_data.transaction_hash,
                 amount_changed=amount_changed,
             )
-        #log.debug(f"pair_amount0_changed= {pair_amount0_changed} pair_amount1_changed= {pair_amount1_changed}")
+        # log.debug(f"pair_amount0_changed= {pair_amount0_changed} pair_amount1_changed= {pair_amount1_changed}")
         if pair_amount0_changed != 0 or pair_amount1_changed != 0:
             await self.db_manager.insert_pair_liquidity_change(
                 address=contract.address,
