@@ -1,3 +1,4 @@
+"""Script for executing pre defined SQL queries / statements."""
 import asyncio
 import argparse
 
@@ -26,32 +27,52 @@ async def cmd_supply(conn, args):
         # Postgres requires non-scrollable cursors to be created
         # and used in a transaction.
 
-        # Create a Cursor object - Total supply change vs time in a given block interval
-        #https://magicstack.github.io/asyncpg/current/api/index.html?highlight=fetch#cursors
-        cur = conn.cursor(
-        """
+        # Base string and args of the SQL query
+        query = """
         SELECT S.amount_changed, B.timestamp
         FROM eth_contract_supply_change AS S
         INNER JOIN eth_transaction AS T
           ON S.transaction_hash=T.transaction_hash
           AND S.address=$1
-        INNER JOIN eth_block AS B 
+        INNER JOIN eth_block AS B
           ON T.block_number=B.block_number
-          AND T.block_number >= $2
-          AND T.block_number < $3
-        ORDER BY B.timestamp ASC
-        """, args.address, args.start_block, args.end_block
-        )
+        """
+        query_args = [args.address]
 
+        # Update the query if args are supplied
+        if args.start_block:
+            query += "\n  AND T.block_number"
+            query_args.append(args.start_block)
+
+        if args.end_block:
+            query += "\n  AND T.block_number"
+            query_args.append(args.end_block)
+
+        # Finish the query
+        query += "\nORDER BY B.timestamp ASC"
+
+        # Create a Cursor object - Total supply change vs time in a given block interval
+        # https://magicstack.github.io/asyncpg/current/api/index.html?highlight=fetch#cursors
+        cur = conn.cursor(query, *query_args)
+
+        n_records = 0
         async for record in cur:
+            n_records += 1
             print(record)
+
+        if n_records == 0:
+            print(f"No supply changes found for specified address ('{args.address}').")
 
 
 async def main():
     parser = argparse.ArgumentParser(description="PostgreSQL query tool")
     # Set default function to None
     parser.set_defaults(func=None)
-    parser.add_argument("--db-dsn", help="PostgreSQL DSN", required=True)
+    parser.add_argument(
+        "--db-dsn",
+        help="PostgreSQL DSN ('postgresql://<user>:<pw>@<host>:<port>/<dbname>')",
+        required=True,
+    )
 
     # Create subparsers for commands
     subparsers = parser.add_subparsers(description="Available commands")
@@ -69,27 +90,19 @@ async def main():
     )
 
     # 'supply' command
-    parser_event = subparsers.add_parser(
-        name="supply", description="Compute the total supply for a given contract"
+    parser_supply = subparsers.add_parser(
+        name="supply", description="Show the supply changes for a given contract"
     )
-    parser_event.set_defaults(func=cmd_supply)
-    parser_event.add_argument(
+    parser_supply.set_defaults(func=cmd_supply)
+    parser_supply.add_argument(
         "-a", "--address", help="Contract address to compute supply for", required=True
     )
 
-    parser_event.add_argument(
-        "-s", 
-        "--start_block", 
-        help="Starting block, included.", 
-        type=int, 
-        required=True
+    parser_supply.add_argument(
+        "-s", "--start_block", help="Starting block, included.", type=int, default=0
     )
-    parser_event.add_argument(
-        "-e", 
-        "--end_block", 
-        help="Ending block, not included.", 
-        type=int,
-        required=True
+    parser_supply.add_argument(
+        "-e", "--end_block", help="Ending block, not included.", type=int, default=None
     )
 
     # Get the CLI arguments
