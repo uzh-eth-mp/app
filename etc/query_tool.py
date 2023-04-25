@@ -36,16 +36,13 @@ async def cmd_supply(conn, args):
           AND S.address=$1
         INNER JOIN eth_block AS B
           ON T.block_number=B.block_number
+          AND T.block_number >= $2
         """
-        query_args = [args.address]
+        query_args = [args.address, args.start_block]
 
-        # Update the query if args are supplied
-        if args.start_block:
-            query += "\n  AND T.block_number"
-            query_args.append(args.start_block)
-
+        # Update the query if end_block is supplied
         if args.end_block:
-            query += "\n  AND T.block_number"
+            query += "\n  AND T.block_number < $3"
             query_args.append(args.end_block)
 
         # Finish the query
@@ -99,10 +96,10 @@ async def main():
     )
 
     parser_supply.add_argument(
-        "-s", "--start_block", help="Starting block, included.", type=int, default=0
+        "-s", "--start-block", help="Starting block, included.", type=int, default=0
     )
     parser_supply.add_argument(
-        "-e", "--end_block", help="Ending block, not included.", type=int, default=None
+        "-e", "--end-block", help="Ending block, not included.", type=int, default=None
     )
 
     # Get the CLI arguments
