@@ -3,9 +3,8 @@ from web3.contract import Contract
 from web3.types import TxReceipt
 
 from app.model.contract import ContractCategory
-from app.web3.transaction_events import EventsGenerator
 from app.web3.transaction_events.decorator import _event_mapper
-from app.web3.transaction_events.types import PairCreatedEvent
+from app.web3.transaction_events.types import PairCreatedEvent, EventsGenerator
 
 # Discarding errors on filtered events is expected
 # https://github.com/oceanprotocol/ocean.py/issues/348#issuecomment-875128102

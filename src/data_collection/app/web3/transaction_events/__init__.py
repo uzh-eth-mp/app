@@ -1,18 +1,13 @@
 from hexbytes import HexBytes
 from web3.contract import Contract
-from web3.types import TxReceipt, EventData
+from web3.types import TxReceipt
 from app.model.contract import ContractCategory
-from . import decorator
+from . import erc20, erc721, uniswap_pair, uniswapv2_factory, decorator
 from typing import (
-    Generator,
-    Tuple,
     Type,
     Union,
 )
-from .types import ContractEvent
-
-
-EventsGenerator = Generator[Tuple[ContractEvent, EventData], None, None]
+from .types import EventsGenerator
 
 
 def get_transaction_events(

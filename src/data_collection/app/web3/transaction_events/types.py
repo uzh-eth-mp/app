@@ -1,6 +1,7 @@
-from typing import List, Optional
+from typing import Generator, List, Optional, Tuple
 
 from pydantic import BaseModel
+from web3.types import EventData
 
 
 class ContractEvent(BaseModel):
@@ -122,3 +123,6 @@ class TransferNonFungibleEvent(ContractEvent):
     dst: str
     tokenId: int
     name = "Transfer"
+
+
+EventsGenerator = Generator[Tuple[ContractEvent, EventData], None, None]

@@ -8,13 +8,13 @@ from web3.logs import DISCARD
 from app import init_logger
 
 from app.model.contract import ContractCategory
-from app.web3.transaction_events import EventsGenerator
 from app.web3.transaction_events.decorator import _event_mapper
 
 from app.web3.transaction_events.types import (
     MintPairEvent,
     BurnPairEvent,
     SwapPairEvent,
+    EventsGenerator,
 )
 
 log = init_logger(__name__)
