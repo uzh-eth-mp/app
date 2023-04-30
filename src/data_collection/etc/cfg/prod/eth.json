@@ -15,6 +15,7 @@
                     "symbol": "USDT",
                     "category": "erc20",
                     "events": [
+                        "Transfer",
                         "Issue",
                         "Redeem"
                     ]
