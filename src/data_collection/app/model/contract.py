@@ -38,13 +38,13 @@ class TokenContractData(BaseModel):
 class PairContractData(BaseModel):
     """Wrapper for web3 pair contract data that gets inserted into the db"""
 
-    # The contract address (used as PK)
     address: str
-    # Address of token0
+    """The contract address (used as PK)"""
     token0: str
-    # Address of token1
+    """Address of token0"""
     token1: str
+    """Address of token1"""
     reserve0: int
     reserve1: int
-    # Address of the factory that created this pair contract
     factory: str
+    """Address of the factory that created this pair contract"""

@@ -136,15 +136,12 @@ class DataConsumer(DataCollector):
         tx_fee = tx_data.gas_price * gas_used
 
         # Insert the transaction and logs data
-        async with self.db_manager.db.transaction():
-            await self.db_manager.insert_transaction(
-                **tx_data.dict(),
-                gas_used=gas_used,
-                is_token_tx=True,
-                transaction_fee=tx_fee,
-            )
-            for tx_log in tx_receipt_data.logs:
-                await self.db_manager.insert_transaction_logs(**tx_log.dict())
+        await self.db_manager.insert_transaction(
+            **tx_data.dict(),
+            gas_used=gas_used,
+            is_token_tx=True,
+            transaction_fee=tx_fee,
+        )
 
         # TODO: check for AND insert internal transactions here if needed
 
@@ -154,18 +151,27 @@ class DataConsumer(DataCollector):
         category: ContractCategory,
         tx_data: TransactionData,
         tx_receipt: TxReceipt,
+        tx_receipt_data: TransactionReceiptData,
         w3_block_hash: HexBytes,
     ):
         """Insert transaction events (supply changes) into the database"""
+        allowed_events = self.contract_parser.get_contract_events(contract.address)
+        # Keep a list of 'logIndex' for logs that should be saved
+        log_indices_to_save = set()
         # log.debug(f"Extracting transaction events from contract {contract.address}")
         # Supply Change = mints - burns
         amount_changed = 0
         pair_amount0_changed = 0
         pair_amount1_changed = 0
-        for event in get_transaction_events(
+        for event, event_log in get_transaction_events(
             category, contract, tx_receipt, w3_block_hash
         ):
-            # FIXME: Remove log?
+            # Check if this event should be processed
+            if not event.should_process_event(allowed_events):
+                continue
+            # Mark this log to be saved
+            log_indices_to_save.add(event_log.logIndex)
+
             # log.debug(f"Caught event ({event.__class__.__name__}): {event}")
             if isinstance(event, BurnFungibleEvent):
                 amount_changed -= event.value
@@ -193,6 +199,16 @@ class DataConsumer(DataCollector):
                 pass
             elif isinstance(event, TransferNonFungibleEvent):
                 pass
+
+        # Insert the transaction logs into DB
+        logs_to_save = [
+            log for log in tx_receipt_data.logs if log.log_index in log_indices_to_save
+        ]
+        async with self.db_manager.db.transaction():
+            for tx_log in logs_to_save:
+                await self.db_manager.insert_transaction_logs(**tx_log.dict())
+
+        # Insert specific events into DB
         if amount_changed != 0:
             await self.db_manager.insert_contract_supply_change(
                 address=contract.address,
@@ -243,7 +259,7 @@ class DataConsumer(DataCollector):
                 contract=contract, tx_data=tx_data, category=contract_category
             )
 
-        # 2. Insert transaction + Logs + Internal transactions
+        # 2. Insert transaction + Internal transactions
         await self._handle_transaction(tx_data=tx_data, tx_receipt_data=tx_receipt_data)
 
         # 3. Transaction events
@@ -252,6 +268,7 @@ class DataConsumer(DataCollector):
             category=contract_category,
             tx_data=tx_data,
             tx_receipt=w3_tx_receipt,
+            tx_receipt_data=tx_receipt_data,
             w3_block_hash=w3_tx_data["blockHash"],
         )
 

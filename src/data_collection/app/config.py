@@ -5,6 +5,7 @@ from pydantic import (
     BaseModel,
     BaseSettings,
     conlist,
+    constr,
     Field,
     root_validator,
     PostgresDsn,
@@ -19,22 +20,36 @@ class ContractConfig(BaseModel):
     For instance USDT, UniswapV2Factory or some UniswapPair
     """
 
-    # The address of the smart contract
     address: str
-    # The symbol / name / description of the contract
+    """The address of the smart contract"""
     symbol: str
-    # The category of the contract. Mapped to contract.ContractCategory Enum.
+    """The symbol / name / description of the contract"""
     category: str
+    """The category of the contract. Mapped to contract.ContractCategory Enum."""
+    events: conlist(item_type=constr(regex="^[A-Z][A-Za-z]*$"), unique_items=True)
+    """Constrained list of events that will be processed for this contract.
+
+    The values within this list should be event names without arguments.
+
+    Examples:
+        ``["Transfer", "Swap", "Mint", "Burn"]``
+        ``["Transfer"]``
+
+    Note:
+        If one of the values in this list is also present in the default contract category ABI,
+        it will be saved into the DB.
+    """
 
     def __eq__(self, __value: object) -> bool:
         return (
             self.address == __value.address
             and self.symbol == __value.symbol
             and self.category == __value.category
+            and self.events == __value.events
         )
 
     def __hash__(self) -> int:
-        return hash(self.address + self.symbol + self.category)
+        return hash(self.address + self.symbol + self.category + "".join(self.events))
 
 
 class DataCollectionConfig(BaseSettings):
@@ -44,22 +59,27 @@ class DataCollectionConfig(BaseSettings):
     """
 
     producer_type: ProducerType
-    # The starting block number. Takes precedence over the setting in the db.
+    """Type of this producer."""
     start_block: Optional[int]
-    # The ending block number. Takes precedence over the setting in the db.
+    """Starting block number. Takes precedence over the setting in the db."""
     end_block: Optional[int]
+    """Ending block number. Takes precedence over the setting in the db."""
 
-    # Contains a list of smart contract objects of interest.
-    # Any transaction interacting (create, call) with these addresses
-    # will be saved in the database. Each contract contains information about
-    # its category!
     contracts: List[ContractConfig]
+    """Contains a list of smart contract objects of interest.
 
-    # Can be empty, required when used with ProducerType.LOG_FILTER
+    Note:
+        Any transaction interacting (create, call) with these addresses
+        will be saved in the database. Each contract contains information about
+        its category.
+    """
+
     topics: Optional[List[Any]]
+    """Can be empty, required when used with ProducerType.LOG_FILTER"""
 
     @root_validator
     def block_order_correct(cls, values):
+        """Check if start_block <= end_block"""
         start_block = values.get("start_block")
         end_block = values.get("end_block")
         if start_block is not None and end_block is not None:

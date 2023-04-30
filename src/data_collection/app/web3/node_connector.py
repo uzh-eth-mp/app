@@ -34,7 +34,8 @@ class NodeConnector:
         headers = {"Host": "localhost", "Content-Type": "application/json"}
         self.w3 = Web3(
             provider=Web3.AsyncHTTPProvider(
-                endpoint_uri=node_url, request_kwargs={"headers": headers}
+                endpoint_uri=node_url,
+                request_kwargs={"headers": headers, "timeout": 60},
             ),
             modules={
                 "eth": (AsyncEth,),

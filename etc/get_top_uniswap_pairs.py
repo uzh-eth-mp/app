@@ -74,6 +74,7 @@ def main(args):
                 address=pair["id"],
                 symbol=f"UniSwap V2 Pair {token0['symbol']}-{token1['symbol']}",
                 category="UniSwapV2Pair",
+                events=args.events,
             )
         )
 
@@ -85,6 +86,14 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "-n", help="The amount of pairs to query", type=int, default=100
+    )
+    parser.add_argument(
+        "-e",
+        "--events",
+        help="The event names to include for the pairs",
+        nargs="+",
+        default=[],
+        type=str,
     )
 
     args = parser.parse_args()

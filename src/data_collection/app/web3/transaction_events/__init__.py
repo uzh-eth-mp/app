@@ -1,15 +1,18 @@
 from hexbytes import HexBytes
 from web3.contract import Contract
-from web3.types import TxReceipt
+from web3.types import TxReceipt, EventData
 from app.model.contract import ContractCategory
-from app import init_logger
-from . import erc20, erc721, uniswap_pair, uniswapv2_factory, decorator
+from . import decorator
 from typing import (
     Generator,
+    Tuple,
     Type,
     Union,
 )
 from .types import ContractEvent
+
+
+EventsGenerator = Generator[Tuple[ContractEvent, EventData], None, None]
 
 
 def get_transaction_events(
@@ -17,7 +20,7 @@ def get_transaction_events(
     contract: Union[Type[Contract], Contract],
     receipt: TxReceipt,
     block_hash: HexBytes,
-) -> Generator[ContractEvent, None, None]:
+) -> EventsGenerator:
     """
     It returns all the contract events found in the given contract with the given receipt.
     """
@@ -25,6 +28,6 @@ def get_transaction_events(
     # if not isinstance(contract, Contract):
     #    logger.error(f"{contract} is not of type Contract!")
     #    return None
-    #assert isinstance(contract, Contract)
+    # assert isinstance(contract, Contract)
     for mapper in decorator.__event_mappers[contract_category]:
         yield from mapper(contract, receipt, block_hash)
