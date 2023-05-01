@@ -4,6 +4,8 @@ from pydantic import Field
 
 from app.model import Web3BaseModel
 
+from pydantic import Field, validator
+
 
 class TransactionData(Web3BaseModel):
     """Describes a transaction given by `get_transaction`"""
@@ -38,8 +40,17 @@ class TransactionReceiptData(Web3BaseModel):
     contract_address: Optional[str] = Field(..., alias="contractAddress")
 
 
-# TODO: finish InternalTransactionData
 class InternalTransactionData(Web3BaseModel):
     """Describes an internal transaction given by `debug_traceTransaction`"""
 
-    pass
+    from_address: str = Field(..., alias="from")
+    to_address: str = Field(..., alias="to")
+    value: float
+    gas_used: Optional[float] = Field(None, alias="gasUsed")
+    gas_limit: float = Field(..., alias="gas")
+    input_data: str = Field(..., alias="input")
+    call_type: str = Field(..., alias="callType")
+
+    @validator("value", "gas_used", "gas_limit", pre=True)
+    def strings_to_float(cls, v):
+        return float.fromhex(v)

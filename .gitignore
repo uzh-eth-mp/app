@@ -1,3 +1,5 @@
+.DS_Store
+
 *.log
 .env
 .env.dev
@@ -18,6 +20,7 @@ node_modules/
 .tox/
 htmlcov/
 .coverage
+.pytest_cache
 
 # Data folder
 data/

@@ -1,10 +1,11 @@
-from typing import Tuple
+from typing import Any, Tuple
 
 from web3 import Web3
 from web3.eth import AsyncEth
 from web3.net import AsyncNet
 from web3.geth import Geth, AsyncGethTxPool, AsyncGethAdmin, AsyncGethPersonal
 from web3.types import TxData, TxReceipt
+
 
 from app.model.block import BlockData
 from app.model.transaction import (
@@ -32,6 +33,7 @@ class NodeConnector:
         # JSON RPC API through an SSH tunnel. Abacus only allows hostname to
         # be "localhost" otherwise it returns a 403 response code.
         headers = {"Host": "localhost", "Content-Type": "application/json"}
+
         self.w3 = Web3(
             provider=Web3.AsyncHTTPProvider(
                 endpoint_uri=node_url, request_kwargs={"headers": headers}
@@ -87,7 +89,32 @@ class NodeConnector:
         tx_receipt_data = TransactionReceiptData(**tx_receipt_data_dict)
         return tx_receipt_data, tx_receipt_data_dict
 
-    # TODO: finish get_internal_transactions
+    async def get_block_reward(self, block_id="latest") -> dict[str, Any]:
+        """Get block reward of a specific block"""
+        data = await self.w3.provider.make_request("trace_block", [block_id])
+
+        blockReward = 0
+        for i in data["result"]:
+            if i["type"] == "reward":
+                blockReward = i["action"]["value"]
+                break
+
+        return int(blockReward, 16)
+
     async def get_internal_transactions(self, tx_hash: str) -> InternalTransactionData:
         """Get internal transaction data by hash"""
-        pass
+        data = await self.w3.provider.make_request(
+            "trace_replayTransaction", [tx_hash, ["trace"]]
+        )
+
+        data_dict = []
+        for i in data["result"]["trace"]:
+            tx_data = i["action"]
+            if result := i.get("result"):
+                tx_data = tx_data | result
+            data_dict.append(tx_data)
+
+        internal_tx_data = list(
+            map(lambda data: InternalTransactionData(**data), data_dict)
+        )
+        return internal_tx_data
