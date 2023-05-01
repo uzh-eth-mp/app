@@ -57,6 +57,10 @@ class DataConsumer(DataCollector):
         # Transaction hash of the currently processed transaction
         self._tx_hash = None
 
+        # Keep a number of consumed (from Kafka) and processed transactions
+        self._n_consumed_txs = 0
+        self._n_processed_txs = 0
+
         # Filter out some kafka logs
         def kafka_logs_filter(record) -> bool:
             msg = record.getMessage()
@@ -237,6 +241,8 @@ class DataConsumer(DataCollector):
         """Called when a new Kafka event is read from a topic"""
         # Get transaction hash from Kafka event
         self._tx_hash = event.value.decode()
+        # Increment number of consumed transactions
+        self._n_consumed_txs += 1
         # Get transaction data
         tx_data, w3_tx_data = await self.node_connector.get_transaction_data(
             self._tx_hash
@@ -257,7 +263,8 @@ class DataConsumer(DataCollector):
             # a known contract
             return
         # log.debug(f"Handling tx {tx_data.transaction_hash} in #{tx_data.block_number}")
-
+        # Increment number of processed transactions
+        self._n_processed_txs += 1
         # Check if transaction is creating a contract or calling it
         contract = self.contract_parser.get_contract(
             contract_address=contract_address, category=contract_category
@@ -297,9 +304,7 @@ class DataConsumer(DataCollector):
             )
         except KafkaConsumerTopicEmptyError:
             # Raised when a partition doesn't receive a new message for 120 seconds.
-            log.info(
-                f"Finished processing topic '{self.kafka_manager.topic}'. Shutting down..."
-            )
+            log.info(f"Finished processing topic '{self.kafka_manager.topic}'.")
             # exit_code doesn't change, 0 = success
         except Exception as e:
             # Global handler for any exception, logs the transaction where this occurred
@@ -311,4 +316,9 @@ class DataConsumer(DataCollector):
             )
             exit_code = 1
         finally:
+            log.info(
+                "number of consumed transactions: {} | number of processed transactions: {}".format(
+                    self._n_consumed_txs, self._n_processed_txs
+                )
+            )
             return exit_code
