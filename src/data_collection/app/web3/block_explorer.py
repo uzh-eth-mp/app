@@ -70,5 +70,3 @@ class BlockExplorer:
             end_block = self.cfg_end_block
 
         return ExplorationBounds(start_block=start_block, end_block=end_block)
-
-        

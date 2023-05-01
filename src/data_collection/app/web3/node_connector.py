@@ -5,7 +5,6 @@ from web3.eth import AsyncEth
 from web3.net import AsyncNet
 from web3.geth import Geth, AsyncGethTxPool, AsyncGethAdmin, AsyncGethPersonal
 from web3.types import TxData, TxReceipt
-from app import init_logger
 
 
 from app.model.block import BlockData
@@ -14,9 +13,6 @@ from app.model.transaction import (
     TransactionReceiptData,
     InternalTransactionData,
 )
-
-log = init_logger(__name__)
-
 
 
 class NodeConnector:
@@ -102,24 +98,23 @@ class NodeConnector:
             if i["type"] == "reward":
                 blockReward = i["action"]["value"]
                 break
-                
-        return int(blockReward,16)
+
+        return int(blockReward, 16)
 
     async def get_internal_transactions(self, tx_hash: str) -> InternalTransactionData:
         """Get internal transaction data by hash"""
         data = await self.w3.provider.make_request(
             "trace_replayTransaction", [tx_hash, ["trace"]]
         )
-        
+
         data_dict = []
         for i in data["result"]["trace"]:
-            if i["result"] == None:
-                tx_data = i["action"]
-                data_dict.append(tx_data)
-            else:
-                tx_data = i["action"] | i["result"]
-                data_dict.append(tx_data)
-        
-        internal_tx_data = list(map(lambda data: InternalTransactionData(**data), data_dict))
-        return internal_tx_data
+            tx_data = i["action"]
+            if result := i.get("result"):
+                tx_data = tx_data | result
+            data_dict.append(tx_data)
 
+        internal_tx_data = list(
+            map(lambda data: InternalTransactionData(**data), data_dict)
+        )
+        return internal_tx_data
