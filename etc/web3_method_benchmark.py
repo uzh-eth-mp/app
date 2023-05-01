@@ -1,6 +1,10 @@
-from web3 import Web3
-import time
 import asyncio
+import statistics
+import time
+
+from typing import List
+
+from web3 import Web3
 from web3.eth import AsyncEth
 from web3.net import AsyncNet
 from web3.geth import Geth, AsyncGethTxPool, AsyncGethAdmin, AsyncGethPersonal
@@ -14,7 +18,7 @@ headers = {
 }
 w3 = Web3(
     provider=Web3.AsyncHTTPProvider(
-        endpoint_uri=node_url, request_kwargs={"headers": headers}
+        endpoint_uri=node_url, request_kwargs={"headers": headers, "timeout": 300}
     ),
     modules={
         "eth": (AsyncEth,),
@@ -31,7 +35,17 @@ w3 = Web3(
     middlewares=[],
 )
 
-N_REQUESTS = 1000
+N_REQUESTS = 100
+
+
+def print_method_response_time_statistics(method_name: str, request_times: List[float]):
+    min_r = min(request_times)
+    avg_r = sum(request_times) / len(request_times)
+    max_r = max(request_times)
+    stddev_r = statistics.stdev(request_times)
+    print(
+        f"Method '{method_name}' response times: min/avg/max/stddev = {min_r:.3f}/{avg_r:.3f}/{max_r:.3f}/{stddev_r:.3f} ms"
+    )
 
 
 async def main(block_number):
@@ -39,7 +53,8 @@ async def main(block_number):
     Args:
         block_number: starting block number
     """
-    request_time_getBlock = 0
+    print(f"Starting web3 method benchmark ({N_REQUESTS} requests per method)\n---")
+    request_times_getBlock = []
     # keep a list of txs for later
     tx_hashes = []
     for i in range(N_REQUESTS):
@@ -48,41 +63,45 @@ async def main(block_number):
         if len(block_data["transactions"]) > 1 and len(tx_hashes) < N_REQUESTS:
             tx_hashes.append(block_data["transactions"][0])
             tx_hashes.append(block_data["transactions"][1])
-        request_time_getBlock += time.perf_counter() - start
+        request_times_getBlock.append((time.perf_counter() - start) * 1000)
+        time.sleep(0.05)
 
-    print(f"Method get_block_data avg response time: {request_time_getBlock:.0f} ms")
+    # to ms divided by n_reqs
+    print_method_response_time_statistics("get_block", request_times_getBlock)
 
-    request_time_getTransaction = 0
+    request_times_getTransaction = []
     for i in range(N_REQUESTS):
         start = time.perf_counter()
         tx_data_dict = await w3.eth.get_transaction(tx_hashes[i])
-        request_time_getTransaction += time.perf_counter() - start
+        request_times_getTransaction.append((time.perf_counter() - start) * 1000)
+        time.sleep(0.05)
 
-    print(
-        f"Method get_transaction_data avg response time: {request_time_getTransaction:.0f} ms"
+    print_method_response_time_statistics(
+        "get_transaction", request_times_getTransaction
     )
 
-    request_time_internaltx = 0
-    ii = 0
+    request_times_internaltx = []
     for i in range(N_REQUESTS):
         """Get internal transaction data by hash"""
-        ii = i
         start = time.perf_counter()
         data = await w3.provider.make_request(
             "trace_replayTransaction", [tx_hashes[i].hex(), ["trace"]]
         )
-        request_time_internaltx += time.perf_counter() - start
-    print(
-        f"Method trace_replayTransaction avg response time: {request_time_internaltx:.0f} ms"
+        request_times_internaltx.append((time.perf_counter() - start) * 1000)
+        time.sleep(0.05)
+
+    print_method_response_time_statistics(
+        "trace_replayTransaction", request_times_internaltx
     )
 
-    request_time_blockReward = 0
+    request_times_blockReward = []
     for i in range(N_REQUESTS):
         start = time.perf_counter()
         data = await w3.provider.make_request("trace_block", [block_number + i])
-        request_time_blockReward += time.perf_counter() - start
+        request_times_blockReward.append((time.perf_counter() - start) * 1000)
+        time.sleep(0.05)
 
-    print(f"Method trace_block avg response time: {request_time_blockReward:.0f} ms")
+    print_method_response_time_statistics("trace_block", request_times_blockReward)
 
 
 asyncio.run(main(15500000))
