@@ -1,6 +1,6 @@
 import collections
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from eth_hash.auto import keccak
 from web3 import Web3
@@ -20,12 +20,15 @@ class ContractParser:
         self.w3 = web3
         self.contract_abi = contract_abi
 
-        # Load contract categories dict
-        self._contract_categories = dict()
+        # Load contract categories dict (cache)
+        # Cache for 'ContractConfig' indexed by address
+        self._contracts_config_cache: Dict[str, ContractConfig] = dict()
         for contract in contracts:
-            self._contract_categories[contract.address.lower()] = ContractCategory(
-                contract.category
-            )
+            contract.category = ContractCategory(contract.category)
+            self._contracts_config_cache[contract.address.lower()] = contract
+
+        # Cache for 'Contract' instances indexed by address
+        self._contracts_cache: Dict[str, Contract] = dict()
 
     def get_contract_category(
         self, contract_address: str
@@ -35,7 +38,23 @@ class ContractParser:
         Returns:
             category: ContractCategory
         """
-        return self._contract_categories.get(contract_address.lower())
+        if contract_config := self._contracts_config_cache.get(
+            contract_address.lower()
+        ):
+            return contract_config.category
+        return None
+
+    def get_contract_events(self, contract_address: str) -> Optional[List[str]]:
+        """Get the contract events by contract address
+
+        Returns:
+            List[str]: list of event names
+        """
+        if contract_config := self._contracts_config_cache.get(
+            contract_address.lower()
+        ):
+            return contract_config.events
+        return None
 
     def _get_contract_abi(
         self, contract_category: ContractCategory
@@ -72,11 +91,20 @@ class ContractParser:
         Returns:
             contract: web3 Contract instance for a given contract address
         """
-        # Get the correct abi for the given cateogry
+        address_lower = contract_address.lower()
+
+        # Check cache first
+        if contract := self._contracts_cache.get(address_lower):
+            return contract
+
+        # Get the correct ABI for the given category
         abi = self._get_contract_abi(contract_category=category)
 
         # Create a w3 contract instance
         contract = self.w3.eth.contract(address=contract_address, abi=abi)
+
+        # Save contract into cache
+        self._contracts_cache[address_lower] = contract
 
         return contract
 

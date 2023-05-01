@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Generator, List, Optional, Tuple
 
 from pydantic import BaseModel
+from web3.types import EventData
 
 
 class ContractEvent(BaseModel):
@@ -10,6 +11,15 @@ class ContractEvent(BaseModel):
     """
 
     contract_address: Optional[str]
+    name: str
+
+    def should_process_event(self, event_names: List[str]):
+        """Whether this event should be processed
+
+        Returns:
+            (bool): `True` if name is part of the event names
+        """
+        return self.name in event_names
 
 
 class MintFungibleEvent(ContractEvent):
@@ -19,6 +29,7 @@ class MintFungibleEvent(ContractEvent):
 
     account: str
     value: int
+    name = "Mint"
 
 
 class BurnFungibleEvent(ContractEvent):
@@ -28,6 +39,7 @@ class BurnFungibleEvent(ContractEvent):
 
     account: str
     value: int
+    name = "Burn"
 
 
 class TransferFungibleEvent(ContractEvent):
@@ -38,6 +50,7 @@ class TransferFungibleEvent(ContractEvent):
     src: str
     dst: str
     value: int
+    name = "Transfer"
 
 
 class PairCreatedEvent(ContractEvent):
@@ -48,6 +61,7 @@ class PairCreatedEvent(ContractEvent):
     pair_address: str
     token0: str
     token1: str
+    name = "PairCreated"
 
 
 # https://ethereum.org/en/developers/tutorials/uniswap-v2-annotated-code/#pair-events
@@ -55,6 +69,7 @@ class MintPairEvent(ContractEvent):
     sender: str
     amount0: int
     amount1: int
+    name = "Mint"
 
 
 class BurnPairEvent(ContractEvent):
@@ -62,6 +77,7 @@ class BurnPairEvent(ContractEvent):
     dst: str
     amount0: int
     amount1: int
+    name = "Burn"
 
 
 class SwapPairEvent(ContractEvent):
@@ -71,6 +87,7 @@ class SwapPairEvent(ContractEvent):
     in1: int
     out0: int
     out1: int
+    name = "Swap"
 
 
 class MintNonFungibleEvent(ContractEvent):
@@ -80,6 +97,7 @@ class MintNonFungibleEvent(ContractEvent):
 
     account: str
     tokenId: str
+    name = "Mint"
 
 
 class BurnNonFungibleEvent(ContractEvent):
@@ -93,6 +111,7 @@ class BurnNonFungibleEvent(ContractEvent):
 
     account: str
     tokenId: int
+    name = "Burn"
 
 
 class TransferNonFungibleEvent(ContractEvent):
@@ -103,3 +122,7 @@ class TransferNonFungibleEvent(ContractEvent):
     src: str
     dst: str
     tokenId: int
+    name = "Transfer"
+
+
+EventsGenerator = Generator[Tuple[ContractEvent, EventData], None, None]

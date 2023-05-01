@@ -57,6 +57,7 @@ class ERC20Tests(unittest.TestCase):
                         "to": "0x000000000000000000000000000000000000BABA",
                         "value": 42,
                     },
+                    logIndex=1337,
                 )
             ]
         )
@@ -78,10 +79,21 @@ class ERC20Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                MintFungibleEvent(
-                    contract_address="0x000000000000000000000000000000000000AAAA",
-                    account="0x000000000000000000000000000000000000BABA",
-                    value=42,
+                (
+                    MintFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        account="0x000000000000000000000000000000000000BABA",
+                        value=42,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "from": "0x0000000000000000000000000000000000000000",
+                            "to": "0x000000000000000000000000000000000000BABA",
+                            "value": 42,
+                        },
+                        logIndex=1337,
+                    ),
                 )
             ],
             events,
@@ -100,6 +112,7 @@ class ERC20Tests(unittest.TestCase):
                         "to": "0x000000000000000000000000000000000000BABA",
                         "value": 42,
                     },
+                    logIndex=1337,
                 )
             ]
         )
@@ -121,10 +134,21 @@ class ERC20Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                MintFungibleEvent(
-                    contract_address="0x000000000000000000000000000000000000AAAA",
-                    account="0x000000000000000000000000000000000000BABA",
-                    value=42,
+                (
+                    MintFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        account="0x000000000000000000000000000000000000BABA",
+                        value=42,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "from": "0x000000000000000000000000000000000000dead",
+                            "to": "0x000000000000000000000000000000000000BABA",
+                            "value": 42,
+                        },
+                        logIndex=1337,
+                    ),
                 )
             ],
             events,
@@ -138,7 +162,7 @@ class ERC20Tests(unittest.TestCase):
         contract.events.Transfer = MagicMock(return_value=transfer_event)
         issue_event = MagicMock(spec=ContractEvent)
         issue_event.process_receipt = MagicMock(
-            return_value=[EventData(event="Issue", args={"amount": 42})]
+            return_value=[EventData(event="Issue", args={"amount": 42}, logIndex=1337)]
         )
         contract.events.Issue = MagicMock(return_value=issue_event)
         redeem_event = MagicMock(spec=ContractEvent)
@@ -161,10 +185,13 @@ class ERC20Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                MintFungibleEvent(
-                    contract_address="0x000000000000000000000000000000000000AAAA",
-                    account="0x000000000000000000000000000000000000BABA",
-                    value=42,
+                (
+                    MintFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        account="0x000000000000000000000000000000000000BABA",
+                        value=42,
+                    ),
+                    EventData(event="Issue", args={"amount": 42}, logIndex=1337),
                 )
             ],
             events,
@@ -183,6 +210,7 @@ class ERC20Tests(unittest.TestCase):
                         "to": "0x0000000000000000000000000000000000000000",
                         "value": 42,
                     },
+                    logIndex=1337,
                 )
             ]
         )
@@ -204,10 +232,21 @@ class ERC20Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                BurnFungibleEvent(
-                    contract_address="0x000000000000000000000000000000000000AAAA",
-                    account="0x000000000000000000000000000000000000BABA",
-                    value=42,
+                (
+                    BurnFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        account="0x000000000000000000000000000000000000BABA",
+                        value=42,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "value": 42,
+                            "from": "0x000000000000000000000000000000000000BABA",
+                            "to": "0x0000000000000000000000000000000000000000",
+                        },
+                        logIndex=1337,
+                    ),
                 )
             ],
             events,
@@ -226,6 +265,7 @@ class ERC20Tests(unittest.TestCase):
                         "to": "0x000000000000000000000000000000000000dead",
                         "value": 42,
                     },
+                    logIndex=1337,
                 )
             ]
         )
@@ -247,10 +287,21 @@ class ERC20Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                BurnFungibleEvent(
-                    contract_address="0x000000000000000000000000000000000000AAAA",
-                    account="0x000000000000000000000000000000000000BABA",
-                    value=42,
+                (
+                    BurnFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        account="0x000000000000000000000000000000000000BABA",
+                        value=42,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "from": "0x000000000000000000000000000000000000BABA",
+                            "to": "0x000000000000000000000000000000000000dead",
+                            "value": 42,
+                        },
+                        logIndex=1337,
+                    ),
                 )
             ],
             events,
@@ -263,12 +314,12 @@ class ERC20Tests(unittest.TestCase):
         transfer_event.process_receipt = MagicMock(return_value=[])
         contract.events.Transfer = MagicMock(return_value=transfer_event)
         issue_event = MagicMock(spec=ContractEvent)
-        issue_event.process_receipt = MagicMock(
-            return_value=[EventData(event="Redeem", args={"amount": 42})]
-        )
+        issue_event.process_receipt = MagicMock(return_value=[])
         contract.events.Issue = MagicMock(return_value=issue_event)
         redeem_event = MagicMock(spec=ContractEvent)
-        redeem_event.process_receipt = MagicMock(return_value=[])
+        redeem_event.process_receipt = MagicMock(
+            return_value=[EventData(event="Redeem", args={"amount": 42}, logIndex=1337)]
+        )
         contract.events.Redeem = MagicMock(return_value=redeem_event)
         contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
@@ -287,10 +338,13 @@ class ERC20Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                BurnFungibleEvent(
-                    contract_address="0x000000000000000000000000000000000000AAAA",
-                    account="0x000000000000000000000000000000000000BABA",
-                    value=42,
+                (
+                    BurnFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        account="0x000000000000000000000000000000000000BABA",
+                        value=42,
+                    ),
+                    EventData(event="Redeem", args={"amount": 42}, logIndex=1337),
                 )
             ],
             events,
@@ -309,6 +363,7 @@ class ERC20Tests(unittest.TestCase):
                         "to": "0x000000000000000000000000000000000000BABA",
                         "value": 42,
                     },
+                    logIndex=1337,
                 )
             ]
         )
@@ -330,11 +385,22 @@ class ERC20Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                TransferFungibleEvent(
-                    contract_address="0x000000000000000000000000000000000000AAAA",
-                    src="0x000000000000000000000000000000000000ABAB",
-                    dst="0x000000000000000000000000000000000000BABA",
-                    value=42,
+                (
+                    TransferFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        src="0x000000000000000000000000000000000000ABAB",
+                        dst="0x000000000000000000000000000000000000BABA",
+                        value=42,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "from": "0x000000000000000000000000000000000000ABAB",
+                            "to": "0x000000000000000000000000000000000000BABA",
+                            "value": 42,
+                        },
+                        logIndex=1337,
+                    ),
                 )
             ],
             events,
@@ -355,6 +421,7 @@ class ERC721Tests(unittest.TestCase):
                         "to": "0x000000000000000000000000000000000000BABA",
                         "tokenId": 4,
                     },
+                    logIndex=1337,
                 )
             ]
         )
@@ -370,10 +437,21 @@ class ERC721Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                MintNonFungibleEvent(
-                    contract_address="0x000000000000000000000000000000000000AAAA",
-                    account="0x000000000000000000000000000000000000BABA",
-                    tokenId=4,
+                (
+                    MintNonFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        account="0x000000000000000000000000000000000000BABA",
+                        tokenId=4,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "from": "0x0000000000000000000000000000000000000000",
+                            "to": "0x000000000000000000000000000000000000BABA",
+                            "tokenId": 4,
+                        },
+                        logIndex=1337,
+                    ),
                 )
             ],
             events,
@@ -392,6 +470,7 @@ class ERC721Tests(unittest.TestCase):
                         "to": "0x000000000000000000000000000000000000BABA",
                         "tokenId": 4,
                     },
+                    logIndex=1337,
                 )
             ]
         )
@@ -413,10 +492,21 @@ class ERC721Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                MintNonFungibleEvent(
-                    contract_address="0x000000000000000000000000000000000000AAAA",
-                    account="0x000000000000000000000000000000000000BABA",
-                    tokenId=4,
+                (
+                    MintNonFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        account="0x000000000000000000000000000000000000BABA",
+                        tokenId=4,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "from": "0x000000000000000000000000000000000000dead",
+                            "to": "0x000000000000000000000000000000000000BABA",
+                            "tokenId": 4,
+                        },
+                        logIndex=1337,
+                    ),
                 )
             ],
             events,
@@ -435,6 +525,7 @@ class ERC721Tests(unittest.TestCase):
                         "to": "0x0000000000000000000000000000000000000000",
                         "tokenId": 4,
                     },
+                    logIndex=1337,
                 )
             ]
         )
@@ -456,10 +547,21 @@ class ERC721Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                BurnNonFungibleEvent(
-                    contract_address="0x000000000000000000000000000000000000AAAA",
-                    account="0x000000000000000000000000000000000000BABA",
-                    tokenId=4,
+                (
+                    BurnNonFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        account="0x000000000000000000000000000000000000BABA",
+                        tokenId=4,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "from": "0x000000000000000000000000000000000000BABA",
+                            "to": "0x0000000000000000000000000000000000000000",
+                            "tokenId": 4,
+                        },
+                        logIndex=1337,
+                    ),
                 )
             ],
             events,
@@ -478,6 +580,7 @@ class ERC721Tests(unittest.TestCase):
                         "to": "0x000000000000000000000000000000000000dead",
                         "tokenId": 4,
                     },
+                    logIndex=1337,
                 )
             ]
         )
@@ -499,10 +602,21 @@ class ERC721Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                BurnNonFungibleEvent(
-                    contract_address="0x000000000000000000000000000000000000AAAA",
-                    account="0x000000000000000000000000000000000000BABA",
-                    tokenId=4,
+                (
+                    BurnNonFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        account="0x000000000000000000000000000000000000BABA",
+                        tokenId=4,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "from": "0x000000000000000000000000000000000000BABA",
+                            "to": "0x000000000000000000000000000000000000dead",
+                            "tokenId": 4,
+                        },
+                        logIndex=1337,
+                    ),
                 )
             ],
             events,
@@ -521,6 +635,7 @@ class ERC721Tests(unittest.TestCase):
                         "to": "0x000000000000000000000000000000000000ABAB",
                         "tokenId": "5",
                     },
+                    logIndex=1337,
                 )
             ]
         )
@@ -542,11 +657,22 @@ class ERC721Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                TransferNonFungibleEvent(
-                    contract_address="0x000000000000000000000000000000000000AAAA",
-                    src="0x000000000000000000000000000000000000BABA",
-                    dst="0x000000000000000000000000000000000000ABAB",
-                    tokenId="5",
+                (
+                    TransferNonFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        src="0x000000000000000000000000000000000000BABA",
+                        dst="0x000000000000000000000000000000000000ABAB",
+                        tokenId="5",
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "from": "0x000000000000000000000000000000000000BABA",
+                            "to": "0x000000000000000000000000000000000000ABAB",
+                            "tokenId": "5",
+                        },
+                        logIndex=1337,
+                    ),
                 )
             ],
             events,
@@ -567,6 +693,7 @@ class UniSwapV2Tests(unittest.TestCase):
                         "token1": "0x0000000000000000000000000000000000000002",
                         "pair": "0x0000000000000000000000000000000000000003",
                     },
+                    logIndex=1337,
                 )
             ]
         )
@@ -586,11 +713,22 @@ class UniSwapV2Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                PairCreatedEvent(
-                    contract_address="0x000000000000000000000000000000000000AAAA",
-                    pair_address="0x0000000000000000000000000000000000000003",
-                    token0="0x0000000000000000000000000000000000000001",
-                    token1="0x0000000000000000000000000000000000000002",
+                (
+                    PairCreatedEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        pair_address="0x0000000000000000000000000000000000000003",
+                        token0="0x0000000000000000000000000000000000000001",
+                        token1="0x0000000000000000000000000000000000000002",
+                    ),
+                    EventData(
+                        event="PairCreated",
+                        args={
+                            "token0": "0x0000000000000000000000000000000000000001",
+                            "token1": "0x0000000000000000000000000000000000000002",
+                            "pair": "0x0000000000000000000000000000000000000003",
+                        },
+                        logIndex=1337,
+                    ),
                 )
             ],
             events,
@@ -609,6 +747,7 @@ class UniSwapV2Tests(unittest.TestCase):
                         "amount0": 2,
                         "amount1": 3,
                     },
+                    logIndex=1337,
                 )
             ]
         )
@@ -630,11 +769,22 @@ class UniSwapV2Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                MintPairEvent(
-                    contract_address="0x000000000000000000000000000000000000AAAA",
-                    sender="0x0000000000000000000000000000000000000001",
-                    amount0=2,
-                    amount1=3,
+                (
+                    MintPairEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        sender="0x0000000000000000000000000000000000000001",
+                        amount0=2,
+                        amount1=3,
+                    ),
+                    EventData(
+                        event="Mint",
+                        args={
+                            "sender": "0x0000000000000000000000000000000000000001",
+                            "amount0": 2,
+                            "amount1": 3,
+                        },
+                        logIndex=1337,
+                    ),
                 )
             ],
             events,
@@ -654,6 +804,7 @@ class UniSwapV2Tests(unittest.TestCase):
                         "amount1": 3,
                         "to": "0x0000000000000000000000000000000000000002",
                     },
+                    logIndex=1337,
                 )
             ]
         )
@@ -675,12 +826,24 @@ class UniSwapV2Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                BurnPairEvent(
-                    contract_address="0x000000000000000000000000000000000000AAAA",
-                    src="0x0000000000000000000000000000000000000001",
-                    dst="0x0000000000000000000000000000000000000002",
-                    amount0=2,
-                    amount1=3,
+                (
+                    BurnPairEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        src="0x0000000000000000000000000000000000000001",
+                        dst="0x0000000000000000000000000000000000000002",
+                        amount0=2,
+                        amount1=3,
+                    ),
+                    EventData(
+                        event="Burn",
+                        args={
+                            "sender": "0x0000000000000000000000000000000000000001",
+                            "amount0": 2,
+                            "amount1": 3,
+                            "to": "0x0000000000000000000000000000000000000002",
+                        },
+                        logIndex=1337,
+                    ),
                 )
             ],
             events,
@@ -708,6 +871,7 @@ class UniSwapV2Tests(unittest.TestCase):
                         "amount1Out": 5,
                         "to": "0x0000000000000000000000000000000000000002",
                     },
+                    logIndex=1337,
                 )
             ]
         )
@@ -723,14 +887,28 @@ class UniSwapV2Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                SwapPairEvent(
-                    contract_address="0x000000000000000000000000000000000000AAAA",
-                    src="0x0000000000000000000000000000000000000001",
-                    dst="0x0000000000000000000000000000000000000002",
-                    in0=2,
-                    in1=3,
-                    out0=4,
-                    out1=5,
+                (
+                    SwapPairEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        src="0x0000000000000000000000000000000000000001",
+                        dst="0x0000000000000000000000000000000000000002",
+                        in0=2,
+                        in1=3,
+                        out0=4,
+                        out1=5,
+                    ),
+                    EventData(
+                        event="Swap",
+                        args={
+                            "sender": "0x0000000000000000000000000000000000000001",
+                            "amount0In": 2,
+                            "amount1In": 3,
+                            "amount0Out": 4,
+                            "amount1Out": 5,
+                            "to": "0x0000000000000000000000000000000000000002",
+                        },
+                        logIndex=1337,
+                    ),
                 )
             ],
             events,

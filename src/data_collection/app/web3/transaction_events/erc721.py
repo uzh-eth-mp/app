@@ -1,25 +1,24 @@
-from typing import Generator
-
 from hexbytes import HexBytes
 from web3.contract import Contract
 from web3.types import TxReceipt
+
 # Discarding errors on filtered events is expected
 # https://github.com/oceanprotocol/ocean.py/issues/348#issuecomment-875128102
 from web3.logs import DISCARD
 from app.model.contract import ContractCategory
-from .decorator import _event_mapper
+from app.web3.transaction_events.decorator import _event_mapper
 from app.web3.transaction_events.types import (
     BurnNonFungibleEvent,
     MintNonFungibleEvent,
     TransferNonFungibleEvent,
-    ContractEvent,
+    EventsGenerator,
 )
 
 
 @_event_mapper(ContractCategory.ERC721)
 def _transaction(
     contract: Contract, receipt: TxReceipt, block_hash: HexBytes
-) -> Generator[ContractEvent, None, None]:
+) -> EventsGenerator:
     burn_addresses = {
         "0x0000000000000000000000000000000000000000",
         "0x000000000000000000000000000000000000dead",
@@ -37,17 +36,17 @@ def _transaction(
                     contract_address=contract.address,
                     account=src,
                     tokenId=token_id,
-                )
+                ), eventLog
             elif src in burn_addresses:
                 yield MintNonFungibleEvent(
                     contract_address=contract.address,
                     account=dst,
                     tokenId=token_id,
-                )
+                ), eventLog
             else:
                 yield TransferNonFungibleEvent(
                     contract_address=contract.address,
                     src=src,
                     dst=dst,
                     tokenId=token_id,
-                )
+                ), eventLog

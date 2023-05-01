@@ -1,25 +1,24 @@
-from typing import Generator
-
 from hexbytes import HexBytes
 from web3.contract import Contract
 from web3.types import TxReceipt
+
 # Discarding errors on filtered events is expected
 # https://github.com/oceanprotocol/ocean.py/issues/348#issuecomment-875128102
 from web3.logs import DISCARD
 from app.model.contract import ContractCategory
-from .decorator import _event_mapper
+from app.web3.transaction_events.decorator import _event_mapper
 from app.web3.transaction_events.types import (
     BurnFungibleEvent,
     MintFungibleEvent,
     TransferFungibleEvent,
-    ContractEvent,
+    EventsGenerator,
 )
 
 
 @_event_mapper(ContractCategory.ERC20)
 def _transaction(
     contract: Contract, receipt: TxReceipt, block_hash: HexBytes
-) -> Generator[ContractEvent, None, None]:
+) -> EventsGenerator:
     # ABI for ERC20 https://gist.github.com/veox/8800debbf56e24718f9f483e1e40c35c
 
     burn_addresses = {
@@ -44,25 +43,25 @@ def _transaction(
             if dst in burn_addresses:
                 yield BurnFungibleEvent(
                     contract_address=contract.address, account=src, value=val
-                )
+                ), eventLog
             # https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol#L269
             elif src in burn_addresses:
                 yield MintFungibleEvent(
                     contract_address=contract.address, account=dst, value=val
-                )
+                ), eventLog
             else:
                 yield TransferFungibleEvent(
                     contract_address=contract.address,
                     src=src,
                     dst=dst,
                     value=val,
-                )
+                ), eventLog
 
 
 @_event_mapper(ContractCategory.ERC20)
 def _issue(
     contract: Contract, receipt: TxReceipt, block_hash: HexBytes
-) -> Generator[ContractEvent, None, None]:
+) -> EventsGenerator:
     # USDT -> https://etherscan.io/address/0xdac17f958d2ee523a2206206994597c13d831ec7#code#L444
     # Issue = USDT owner creates tokens.
     for eventLog in contract.events.Issue().process_receipt(receipt, errors=DISCARD):
@@ -71,13 +70,13 @@ def _issue(
             contract_address=contract.address,
             account=contract.functions.getOwner().call(block_identifier=block_hash),
             value=val,
-        )
+        ), eventLog
 
 
 @_event_mapper(ContractCategory.ERC20)
 def _redeem(
     contract: Contract, receipt: TxReceipt, block_hash: HexBytes
-) -> Generator[ContractEvent, None, None]:
+) -> EventsGenerator:
     # Redeem = USDT owner makes tokens dissapear - no null address. if they transfer to null address, still burn.
     # getOwner -> https://etherscan.io/address/0xdac17f958d2ee523a2206206994597c13d831ec7#code#L275
     for eventLog in contract.events.Redeem().process_receipt(receipt, errors=DISCARD):
@@ -86,4 +85,4 @@ def _redeem(
             contract_address=contract.address,
             account=contract.functions.getOwner().call(block_identifier=block_hash),
             value=val,
-        )
+        ), eventLog
