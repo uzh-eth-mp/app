@@ -7,27 +7,15 @@ services:
   # Updated network settings for data producers and consumers
   data_producer_eth:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/eth.json --worker-type producer"
-    network_mode: "bridge"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
   data_producer_etc:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/etc.json --worker-type producer"
-    network_mode: "bridge"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
   data_producer_bsc:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/bsc.json --worker-type producer"
-    network_mode: "bridge"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
   data_consumer_eth:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/eth.json --worker-type consumer"
-    network_mode: "bridge"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     deploy:
       replicas: ${N_CONSUMERS}
       restart_policy:
@@ -38,9 +26,6 @@ services:
 
   data_consumer_etc:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/etc.json --worker-type consumer"
-    network_mode: "bridge"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     deploy:
       replicas: ${N_CONSUMERS}
       restart_policy:
@@ -51,9 +36,6 @@ services:
 
   data_consumer_bsc:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/bsc.json --worker-type consumer"
-    network_mode: "bridge"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     deploy:
       replicas: ${N_CONSUMERS}
       restart_policy:
