@@ -16,8 +16,8 @@
                     "category": "erc20",
                     "events": [
                         "Transfer",
-                        "Issue",
-                        "Redeem"
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -26,8 +26,8 @@
                     "category": "erc20",
                     "events": [
                         "Transfer",
-                        "Issue",
-                        "Redeem"
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -36,8 +36,8 @@
                     "category": "erc20",
                     "events": [
                         "Transfer",
-                        "Issue",
-                        "Redeem"
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -46,8 +46,8 @@
                     "category": "erc20",
                     "events": [
                         "Transfer",
-                        "Issue",
-                        "Redeem"
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -56,8 +56,8 @@
                     "category": "erc20",
                     "events": [
                         "Transfer",
-                        "Issue",
-                        "Redeem"
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -71,7 +71,9 @@
                     "symbol": "UniSwap V2 Pair UETH-ULCK",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -79,7 +81,9 @@
                     "symbol": "UniSwap V2 Pair WISE-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -87,7 +91,9 @@
                     "symbol": "UniSwap V2 Pair USDC-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -95,7 +101,9 @@
                     "symbol": "UniSwap V2 Pair WETH-USDT",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -103,7 +111,9 @@
                     "symbol": "UniSwap V2 Pair DELTA-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -111,7 +121,9 @@
                     "symbol": "UniSwap V2 Pair FNK-USDT",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -119,7 +131,9 @@
                     "symbol": "UniSwap V2 Pair RK:ETH-ROOT",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -127,7 +141,9 @@
                     "symbol": "UniSwap V2 Pair DAI-USDC",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -135,7 +151,9 @@
                     "symbol": "UniSwap V2 Pair USDC-USDT",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -143,7 +161,9 @@
                     "symbol": "UniSwap V2 Pair ETH2POS-DC",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -151,7 +171,9 @@
                     "symbol": "UniSwap V2 Pair M2-wPE",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -159,7 +181,9 @@
                     "symbol": "UniSwap V2 Pair DAI-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -167,7 +191,9 @@
                     "symbol": "UniSwap V2 Pair FXS-FRAX",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -175,7 +201,9 @@
                     "symbol": "UniSwap V2 Pair DBL-BLUE",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -183,7 +211,9 @@
                     "symbol": "UniSwap V2 Pair HANU-MIA",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -191,7 +221,9 @@
                     "symbol": "UniSwap V2 Pair HANU-GOJ",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -199,7 +231,9 @@
                     "symbol": "UniSwap V2 Pair XXi-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -207,7 +241,9 @@
                     "symbol": "UniSwap V2 Pair WETH-CAW",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -215,7 +251,9 @@
                     "symbol": "UniSwap V2 Pair MC-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -223,7 +261,9 @@
                     "symbol": "UniSwap V2 Pair BHNY-wPE",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -231,7 +271,9 @@
                     "symbol": "UniSwap V2 Pair ELON-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -239,7 +281,9 @@
                     "symbol": "UniSwap V2 Pair UNI-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -247,7 +291,9 @@
                     "symbol": "UniSwap V2 Pair vUSD-VOW",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -255,7 +301,9 @@
                     "symbol": "UniSwap V2 Pair WBTC-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -263,7 +311,9 @@
                     "symbol": "UniSwap V2 Pair FEI-TRIBE",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -271,7 +321,9 @@
                     "symbol": "UniSwap V2 Pair BigSB-USDC",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -279,7 +331,9 @@
                     "symbol": "UniSwap V2 Pair PAXG-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -287,7 +341,9 @@
                     "symbol": "UniSwap V2 Pair WETH-SUPER",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -295,7 +351,9 @@
                     "symbol": "UniSwap V2 Pair WAXE-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -303,7 +361,9 @@
                     "symbol": "UniSwap V2 Pair WETH-FLOKI",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -311,7 +371,9 @@
                     "symbol": "UniSwap V2 Pair UETH-DAPE",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -319,7 +381,9 @@
                     "symbol": "UniSwap V2 Pair ULS-UETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -327,7 +391,9 @@
                     "symbol": "UniSwap V2 Pair WETH-BTT",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -335,7 +401,9 @@
                     "symbol": "UniSwap V2 Pair DG-USDC",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -343,7 +411,9 @@
                     "symbol": "UniSwap V2 Pair WOO-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -351,7 +421,9 @@
                     "symbol": "UniSwap V2 Pair UFO-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -359,7 +431,9 @@
                     "symbol": "UniSwap V2 Pair eXRD-USDC",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -367,7 +441,9 @@
                     "symbol": "UniSwap V2 Pair WETH-FOX",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -375,7 +451,9 @@
                     "symbol": "UniSwap V2 Pair WETH-SAITAMA",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -383,7 +461,9 @@
                     "symbol": "UniSwap V2 Pair PAXG-USDC",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -391,7 +471,9 @@
                     "symbol": "UniSwap V2 Pair RAD-USDC",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -399,7 +481,9 @@
                     "symbol": "UniSwap V2 Pair stETH-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -407,7 +491,9 @@
                     "symbol": "UniSwap V2 Pair DAI-O",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -415,7 +501,9 @@
                     "symbol": "UniSwap V2 Pair ERN-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -423,7 +511,9 @@
                     "symbol": "UniSwap V2 Pair ASTO-USDC",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -431,7 +521,9 @@
                     "symbol": "UniSwap V2 Pair scUSD-USDC",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -439,7 +531,9 @@
                     "symbol": "UniSwap V2 Pair VOLT-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -447,7 +541,9 @@
                     "symbol": "UniSwap V2 Pair WETH-DEXT",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -455,7 +551,9 @@
                     "symbol": "UniSwap V2 Pair WETH-CULT",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -463,7 +561,9 @@
                     "symbol": "UniSwap V2 Pair ShibDoge-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -471,7 +571,9 @@
                     "symbol": "UniSwap V2 Pair QOM-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -479,7 +581,9 @@
                     "symbol": "UniSwap V2 Pair WETH-AMPL",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -487,7 +591,9 @@
                     "symbol": "UniSwap V2 Pair USDT-HEZ",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -495,7 +601,9 @@
                     "symbol": "UniSwap V2 Pair PNK-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -503,7 +611,9 @@
                     "symbol": "UniSwap V2 Pair USDC-scUSD",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -511,7 +621,9 @@
                     "symbol": "UniSwap V2 Pair WETH-SFTX",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -519,7 +631,9 @@
                     "symbol": "UniSwap V2 Pair X2Y2-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -527,7 +641,9 @@
                     "symbol": "UniSwap V2 Pair STARL-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -535,7 +651,9 @@
                     "symbol": "UniSwap V2 Pair FLUT-DAI",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -543,7 +661,9 @@
                     "symbol": "UniSwap V2 Pair SWFL-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -551,7 +671,9 @@
                     "symbol": "UniSwap V2 Pair XFIT-USDT",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -559,7 +681,9 @@
                     "symbol": "UniSwap V2 Pair AUDIO-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -567,7 +691,9 @@
                     "symbol": "UniSwap V2 Pair PEPE-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -575,7 +701,9 @@
                     "symbol": "UniSwap V2 Pair UETH-ROOT",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -583,7 +711,9 @@
                     "symbol": "UniSwap V2 Pair WILD-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -591,7 +721,9 @@
                     "symbol": "UniSwap V2 Pair LON-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -599,7 +731,9 @@
                     "symbol": "UniSwap V2 Pair XFI-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -607,7 +741,9 @@
                     "symbol": "UniSwap V2 Pair GF-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -615,7 +751,9 @@
                     "symbol": "UniSwap V2 Pair STRP-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -623,7 +761,9 @@
                     "symbol": "UniSwap V2 Pair DOGE-USDT",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -631,7 +771,9 @@
                     "symbol": "UniSwap V2 Pair BOTTO-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -639,7 +781,9 @@
                     "symbol": "UniSwap V2 Pair INU-DAI",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -647,7 +791,9 @@
                     "symbol": "UniSwap V2 Pair BEND-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -655,7 +801,9 @@
                     "symbol": "UniSwap V2 Pair ANT-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -663,7 +811,9 @@
                     "symbol": "UniSwap V2 Pair POLS-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -671,7 +821,9 @@
                     "symbol": "UniSwap V2 Pair WDOGE-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -679,7 +831,9 @@
                     "symbol": "UniSwap V2 Pair DOGE-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -687,7 +841,9 @@
                     "symbol": "UniSwap V2 Pair KDOE-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -695,7 +851,9 @@
                     "symbol": "UniSwap V2 Pair DFI-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -703,7 +861,9 @@
                     "symbol": "UniSwap V2 Pair KOO-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -711,7 +871,9 @@
                     "symbol": "UniSwap V2 Pair WETH-DETS",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -719,7 +881,9 @@
                     "symbol": "UniSwap V2 Pair HEX-HDRN",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -727,7 +891,9 @@
                     "symbol": "UniSwap V2 Pair LFT-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -735,7 +901,9 @@
                     "symbol": "UniSwap V2 Pair WETH-ROOK",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -743,7 +911,9 @@
                     "symbol": "UniSwap V2 Pair Dione-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -751,7 +921,9 @@
                     "symbol": "UniSwap V2 Pair LINK-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -759,7 +931,9 @@
                     "symbol": "UniSwap V2 Pair \u2697\ufe0f-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -767,7 +941,9 @@
                     "symbol": "UniSwap V2 Pair EVN-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -775,7 +951,9 @@
                     "symbol": "UniSwap V2 Pair DJ15-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -783,7 +961,9 @@
                     "symbol": "UniSwap V2 Pair USDC-TSUKA",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -791,7 +971,9 @@
                     "symbol": "UniSwap V2 Pair imgnAI-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -799,7 +981,9 @@
                     "symbol": "UniSwap V2 Pair KAP-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -807,7 +991,9 @@
                     "symbol": "UniSwap V2 Pair KISHU-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -815,7 +1001,9 @@
                     "symbol": "UniSwap V2 Pair MASK-USDC",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -823,7 +1011,9 @@
                     "symbol": "UniSwap V2 Pair WETH-USD",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -831,7 +1021,9 @@
                     "symbol": "UniSwap V2 Pair KUMA-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -839,7 +1031,9 @@
                     "symbol": "UniSwap V2 Pair SHARE-USD",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -847,7 +1041,9 @@
                     "symbol": "UniSwap V2 Pair SPOOL-DAI",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -855,7 +1051,9 @@
                     "symbol": "UniSwap V2 Pair BabyDoge-WETH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 },
                 {
@@ -863,7 +1061,9 @@
                     "symbol": "UniSwap V2 Pair WETH-PUSH",
                     "category": "UniSwapV2Pair",
                     "events": [
-                        "Swap"
+                        "Swap",
+                        "Mint",
+                        "Burn"
                     ]
                 }
             ]

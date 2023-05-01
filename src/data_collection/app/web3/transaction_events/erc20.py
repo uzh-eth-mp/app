@@ -28,6 +28,7 @@ def _transaction(
 
     # here, contract contains ABI, which has the definition of Transfer().
     # https://web3py.readthedocs.io/en/latest/contracts.html#web3.contract.ContractEvents.myEvent
+    # https://web3py.readthedocs.io/en/stable/web3.contract.html#web3.contract.ContractEvents.myEvent
 
     # there might be multiple emits in the contract, that's why we're looping, and use yield.
     # contract.events.Transfer() represents the transfer event defined in the ABI. when a receipt is passed, we get the
