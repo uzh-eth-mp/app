@@ -3,6 +3,8 @@ import asyncio
 import sys
 
 import uvloop
+import sentry_sdk
+from sentry_sdk.integrations.asyncio import AsyncioIntegration
 
 from app import init_logger
 from app.config import Config
@@ -16,9 +18,7 @@ from app.model.abi import ContractABI
 log = init_logger(__name__)
 
 
-async def main(args: argparse.Namespace):
-    # Load the config file
-    config: Config = Config.parse_file(args.cfg)
+async def main(args: argparse.Namespace, config: Config):
     app_name = f"{args.mode.value}-{config.kafka_topic}"
 
     log.info(f"Starting {app_name}")
@@ -29,6 +29,7 @@ async def main(args: argparse.Namespace):
         # Load the ABIs
         contract_abi = ContractABI.parse_file(args.abi_file)
         consumer_tasks = []
+
         # Consumer
         async def start_consumer():
             async with DataConsumer(config, contract_abi) as data_consumer:
@@ -72,7 +73,18 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    # Load the config file
+    config: Config = Config.parse_file(args.cfg)
+
+    # Initialize Sentry if needed (env var SENTRY_DSN present)
+    if sentry_dsn := config.sentry_dsn:
+        sentry_sdk.init(
+            dsn=sentry_dsn,
+            integrations=[
+                AsyncioIntegration(),
+            ],
+        )
+
     # Run the app
-    # requires python 3.11+
     with asyncio.Runner(loop_factory=uvloop.new_event_loop) as runner:
-        runner.run(main(args))
+        runner.run(main(args, config))

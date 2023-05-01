@@ -112,6 +112,7 @@ services:
       - db
     environment:
       - LOG_LEVEL=${LOG_LEVEL}
+      - SENTRY_DSN=${SENTRY_DSN}
 
   data_producer_etc:
     build:
@@ -123,6 +124,7 @@ services:
       - db
     environment:
       - LOG_LEVEL=${LOG_LEVEL}
+      - SENTRY_DSN=${SENTRY_DSN}
 
   data_producer_bsc:
     build:
@@ -134,6 +136,7 @@ services:
       - db
     environment:
       - LOG_LEVEL=${LOG_LEVEL}
+      - SENTRY_DSN=${SENTRY_DSN}
 
   # Data consumers
   data_consumer_eth:
@@ -148,6 +151,7 @@ services:
     environment:
       - LOG_LEVEL=${LOG_LEVEL}
       - N_CONSUMER_INSTANCES=${N_CONSUMER_INSTANCES}
+      - SENTRY_DSN=${SENTRY_DSN}
 
   data_consumer_etc:
     build:
@@ -161,6 +165,7 @@ services:
     environment:
       - LOG_LEVEL=${LOG_LEVEL}
       - N_CONSUMER_INSTANCES=${N_CONSUMER_INSTANCES}
+      - SENTRY_DSN=${SENTRY_DSN}
 
   data_consumer_bsc:
     build:
@@ -174,6 +179,7 @@ services:
     environment:
       - LOG_LEVEL=${LOG_LEVEL}
       - N_CONSUMER_INSTANCES=${N_CONSUMER_INSTANCES}
+      - SENTRY_DSN=${SENTRY_DSN}
 
 
 # Kafka related config
