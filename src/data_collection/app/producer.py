@@ -26,7 +26,7 @@ class DataProducer(DataCollector):
 
     MAX_ALLOWED_TRANSACTIONS = 200000
     """The maximum amount of allowed transactions in a single kafka topic"""
-    PROGRESS_LOG_FREQUENCY = 100
+    PROGRESS_LOG_FREQUENCY = 1000
     """Log a progress status every 1000 blocks"""
 
     def __init__(self, config: Config) -> None:
