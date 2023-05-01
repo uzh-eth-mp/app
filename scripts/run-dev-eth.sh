@@ -6,10 +6,13 @@ source scripts/util/prepare-env.sh
 
 # Add dev prefix
 export PROJECT_NAME="$PROJECT_NAME-dev"
-export DATA_DIR="$DATA_DIR-dev"
+export DATA_DIR="$DATA_DIR/dev"
+
+# Don't use Sentry for dev
+export SENTRY_DSN=
 
 source scripts/util/compose-cleanup.sh
-source scripts/util/prepare-data-dir.sh
+source scripts/util/prepare-data-dir.sh $DATA_DIR $KAFKA_N_PARTITIONS
 
 # Start the containers in detached mode and
 # attach the logs only to the data producers and consumers
