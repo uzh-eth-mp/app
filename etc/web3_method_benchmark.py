@@ -2,6 +2,7 @@ import asyncio
 import statistics
 import time
 
+from datetime import datetime
 from typing import List
 
 from web3 import Web3
@@ -53,7 +54,8 @@ async def main(block_number):
     Args:
         block_number: starting block number
     """
-    print(f"Starting web3 method benchmark ({N_REQUESTS} requests per method)\n---")
+    print(f"Starting web3 method benchmark ({N_REQUESTS} requests per method)")
+    print(f"Current datetime (UTC): {datetime.utcnow().isoformat()}\n---")
     request_times_getBlock = []
     # keep a list of txs for later
     tx_hashes = []
