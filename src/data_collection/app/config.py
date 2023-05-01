@@ -4,6 +4,7 @@ from pydantic import (
     AnyUrl,
     BaseModel,
     BaseSettings,
+    confrozenset,
     conlist,
     constr,
     Field,
@@ -26,8 +27,8 @@ class ContractConfig(BaseModel):
     """The symbol / name / description of the contract"""
     category: str
     """The category of the contract. Mapped to contract.ContractCategory Enum."""
-    events: conlist(item_type=constr(regex="^[A-Z][A-Za-z]*$"), unique_items=True)
-    """Constrained list of events that will be processed for this contract.
+    events: confrozenset(item_type=constr(regex="^[A-Z][A-Za-z]*$"))
+    """Constrained set of events that will be processed for this contract.
 
     The values within this list should be event names without arguments.
 

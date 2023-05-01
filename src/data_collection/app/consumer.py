@@ -170,7 +170,7 @@ class DataConsumer(DataCollector):
             if not event.should_process_event(allowed_events):
                 continue
             # Mark this log to be saved
-            log_indices_to_save.add(event_log.logIndex)
+            log_indices_to_save.add(event_log["logIndex"])
 
             # log.debug(f"Caught event ({event.__class__.__name__}): {event}")
             if isinstance(event, BurnFungibleEvent):
