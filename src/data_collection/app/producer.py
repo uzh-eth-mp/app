@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 from web3.exceptions import BlockNotFound
 
@@ -8,6 +9,7 @@ from app.model.block import BlockData
 from app.model.producer_type import ProducerType
 from app.kafka.manager import KafkaProducerManager
 from app.web3.block_explorer import BlockExplorer
+from app.utils import log_producer_progress
 from app.utils.data_collector import DataCollector
 
 
@@ -22,8 +24,10 @@ class DataProducer(DataCollector):
     of processing (latest_processed_block).
     """
 
-    # The maximum amount of allowed transactions in a single kafka topic
     MAX_ALLOWED_TRANSACTIONS = 200000
+    """The maximum amount of allowed transactions in a single kafka topic"""
+    PROGRESS_LOG_FREQUENCY = 100
+    """Log a progress status every 1000 blocks"""
 
     def __init__(self, config: Config) -> None:
         super().__init__(config)
@@ -91,6 +95,7 @@ class DataProducer(DataCollector):
         try:
             # Keep track of how many times the producer has 'stalled'
             stall_counter = 0
+            _initial_time_counter_stamp = time.perf_counter()
             while should_continue(i_block):
                 # Verify that there is space in the Kafka topic for more transaction hashes
                 if n_txs := await self.kafka_manager.redis_manager.get_n_transactions():
@@ -128,9 +133,16 @@ class DataProducer(DataCollector):
                 # Continue from the next block
                 i_block += 1
 
-                # Log a status message every 1k blocks
-                if (i_block - start_block) % 1000 == 0:
-                    log.info(f"Current block: #{i_block} | n_txs in topic {n_txs}")
+                # Log a status message if needed
+                log_producer_progress(
+                    log=log,
+                    i_block=i_processed_block,
+                    start_block=start_block,
+                    end_block=end_block,
+                    progress_log_frequency=self.PROGRESS_LOG_FREQUENCY,
+                    initial_time_counter=_initial_time_counter_stamp,
+                    n_transactions=await self.kafka_manager.redis_manager.get_n_transactions()
+                )
         except BlockNotFound:
             # OK, BlockNotFound exception is raised when the latest block is reached
             pass
