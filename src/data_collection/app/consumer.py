@@ -179,11 +179,6 @@ class DataConsumer(DataCollector):
         for event, event_log in get_transaction_events(
             category, contract, tx_receipt, w3_block_hash
         ):
-            # Check if this event should be processed
-            if not event.should_process_event(allowed_events):
-                continue
-            # Mark this log to be saved
-            log_indices_to_save.add(event_log["logIndex"])
 
             # log.debug(f"Caught event ({event.__class__.__name__}): {event}")
             if isinstance(event, BurnFungibleEvent):
@@ -212,7 +207,10 @@ class DataConsumer(DataCollector):
                 pass
             elif isinstance(event, TransferNonFungibleEvent):
                 pass
-
+                # Check if this event should be processed
+            # Mark this log to be saved
+            if event.should_process_event(allowed_events):
+               log_indices_to_save.add(event_log["logIndex"])
         # Insert the transaction logs into DB
         logs_to_save = [
             log for log in tx_receipt_data.logs if log.log_index in log_indices_to_save
