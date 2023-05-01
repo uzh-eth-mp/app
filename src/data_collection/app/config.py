@@ -8,6 +8,7 @@ from pydantic import (
     Field,
     root_validator,
     PostgresDsn,
+    RedisDsn
 )
 
 from app.model.producer_type import ProducerType
@@ -92,7 +93,10 @@ class Config(BaseSettings):
     db_dsn: PostgresDsn
     """DSN for PostgreSQL"""
 
-    redis_url: AnyUrl
+    sentry_dsn: Optional[AnyUrl]
+    """DSN for Sentry"""
+
+    redis_url: RedisDsn
     """URL for Redis (needs to have a 'redis://' scheme)"""
 
     kafka_url: str
