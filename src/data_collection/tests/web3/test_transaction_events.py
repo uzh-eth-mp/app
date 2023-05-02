@@ -94,7 +94,24 @@ class ERC20Tests(unittest.TestCase):
                         },
                         logIndex=1337,
                     ),
-                )
+                ),
+                (
+                    TransferFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        src="0x0000000000000000000000000000000000000000",
+                        dst="0x000000000000000000000000000000000000BABA",
+                        value=42,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "from": "0x0000000000000000000000000000000000000000",
+                            "to": "0x000000000000000000000000000000000000BABA",
+                            "value": 42,
+                        },
+                        logIndex=1337,
+                    ),
+                ),
             ],
             events,
         )
@@ -149,7 +166,24 @@ class ERC20Tests(unittest.TestCase):
                         },
                         logIndex=1337,
                     ),
-                )
+                ),
+                (
+                    TransferFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        src="0x000000000000000000000000000000000000dead",
+                        dst="0x000000000000000000000000000000000000BABA",
+                        value=42,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "from": "0x000000000000000000000000000000000000dead",
+                            "to": "0x000000000000000000000000000000000000BABA",
+                            "value": 42,
+                        },
+                        logIndex=1337,
+                    ),
+                ),
             ],
             events,
         )
@@ -247,7 +281,24 @@ class ERC20Tests(unittest.TestCase):
                         },
                         logIndex=1337,
                     ),
-                )
+                ),
+                (
+                    TransferFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        src="0x000000000000000000000000000000000000BABA",
+                        dst="0x0000000000000000000000000000000000000000",
+                        value=42,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "value": 42,
+                            "from": "0x000000000000000000000000000000000000BABA",
+                            "to": "0x0000000000000000000000000000000000000000",
+                        },
+                        logIndex=1337,
+                    ),
+                ),
             ],
             events,
         )
@@ -302,7 +353,24 @@ class ERC20Tests(unittest.TestCase):
                         },
                         logIndex=1337,
                     ),
-                )
+                ),
+                (
+                    TransferFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        src="0x000000000000000000000000000000000000BABA",
+                        dst="0x000000000000000000000000000000000000dead",
+                        value=42,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "from": "0x000000000000000000000000000000000000BABA",
+                            "to": "0x000000000000000000000000000000000000dead",
+                            "value": 42,
+                        },
+                        logIndex=1337,
+                    ),
+                ),
             ],
             events,
         )
@@ -452,7 +520,24 @@ class ERC721Tests(unittest.TestCase):
                         },
                         logIndex=1337,
                     ),
-                )
+                ),
+                (
+                    TransferNonFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        src="0x0000000000000000000000000000000000000000",
+                        dst="0x000000000000000000000000000000000000BABA",
+                        tokenId=4,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "from": "0x0000000000000000000000000000000000000000",
+                            "to": "0x000000000000000000000000000000000000BABA",
+                            "tokenId": 4,
+                        },
+                        logIndex=1337,
+                    ),
+                ),
             ],
             events,
         )
@@ -507,7 +592,24 @@ class ERC721Tests(unittest.TestCase):
                         },
                         logIndex=1337,
                     ),
-                )
+                ),
+                (
+                    TransferNonFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        src="0x000000000000000000000000000000000000dead",
+                        dst="0x000000000000000000000000000000000000BABA",
+                        tokenId=4,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "from": "0x000000000000000000000000000000000000dead",
+                            "to": "0x000000000000000000000000000000000000BABA",
+                            "tokenId": 4,
+                        },
+                        logIndex=1337,
+                    ),
+                ),
             ],
             events,
         )
@@ -562,7 +664,24 @@ class ERC721Tests(unittest.TestCase):
                         },
                         logIndex=1337,
                     ),
-                )
+                ),
+                (
+                    TransferNonFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        src="0x000000000000000000000000000000000000BABA",
+                        dst="0x0000000000000000000000000000000000000000",
+                        tokenId=4,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "from": "0x000000000000000000000000000000000000BABA",
+                            "to": "0x0000000000000000000000000000000000000000",
+                            "tokenId": 4,
+                        },
+                        logIndex=1337,
+                    ),
+                ),
             ],
             events,
         )
@@ -617,7 +736,24 @@ class ERC721Tests(unittest.TestCase):
                         },
                         logIndex=1337,
                     ),
-                )
+                ),
+                (
+                    TransferNonFungibleEvent(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        src="0x000000000000000000000000000000000000BABA",
+                        dst="0x000000000000000000000000000000000000dead",
+                        tokenId=4,
+                    ),
+                    EventData(
+                        event="Transfer",
+                        args={
+                            "from": "0x000000000000000000000000000000000000BABA",
+                            "to": "0x000000000000000000000000000000000000dead",
+                            "tokenId": 4,
+                        },
+                        logIndex=1337,
+                    ),
+                ),
             ],
             events,
         )

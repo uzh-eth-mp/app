@@ -49,13 +49,13 @@ def _transaction(
                 yield MintFungibleEvent(
                     contract_address=contract.address, account=dst, value=val
                 ), eventLog
-            else:
-                yield TransferFungibleEvent(
-                    contract_address=contract.address,
-                    src=src,
-                    dst=dst,
-                    value=val,
-                ), eventLog
+
+            yield TransferFungibleEvent(
+                contract_address=contract.address,
+                src=src,
+                dst=dst,
+                value=val,
+            ), eventLog
 
 
 @_event_mapper(ContractCategory.ERC20)

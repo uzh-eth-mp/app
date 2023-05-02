@@ -43,10 +43,10 @@ def _transaction(
                     account=dst,
                     tokenId=token_id,
                 ), eventLog
-            else:
-                yield TransferNonFungibleEvent(
-                    contract_address=contract.address,
-                    src=src,
-                    dst=dst,
-                    tokenId=token_id,
-                ), eventLog
+
+            yield TransferNonFungibleEvent(
+                contract_address=contract.address,
+                src=src,
+                dst=dst,
+                tokenId=token_id,
+            ), eventLog
