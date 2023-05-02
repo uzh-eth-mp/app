@@ -8,11 +8,13 @@ from pydantic import (
     conlist,
     constr,
     Field,
+    validator,
     root_validator,
     PostgresDsn,
-    RedisDsn
+    RedisDsn,
 )
 
+import app.web3.transaction_events.types as w3t
 from app.model.producer_type import ProducerType
 
 
@@ -29,18 +31,34 @@ class ContractConfig(BaseModel):
     category: str
     """The category of the contract. Mapped to contract.ContractCategory Enum."""
     events: confrozenset(item_type=constr(regex="^[A-Z][A-Za-z]*$"))
-    """Constrained set of events that will be processed for this contract.
+    """Constrained set of events that will be processed (stored into DB) for this contract.
 
-    The values within this list should be event names without arguments.
+    The values within this list should be equal to `EventContract` subclasses' names.
 
     Examples:
-        ``["Transfer", "Swap", "Mint", "Burn"]``
-        ``["Transfer"]``
-
-    Note:
-        If one of the values in this list is also present in the default contract category ABI,
-        it will be saved into the DB.
+        ``["TransferFungibleEvent", "SwapPairEvent", "MintFungibleEvent", "BurnFungibleEvent"]``
+        ``["TransferFungibleEvent"]``
     """
+
+    @validator("events")
+    def check_if_events_are_matching_event_names_in_web3_types(cls, values):
+        """Check if each of the items in 'events' field is one of the ContractEvent.__name__ defined in types.py"""
+        # Get names of event subclasses
+        event_cls_names = set(
+            [
+                cls_name
+                for cls_name, event_cls in w3t.__dict__.items()
+                if isinstance(event_cls, type)
+                and issubclass(event_cls, w3t.ContractEvent)
+                and cls_name != "ContractEvent"
+            ]
+        )
+        # Check if each event name is correct
+        for v in values:
+            if v not in event_cls_names:
+                raise ValueError(f"{v} is not an acceptable event name.")
+
+        return values
 
     def __eq__(self, __value: object) -> bool:
         return (
@@ -114,7 +132,7 @@ class Config(BaseSettings):
     db_dsn: PostgresDsn
     """DSN for PostgreSQL"""
 
-    sentry_dsn: Optional[AnyUrl]
+    sentry_dsn: Optional[str] = None
     """DSN for Sentry"""
 
     redis_url: RedisDsn

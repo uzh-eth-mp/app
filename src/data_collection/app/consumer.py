@@ -180,7 +180,7 @@ class DataConsumer(DataCollector):
             category, contract, tx_receipt, w3_block_hash
         ):
             # Check if this event should be processed
-            if not event.should_process_event(allowed_events):
+            if not type(event).__name__ in allowed_events:
                 continue
             # Mark this log to be saved
             log_indices_to_save.add(event_log["logIndex"])
