@@ -28,5 +28,5 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run docker-compose.tests.yml
-        run: docker compose -f docker-compose.tests.yml up test_web3 --build --abort-on-container-exit
+        run: bash scripts/tests/run-tests-web3.sh
         shell: bash
