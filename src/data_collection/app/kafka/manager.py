@@ -9,7 +9,7 @@ from aiokafka.structs import RecordMetadata
 
 from app import init_logger
 from app.db.redis import RedisManager
-from app.kafka.exceptions import KafkaManagerError, KafkaConsumerTopicEmptyError
+from app.kafka.exceptions import KafkaManagerError, KafkaConsumerPartitionsEmptyError
 
 
 log = init_logger(__name__)
@@ -230,9 +230,9 @@ class KafkaProducerManager(KafkaManager):
 class KafkaConsumerManager(KafkaManager):
     """Manage consuming events from a given Kafka topic"""
 
-    # How much time (in seconds) to wait for the next event / message
-    # from a Kafka topic before exiting
-    EVENT_RETRIEVAL_TIMEOUT = 300
+    EVENT_RETRIEVAL_TIMEOUT = 900
+    """How much time (in seconds) to wait for the next event / message
+    from a Kafka topic before timing out the consumer"""
 
     def __init__(self, kafka_url: str, redis_url: str, topic: str) -> None:
         super().__init__(kafka_url=kafka_url, redis_url=redis_url, topic=topic)
@@ -247,11 +247,16 @@ class KafkaConsumerManager(KafkaManager):
 
     async def _event_timeout(self, event):
         """Raise an exception if event.set() is not called for EVENT_RETRIEVAL_TIMEOUT seconds"""
-        while True:
-            # Wait for event.set() to be called for EVENT_RETRIEVAL_TIMEOUT seconds
-            await asyncio.wait_for(event.wait(), self.EVENT_RETRIEVAL_TIMEOUT)
-            # Reset the event timeout to wait another 30 seconds for a new Kafka event
-            event.clear()
+        try:
+            while True:
+                # Wait for event.set() to be called for EVENT_RETRIEVAL_TIMEOUT seconds
+                await asyncio.wait_for(event.wait(), self.EVENT_RETRIEVAL_TIMEOUT)
+                # Reset the event timeout to wait another EVENT_RETRIEVAL_TIMEOUT seconds for a new Kafka event
+                event.clear()
+        except TimeoutError as e:
+            # Catch asyncio.TimeoutError from the wait event timeout and reraise it as KafkaConsumerTopicEmptyError
+            # because there are no more events in the partitions
+            raise KafkaConsumerPartitionsEmptyError from e
 
     async def _start_listening_on_topic(
         self,
@@ -259,18 +264,15 @@ class KafkaConsumerManager(KafkaManager):
         wait_event: asyncio.Event,
     ):
         """Listen for new Kafka messages on a predefined topic"""
-        try:
-            # Wait for new events from Kafka and call the callback
-            async for event in self._client:
-                # Notify the wait_event that we've received a new Kafka topic event
-                wait_event.set()
-                # Decrement the amount of events / messages in the partition
-                # this event was retrieved from
-                await self.redis_manager.decr_transactions(event.partition)
-                # Await the async callback
-                await on_event_callback(event)
-        except TimeoutError as e:
-            raise KafkaConsumerTopicEmptyError from e
+        # Wait for new events from Kafka and call the callback
+        async for event in self._client:
+            # Notify the wait_event that we've received a new Kafka topic event
+            wait_event.set()
+            # Decrement the amount of events / messages in the partition
+            # this event was retrieved from
+            await self.redis_manager.decr_transactions(event.partition)
+            # Await the async callback
+            await on_event_callback(event)
 
     async def start_consuming(
         self, on_event_callback: Callable[[str], Awaitable[None]]
@@ -298,12 +300,12 @@ class KafkaConsumerManager(KafkaManager):
             # (with a timeout task that can interrupt the consume task by raising an exception)
             await asyncio.gather(timeout_task, consume_task)
 
-        except TimeoutError:
+        except KafkaConsumerPartitionsEmptyError:
             # Raised when no message is received within the specified time
             log.info(
                 f"No event received for {self.EVENT_RETRIEVAL_TIMEOUT} seconds - timed out"
             )
-            raise KafkaConsumerTopicEmptyError
+            raise
         finally:
             # Disconnect from Kafka
             await self.disconnect()

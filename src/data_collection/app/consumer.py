@@ -5,7 +5,7 @@ from web3.types import TxReceipt, HexBytes
 
 from app import init_logger
 from app.config import Config
-from app.kafka.exceptions import KafkaConsumerTopicEmptyError
+from app.kafka.exceptions import KafkaConsumerPartitionsEmptyError
 from app.kafka.manager import KafkaConsumerManager
 from app.model.abi import ContractABI
 from app.model.contract import ContractCategory
@@ -302,7 +302,7 @@ class DataConsumer(DataCollector):
             await self.kafka_manager.start_consuming(
                 on_event_callback=self._on_kafka_event
             )
-        except KafkaConsumerTopicEmptyError:
+        except KafkaConsumerPartitionsEmptyError:
             # Raised when a partition doesn't receive a new message for 120 seconds.
             log.info(f"Finished processing topic '{self.kafka_manager.topic}'.")
             # exit_code doesn't change, 0 = success

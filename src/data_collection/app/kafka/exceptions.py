@@ -4,8 +4,8 @@ class KafkaManagerError(Exception):
     pass
 
 
-class KafkaConsumerTopicEmptyError(KafkaManagerError):
-    """Raised when a message is not retrieved from a topic for a some time."""
+class KafkaConsumerPartitionsEmptyError(KafkaManagerError):
+    """Raised when a message is not retrieved from any partition for a some time."""
 
     pass
 

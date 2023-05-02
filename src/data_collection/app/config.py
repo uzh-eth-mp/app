@@ -10,7 +10,7 @@ from pydantic import (
     Field,
     root_validator,
     PostgresDsn,
-    RedisDsn
+    RedisDsn,
 )
 
 from app.model.producer_type import ProducerType

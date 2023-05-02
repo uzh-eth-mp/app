@@ -3,7 +3,7 @@
 RETRIES=0
 
 # Wait for PostgreSQL to start
-while ! curl http://$POSTGRES_HOST:$POSTGRES_PORT/ 2>&1 | grep '52';
+while ! curl --connect-timeout 5 http://$POSTGRES_HOST:$POSTGRES_PORT/ 2>&1 | grep '52';
 do
   sleep 1;
   echo "Waiting 1s for PostgreSQL container to start.";
