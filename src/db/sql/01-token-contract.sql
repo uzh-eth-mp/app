@@ -81,7 +81,7 @@ BEGIN
        to_address varchar(256) NOT NULL,
        from_address varchar(256) NOT NULL,
        token_id int,
-       transaction_hash varchar(256),
+       transaction_hash varchar(256)
       )', blockchain_name || '_nft_transfer', blockchain_name || '_contract');
 END
 $func$;
