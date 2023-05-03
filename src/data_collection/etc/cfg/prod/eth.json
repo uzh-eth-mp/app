@@ -61,6 +61,16 @@
                     ]
                 },
                 {
+                    "address": "0x36d02DcD463Dfd71E4a07d8Aa946742Da94e8D3a",
+                    "symbol": "SFTD",
+                    "category": "erc721",
+                    "events": [
+                        "TransferNonFungibleEvent",
+                        "MintNonFungibleEvent",
+                        "BurnNonFungibleEvent"
+                    ]
+                },
+                {
                     "address": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
                     "symbol": "UniSwap V2 Factory",
                     "category": "UniSwapV2Factory",
