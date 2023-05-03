@@ -21,12 +21,12 @@ env:
 
 jobs:
   test:
-    name: web3 unit tests
+    name: unit tests
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
 
       - name: Run docker-compose.tests.yml
-        run: bash scripts/tests/run-tests-web3.sh
+        run: bash scripts/tests/run-tests-unit.sh
         shell: bash
