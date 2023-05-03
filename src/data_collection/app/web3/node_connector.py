@@ -1,4 +1,4 @@
-from typing import Any, Tuple
+from typing import Any, List, Tuple
 
 from web3 import Web3
 from web3.eth import AsyncEth
@@ -102,7 +102,9 @@ class NodeConnector:
 
         return int(blockReward, 16)
 
-    async def get_internal_transactions(self, tx_hash: str) -> InternalTransactionData:
+    async def get_internal_transactions(
+        self, tx_hash: str
+    ) -> List[InternalTransactionData]:
         """Get internal transaction data by hash"""
         data = await self.w3.provider.make_request(
             "trace_replayTransaction", [tx_hash, ["trace"]]

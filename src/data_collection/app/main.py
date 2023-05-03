@@ -18,10 +18,10 @@ from app.model.abi import ContractABI
 log = init_logger(__name__)
 
 
-async def main(args: argparse.Namespace, config: Config):
-    app_name = f"{args.mode.value}-{config.kafka_topic}"
+async def start(args: argparse.Namespace, config: Config):
+    worker_name = f"{args.mode.value}-{config.kafka_topic}"
 
-    log.info(f"Starting {app_name}")
+    log.info(f"Starting {worker_name}")
     exit_code = 0
 
     # Start the app in the correct mode
@@ -37,8 +37,6 @@ async def main(args: argparse.Namespace, config: Config):
 
         # Start N_CONSUMER_INSTANCES asyncio tasks
         for _ in range(config.number_of_consumer_tasks):
-            # TODO: # of consumers can be increased by using a asyncpg connection_pool across
-            # all the tasks within this process
             consumer_tasks.append(asyncio.create_task(start_consumer()))
         result = await asyncio.gather(*consumer_tasks)
         # Return erroneous exit code if needed
@@ -48,11 +46,12 @@ async def main(args: argparse.Namespace, config: Config):
         async with DataProducer(config) as data_producer:
             exit_code = await data_producer.start_producing_data()
 
-    log.info(f"Exiting {app_name} with code {exit_code}")
+    log.info(f"Exiting {worker_name} with code {exit_code}")
     sys.exit(exit_code)
 
 
-if __name__ == "__main__":
+def main():
+    """Load CLI args, json config and start the app with asyncio"""
     # CLI arguments parser
     parser = argparse.ArgumentParser(description="EVM-node Data Collector")
     parser.add_argument(
@@ -87,4 +86,8 @@ if __name__ == "__main__":
 
     # Run the app
     with asyncio.Runner(loop_factory=uvloop.new_event_loop) as runner:
-        runner.run(main(args, config))
+        runner.run(start(args, config))
+
+
+if __name__ == "__main__":
+    main()

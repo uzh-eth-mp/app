@@ -1,4 +1,5 @@
 asyncpg
+aiokafka
 fakeredis
 pydantic
 pytest

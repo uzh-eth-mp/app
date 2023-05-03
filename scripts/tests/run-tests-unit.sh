@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Run web3 unit tests
+# Run unit tests
 docker compose \
     -f docker-compose.tests.yml \
-    up test_web3 \
+    up test_unit \
     --build \
     --abort-on-container-exit

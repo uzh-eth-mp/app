@@ -33,9 +33,9 @@ services:
       dockerfile: Dockerfile.tests
     command: ["pytest", "tests/db/test_redis.py"]
 
-  # Tests for web3 code
-  test_web3:
+  # Unit tests
+  test_unit:
     build:
       context: ./src/data_collection
       dockerfile: Dockerfile.tests
-    command: ["pytest", "tests/web3"]
+    command: ["pytest", "tests/unit"]

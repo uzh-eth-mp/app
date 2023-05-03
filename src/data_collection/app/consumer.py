@@ -149,7 +149,7 @@ class DataConsumer(DataCollector):
 
         # check for AND insert internal transactions if needed
         internal_tx_data = await self.node_connector.get_internal_transactions(
-            self._tx_hash
+            tx_data.transaction_hash
         )
         if internal_tx_data:
             async with self.db_manager.db.transaction():
