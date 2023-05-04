@@ -1,6 +1,11 @@
-from unittest.mock import AsyncMock
+from unittest.mock import Mock, AsyncMock, patch
 
 from app.model.transaction import InternalTransactionData
+from app.web3.transaction_events.types import (
+    TransferFungibleEvent,
+    BurnFungibleEvent,
+    MintFungibleEvent,
+)
 
 
 class TestHandleContractCreation:
@@ -106,20 +111,176 @@ class TestHandleTransaction:
 class TestHandleTransactionEvents:
     """Tests for _handle_transaction_events method in DataConsumer"""
 
-    async def test_no_event_inserted(self):
+    @patch("app.consumer.get_transaction_events")
+    async def test_no_event_inserted(
+        self,
+        mock_get_transaction_events,
+        consumer_factory,
+        config_factory,
+        data_collection_config_factory,
+        contract_config_usdt,
+        contract_abi,
+        transaction_data,
+        transaction_receipt_data,
+        transaction_logs_data,
+    ):
         """Test that no event is inserted if no event was found"""
-        # TODO: Implement
-        pass
+        # Arrange
+        consumer = consumer_factory(
+            config_factory([data_collection_config_factory([contract_config_usdt])]),
+            contract_abi,
+        )
+        get_contract_events_mock = Mock()
+        get_contract_events_mock.return_value = [
+            "TransferFungibleEvent",
+            "MintFungibleEvent",
+            "BurnFungibleEvent",
+        ]
+        consumer.contract_parser.get_contract_events = get_contract_events_mock
+        mock_get_transaction_events.return_value = [
+            # (
+            #     TransferFungibleEvent(
+            #         contract_address=contract_config_usdt.address,
+            #         src="0xF00D",
+            #         dst="0xCAFE",
+            #         value=1500,
+            #     ),
+            #     dict(logIndex=1337),
+            # )
+        ]
+        transaction_receipt_data.logs = [transaction_logs_data]
+        contract_mock = Mock()
+        contract_mock.address = contract_config_usdt.address
+        consumer.db_manager.insert_transaction_logs = AsyncMock()
+        consumer.db_manager.insert_contract_supply_change = AsyncMock()
+        consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
 
-    async def test_no_event_inserted_if_not_in_config(self):
+        # Act
+        await consumer._handle_transaction_events(
+            contract=contract_mock,
+            category=Mock(),
+            tx_data=transaction_data,
+            tx_receipt=Mock(),
+            tx_receipt_data=transaction_receipt_data,
+            w3_block_hash=Mock(),
+        )
+
+        # Assert
+        consumer.db_manager.insert_transaction_logs.assert_not_awaited()
+        consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
+        consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
+
+    @patch("app.consumer.get_transaction_events")
+    async def test_no_event_inserted_if_not_in_config(
+        self,
+        mock_get_transaction_events,
+        consumer_factory,
+        config_factory,
+        data_collection_config_factory,
+        contract_config_usdt,
+        contract_abi,
+        transaction_data,
+        transaction_receipt_data,
+        transaction_logs_data,
+    ):
         """Test that no event is inserted if event found but is not in config"""
-        # TODO: Implement
-        pass
+        # Arrange
+        consumer = consumer_factory(
+            config_factory([data_collection_config_factory([contract_config_usdt])]),
+            contract_abi,
+        )
+        get_contract_events_mock = Mock()
+        get_contract_events_mock.return_value = []
+        consumer.contract_parser.get_contract_events = get_contract_events_mock
+        mock_get_transaction_events.return_value = [
+            (
+                TransferFungibleEvent(
+                    contract_address=contract_config_usdt.address,
+                    src="0xF00D",
+                    dst="0xCAFE",
+                    value=1500,
+                ),
+                dict(logIndex=1337),
+            )
+        ]
+        transaction_receipt_data.logs = [transaction_logs_data]
+        contract_mock = Mock()
+        contract_mock.address = contract_config_usdt.address
+        consumer.db_manager.insert_transaction_logs = AsyncMock()
+        consumer.db_manager.insert_contract_supply_change = AsyncMock()
+        consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
 
-    async def test_transfer_fungible_event_inserted(self):
+        # Act
+        await consumer._handle_transaction_events(
+            contract=contract_mock,
+            category=Mock(),
+            tx_data=transaction_data,
+            tx_receipt=Mock(),
+            tx_receipt_data=transaction_receipt_data,
+            w3_block_hash=Mock(),
+        )
+
+        # Assert
+        consumer.db_manager.insert_transaction_logs.assert_not_awaited()
+        consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
+        consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
+
+    @patch("app.consumer.get_transaction_events")
+    async def test_transfer_fungible_event_inserted(
+        self,
+        mock_get_transaction_events,
+        consumer_factory,
+        config_factory,
+        data_collection_config_factory,
+        contract_config_usdt,
+        contract_abi,
+        transaction_data,
+        transaction_receipt_data,
+        transaction_logs_data,
+    ):
         """Test that transfer fungible event is inserted"""
-        # TODO: Implement
-        pass
+        # Arrange
+        consumer = consumer_factory(
+            config_factory([data_collection_config_factory([contract_config_usdt])]),
+            contract_abi,
+        )
+        get_contract_events_mock = Mock()
+        get_contract_events_mock.return_value = ["TransferFungibleEvent"]
+        consumer.contract_parser.get_contract_events = get_contract_events_mock
+        mock_get_transaction_events.return_value = [
+            (
+                TransferFungibleEvent(
+                    contract_address=contract_config_usdt.address,
+                    src="0xF00D",
+                    dst="0xCAFE",
+                    value=1500,
+                ),
+                dict(logIndex=1337),
+            )
+        ]
+        transaction_receipt_data.logs = [transaction_logs_data]
+        contract_mock = Mock()
+        contract_mock.address = contract_config_usdt.address
+        consumer.db_manager.insert_transaction_logs = AsyncMock()
+        consumer.db_manager.insert_contract_supply_change = AsyncMock()
+        consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
+
+        # Act
+        await consumer._handle_transaction_events(
+            contract=contract_mock,
+            category=Mock(),
+            tx_data=transaction_data,
+            tx_receipt=Mock(),
+            tx_receipt_data=transaction_receipt_data,
+            w3_block_hash=Mock(),
+        )
+
+        # Assert
+        consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
+            **transaction_logs_data.dict()
+        )
+        consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
+        consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
 
     async def test_transfer_fungible_event_not_inserted_if_not_in_config(self):
         """Test that transfer fungible event is not inserted if not in config"""

@@ -10,14 +10,17 @@ from app.model.transaction import (
     InternalTransactionData,
     TransactionData,
     TransactionReceiptData,
+    TransactionLogsData,
 )
+
+shared_tx_hash = "0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822"
 
 
 @pytest.fixture
 def transaction_data() -> TransactionData:
     return TransactionData(
         **{
-            "hash": "0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822",
+            "hash": shared_tx_hash,
             "blockNumber": 1337,
             "from": "0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822",
             "to": "0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822",
@@ -38,6 +41,23 @@ def transaction_receipt_data() -> TransactionReceiptData:
             "type": "call",
             "contractAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         }
+    )
+
+
+@pytest.fixture
+def transaction_logs_data() -> TransactionLogsData:
+    return TransactionLogsData(
+        transactionHash=shared_tx_hash,
+        address="0xf76de79a8cb78158f22dc8e0f3b6f3f6b9cd97d8",
+        logIndex=1337,
+        data="|Â¦E<",
+        removed=False,
+        topics=[
+            "0x940c4b3549ef0aaff95807dc27f62d88ca15532d1bf535d7d63800f40395d16c",
+            "0x000000000000000000000000e2de6d17b8314f7f182f698606a53a064b00ddcc",
+            "0x0000000000000000000000005e42c86bb5352e9d985dd1200e05a35f4b0b2b14",
+            "0x54494d4500000000000000000000000000000000000000000000000000000000",
+        ],
     )
 
 
