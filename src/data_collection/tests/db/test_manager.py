@@ -89,3 +89,11 @@ class TestInsert:
         await db_manager.insert_contract(**contract_data)
         await db_manager.insert_pair_contract(**pair_contract_data)
         await db_manager.insert_pair_liquidity_change(**pair_liquidity_change_data)
+
+    @pytest.mark.usefixtures("clean_db")
+    async def test_insert_nft_transfer(
+        self,
+        db_manager,
+        nft_transfer_data,
+    ):
+        await db_manager.insert_nft_transfer(**nft_transfer_data)

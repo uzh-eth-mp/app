@@ -177,7 +177,33 @@ class DatabaseManager:
             data,
             removed,
             topics,
-            )
+        )
+
+    async def insert_nft_transfer(
+        self,
+        transaction_hash: str,
+        address: str,
+        from_address: str,
+        to_address: str,
+        token_id: int,
+    ):
+        """
+        Insert nft transfer data into <node>_nft_transfer table.
+        """
+
+        table = f"{self.node_name}_nft_transfer"
+
+        await self.db.execute(
+            f"""
+            INSERT INTO {table} (transaction_hash, address, from_address, to_address, token_id)
+            VALUES ($1, $2, $3,$4, $5);
+            """,
+            transaction_hash,
+            address,
+            from_address,
+            to_address,
+            token_id,
+        )
 
     async def insert_contract(
         self, address: str, transaction_hash: str, is_pair_contract: bool
@@ -280,10 +306,6 @@ class DatabaseManager:
         Insert pair liquidity change data into <node>_token_contract_supply_change table.
         """
         table = f"{self.node_name}_pair_liquidity_change"
-        #log.debug(f"Inserting into pair_liquidity_change:{table}:\n"+
-                  #f"""INSERT INTO {table} (address, amount0, amount1, transaction_hash)
-                   #   VALUES ({address}, {amount0}, {amount1}, {transaction_hash})
-                    #  ON CONFLICT (address, transaction_hash) DO NOTHING;""")
 
         await self.db.execute(
             f"""
@@ -332,8 +354,3 @@ class DatabaseManager:
 
         # Return a dictionary
         return dict(res) if res else None
-
-    # TODO: Finish get_block_transactions
-    async def get_block_transactions(block_number: int) -> List[dict[str, Any]]:
-        """Get all transactions for the given block number"""
-        pass
