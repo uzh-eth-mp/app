@@ -284,7 +284,7 @@ class TestHandleTransactionEvents:
 
     async def test_transfer_fungible_event_not_inserted_if_not_in_config(self):
         """Test that transfer fungible event is not inserted if not in config"""
-        # TODO: Implement
+        # TODO: Implemen
         pass
 
     async def test_mint_fungible_event_inserted(self):
