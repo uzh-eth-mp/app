@@ -8,8 +8,8 @@ on:
     paths:
       - .github/workflows/test-web3.yaml
       # Python
-      - 'src/data_collection/app/web3/**'
-      - 'src/data_collection/tests/web3/**'
+      - 'src/data_collection/app/**'
+      - 'src/data_collection/tests/unit/**'
       - 'src/data_collection/Dockerfile.tests'
       - 'src/data_collection/pytest.ini'
       - 'src/data_collection/requirements-tests.in'
