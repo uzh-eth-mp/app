@@ -69,6 +69,28 @@ SELECT create_table_token_contract('bsc');
 SELECT create_table_token_contract('etc');
 
 
+-- TOKEN CONTRACT TABLE - ERC20 & ERC721 & ERC1155
+CREATE OR REPLACE FUNCTION create_table_nft_transfer(blockchain_name varchar(30))
+  RETURNS VOID
+  LANGUAGE plpgsql AS
+$func$
+BEGIN
+   EXECUTE format('
+      CREATE TABLE IF NOT EXISTS %I (
+       address varchar(256) NOT NULL,
+       to_address varchar(256) NOT NULL,
+       from_address varchar(256) NOT NULL,
+       token_id int,
+       transaction_hash varchar(256)
+      )', blockchain_name || '_nft_transfer', blockchain_name || '_contract');
+END
+$func$;
+
+SELECT create_table_nft_transfer('eth');
+SELECT create_table_nft_transfer('bsc');
+SELECT create_table_nft_transfer('etc');
+
+
 --CONTRACT SUPPLY CHANGE TABLE
 CREATE OR REPLACE FUNCTION create_table_contract_supply_change(blockchain_name varchar(30))
   RETURNS VOID

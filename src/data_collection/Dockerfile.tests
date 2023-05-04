@@ -11,6 +11,7 @@ COPY requirements-tests.txt requirements-tests.txt
 RUN pip install -r requirements-tests.txt
 
 COPY app app
+COPY etc etc
 COPY tests tests
 COPY pytest.ini pytest.ini
 COPY scripts/wait-for-db.sh wait-for-db.sh

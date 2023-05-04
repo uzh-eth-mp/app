@@ -81,6 +81,8 @@ services:
         KAFKA_GID: ${DATA_GID}
     ports:
       - "9092"
+    depends_on:
+      - zookeeper
     environment:
       # Kafka specific environment variables
       - KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS=6000

@@ -149,7 +149,7 @@ class DataConsumer(DataCollector):
 
         # check for AND insert internal transactions if needed
         internal_tx_data = await self.node_connector.get_internal_transactions(
-            self._tx_hash
+            tx_data.transaction_hash
         )
         if internal_tx_data:
             async with self.db_manager.db.transaction():
@@ -180,7 +180,7 @@ class DataConsumer(DataCollector):
             category, contract, tx_receipt, w3_block_hash
         ):
             # Check if this event should be processed
-            if not event.should_process_event(allowed_events):
+            if not type(event).__name__ in allowed_events:
                 continue
             # Mark this log to be saved
             log_indices_to_save.add(event_log["logIndex"])
@@ -211,7 +211,13 @@ class DataConsumer(DataCollector):
             elif isinstance(event, BurnNonFungibleEvent):
                 pass
             elif isinstance(event, TransferNonFungibleEvent):
-                pass
+                await self.db_manager.insert_nft_transfer(
+                    address=contract.address,
+                    from_address=event.src,
+                    to_address=event.dst,
+                    token_id=event.tokenId,
+                    transaction_hash=tx_data.transaction_hash,
+                )
 
         # Insert the transaction logs into DB
         logs_to_save = [

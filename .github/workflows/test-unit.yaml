@@ -1,32 +1,28 @@
 
-name: Web3 unit tests
+name: Unit tests
 
 on:
   push:
     branches-ignore:
       - 'main'
     paths:
-      - .github/workflows/test-web3.yaml
+      - .github/workflows/test-unit.yaml
       # Python
-      - 'src/data_collection/app/web3/**'
-      - 'src/data_collection/tests/web3/**'
+      - 'src/data_collection/app/**'
+      - 'src/data_collection/tests/unit/**'
       - 'src/data_collection/Dockerfile.tests'
       - 'src/data_collection/pytest.ini'
       - 'src/data_collection/requirements-tests.in'
       - 'src/data_collection/requirements-tests.txt'
 
-env:
-  IMAGE_NAME: ${{ github.repository }}
-  GHCR: ghcr.io
-
 jobs:
   test:
-    name: web3 unit tests
+    name: unit tests
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
 
       - name: Run docker-compose.tests.yml
-        run: docker compose -f docker-compose.tests.yml up test_web3 --build --abort-on-container-exit
+        run: bash scripts/tests/run-tests-unit.sh
         shell: bash
