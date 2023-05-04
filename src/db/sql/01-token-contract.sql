@@ -77,7 +77,7 @@ $func$
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       address varchar(256) REFERENCES %I(address) NOT NULL,
+       address varchar(256) NOT NULL,
        to_address varchar(256) NOT NULL,
        from_address varchar(256) NOT NULL,
        token_id int,
@@ -87,6 +87,8 @@ END
 $func$;
 
 SELECT create_table_nft_transfer('eth');
+SELECT create_table_nft_transfer('bsc');
+SELECT create_table_nft_transfer('etc');
 
 
 --CONTRACT SUPPLY CHANGE TABLE

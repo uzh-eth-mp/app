@@ -214,10 +214,11 @@ class DataConsumer(DataCollector):
                 await self.db_manager.insert_nft_transfer(
                     address=contract.address,
                     from_address=event.src,
-                    to_address= event.dst,
-                    token_id = event.tokenId,
-                    transaction_hash = tx_data.transaction_hash)
-                
+                    to_address=event.dst,
+                    token_id=event.tokenId,
+                    transaction_hash=tx_data.transaction_hash,
+                )
+
         # Insert the transaction logs into DB
         logs_to_save = [
             log for log in tx_receipt_data.logs if log.log_index in log_indices_to_save

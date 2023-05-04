@@ -193,3 +193,14 @@ def contract_supply_change_data() -> dict[str, Any]:
         amount_changed=22,
         transaction_hash="0x871dadd3f5ca95b398575d710d39385de9123a10717e2e37a90545a805daca78",
     )
+
+
+@pytest.fixture
+def nft_transfer_data() -> dict[str, Any]:
+    return dict(
+        transaction_hash=shared_tx_hash,
+        address=shared_address,
+        token_id=1,
+        from_address="0xCAFE000000000000000000000000000000000000",
+        to_address="0xF00D000000000000000000000000000000000000",
+    )
