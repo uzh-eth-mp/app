@@ -1,12 +1,12 @@
 
-name: Web3 unit tests
+name: Unit tests
 
 on:
   push:
     branches-ignore:
       - 'main'
     paths:
-      - .github/workflows/test-web3.yaml
+      - .github/workflows/test-unit.yaml
       # Python
       - 'src/data_collection/app/**'
       - 'src/data_collection/tests/unit/**'
@@ -14,10 +14,6 @@ on:
       - 'src/data_collection/pytest.ini'
       - 'src/data_collection/requirements-tests.in'
       - 'src/data_collection/requirements-tests.txt'
-
-env:
-  IMAGE_NAME: ${{ github.repository }}
-  GHCR: ghcr.io
 
 jobs:
   test:
