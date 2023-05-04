@@ -11,7 +11,7 @@ from app.config import Config
 from app.producer import DataProducer
 from app.consumer import DataConsumer
 from app.utils.enum_action import EnumAction
-from app.model import DataCollectionMode
+from app.model import DataCollectionWorkerMode
 from app.model.abi import ContractABI
 
 
@@ -25,7 +25,7 @@ async def start(args: argparse.Namespace, config: Config):
     exit_code = 0
 
     # Start the app in the correct mode
-    if args.mode == DataCollectionMode.CONSUMER:
+    if args.mode == DataCollectionWorkerMode.CONSUMER:
         # Load the ABIs
         contract_abi = ContractABI.parse_file(args.abi_file)
         consumer_tasks = []
@@ -41,7 +41,7 @@ async def start(args: argparse.Namespace, config: Config):
         result = await asyncio.gather(*consumer_tasks)
         # Return erroneous exit code if needed
         exit_code = int(any(result))
-    elif args.mode == DataCollectionMode.PRODUCER:
+    elif args.mode == DataCollectionWorkerMode.PRODUCER:
         # Producer
         async with DataProducer(config) as data_producer:
             exit_code = await data_producer.start_producing_data()
@@ -65,8 +65,8 @@ def main():
     )
     parser.add_argument(
         "--mode",
-        help="The data collection mode (producing or consuming data)",
-        type=DataCollectionMode,
+        help="The data collection worker mode (producing or consuming data)",
+        type=DataCollectionWorkerMode,
         action=EnumAction,
         required=True,
     )
