@@ -11,7 +11,7 @@ from app.config import Config
 from app.producer import DataProducer
 from app.consumer import DataConsumer
 from app.utils.enum_action import EnumAction
-from app.model import DataCollectionWorkerMode
+from app.model import DataCollectionWorkerType
 from app.model.abi import ContractABI
 
 
@@ -19,13 +19,13 @@ log = init_logger(__name__)
 
 
 async def start(args: argparse.Namespace, config: Config):
-    worker_name = f"{args.mode.value}-{config.kafka_topic}"
+    worker_name = f"{args.worker_type.value}-{config.kafka_topic}"
 
     log.info(f"Starting {worker_name}")
     exit_code = 0
 
     # Start the app in the correct mode
-    if args.mode == DataCollectionWorkerMode.CONSUMER:
+    if args.worker_type == DataCollectionWorkerType.CONSUMER:
         # Load the ABIs
         contract_abi = ContractABI.parse_file(args.abi_file)
         consumer_tasks = []
@@ -41,7 +41,7 @@ async def start(args: argparse.Namespace, config: Config):
         result = await asyncio.gather(*consumer_tasks)
         # Return erroneous exit code if needed
         exit_code = int(any(result))
-    elif args.mode == DataCollectionWorkerMode.PRODUCER:
+    elif args.worker_type == DataCollectionWorkerType.PRODUCER:
         # Producer
         async with DataProducer(config) as data_producer:
             exit_code = await data_producer.start_producing_data()
@@ -64,9 +64,9 @@ def main():
         default="etc/contract_abi.json",
     )
     parser.add_argument(
-        "--mode",
-        help="The data collection worker mode (producing or consuming data)",
-        type=DataCollectionWorkerMode,
+        "--worker-type",
+        help="The data collection worker type (producing or consuming data)",
+        type=DataCollectionWorkerType,
         action=EnumAction,
         required=True,
     )

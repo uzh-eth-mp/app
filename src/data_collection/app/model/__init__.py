@@ -5,8 +5,8 @@ from hexbytes import HexBytes
 from pydantic import BaseModel, root_validator
 
 
-class DataCollectionWorkerMode(Enum):
-    """The mode of the worker: producing or consuming data"""
+class DataCollectionWorkerType(Enum):
+    """The type of the worker: producing or consuming data"""
 
     PRODUCER = "producer"
     CONSUMER = "consumer"
