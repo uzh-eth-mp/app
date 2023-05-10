@@ -15,7 +15,7 @@ from pydantic import (
 )
 
 import app.web3.transaction_events.types as w3t
-from app.model.producer_type import ProducerType
+from app.model import DataCollectionMode
 
 
 class ContractConfig(BaseModel):
@@ -78,8 +78,8 @@ class DataCollectionConfig(BaseSettings):
     Each data collection config will start producing transactions depending on its producer_type.
     """
 
-    producer_type: ProducerType
-    """Type of this producer."""
+    mode: DataCollectionMode
+    """Mode of this data collection config."""
     start_block: Optional[int]
     """Starting block number. Takes precedence over the setting in the db."""
     end_block: Optional[int]
@@ -112,14 +112,12 @@ class DataCollectionConfig(BaseSettings):
         return values
 
     @root_validator
-    def producer_type_not_missing_topics(cls, values):
-        """Validate topics not missing when producer_type = LOG_FILTER"""
-        producer_type = values.get("producer_type")
-        if producer_type == ProducerType.LOG_FILTER:
+    def mode_not_missing_topics(cls, values):
+        """Validate topics not missing when mode = LOG_FILTER"""
+        mode = values.get("mode")
+        if mode == DataCollectionMode.LOG_FILTER:
             if values.get("topics") is None:
-                raise ValueError(
-                    f'"producer_type": "log_filter" requires "topics" field'
-                )
+                raise ValueError(f'"mode": "log_filter" requires "topics" field')
         return values
 
 

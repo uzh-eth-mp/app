@@ -6,7 +6,7 @@ from web3.exceptions import BlockNotFound
 from app import init_logger
 from app.config import Config, DataCollectionConfig
 from app.model.block import BlockData
-from app.model.producer_type import ProducerType
+from app.model import DataCollectionMode
 from app.kafka.manager import KafkaProducerManager
 from app.web3.block_explorer import BlockExplorer
 from app.utils import log_producer_progress
@@ -162,10 +162,10 @@ class DataProducer(DataCollector):
         pretty_config["contracts"] = list(map(lambda c: c.symbol, data_collection_cfg.contracts))
         log.info(f"Creating data collection producer task ({pretty_config})")
 
-        match data_collection_cfg.producer_type:
-            case ProducerType.FULL:
+        match data_collection_cfg.mode:
+            case DataCollectionMode.FULL:
                 return asyncio.create_task(self._start_full_producer(data_collection_cfg))
-            case ProducerType.LOG_FILTER:
+            case DataCollectionMode.LOG_FILTER:
                 return asyncio.create_task(self._start_logfilter_producer(data_collection_cfg))
 
     async def start_producing_data(self) -> int:
