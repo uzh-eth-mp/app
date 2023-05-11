@@ -503,7 +503,11 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
             **transaction_logs_data.dict()
         )
-        consumer.db_manager.insert_contract_supply_change.assert_awaited_once()
+        consumer.db_manager.insert_contract_supply_change.assert_awaited_once_with(
+           address='0xdAC17F958D2ee523a2206206994597C13D831ec7', 
+           transaction_hash='0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822', 
+           amount_changed=-1500
+        )
         consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
 
     @patch("app.consumer.get_transaction_events")
@@ -519,7 +523,6 @@ class TestHandleTransactionEvents:
         transaction_logs_data,):
 
         """Test that burn fungible event is not inserted if not in config"""
-
         # Arrange
         consumer = consumer_factory(
             config_factory([data_collection_config_factory([contract_config_usdt])]),
@@ -579,17 +582,34 @@ class TestHandleTransactionEvents:
             contract_abi,
         )
         get_contract_events_mock = Mock()
-        get_contract_events_mock.return_value = ["TransferFungibleEvent"]
+        get_contract_events_mock.return_value = ["TransferFungibleEvent", "BurnFungibleEvent"]
         consumer.contract_parser.get_contract_events = get_contract_events_mock
         mock_get_transaction_events.return_value = [
             (
                 TransferFungibleEvent(
                     contract_address=contract_config_usdt.address,
                     src="0xF00D",
-                    dst="0x000000",
-                    value=1500,
+                    dst= "0x0000000000000000000000000000000000000000",
+                    value=2000,
                 ),
                 dict(logIndex=1337),
+            ), 
+            (
+                TransferFungibleEvent(
+                    contract_address=contract_config_usdt.address,
+                    src="0xF00D",
+                    dst= "0x000000000000000000000000000000000000dead",
+                    value=2000,
+                ),
+                dict(logIndex=1337),
+            ), 
+            (
+                BurnFungibleEvent(
+                    contract_address=contract_config_usdt.address,
+                    account = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+                    value=1500,
+                ),
+                dict(logIndex=1338),
             )
         ]
         transaction_receipt_data.logs = [transaction_logs_data]
@@ -613,7 +633,12 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
             **transaction_logs_data.dict()
         )
-        consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
+        consumer.db_manager.insert_contract_supply_change.assert_awaited_once_with(
+            address='0xdAC17F958D2ee523a2206206994597C13D831ec7', 
+            transaction_hash='0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822', 
+            amount_changed=-1500
+            
+        )
         consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
   
     @patch("app.consumer.get_transaction_events")
@@ -643,11 +668,21 @@ class TestHandleTransactionEvents:
                 TransferFungibleEvent(
                     contract_address=contract_config_usdt.address,
                     src="0xF00D",
-                    dst="0x000000",
+                    dst="0x0000000000000000000000000000000000000000",
+                    value=1500,
+                ),
+                dict(logIndex=1337),
+            ), 
+                (
+                TransferFungibleEvent(
+                    contract_address=contract_config_usdt.address,
+                    src="0xF00D",
+                    dst="0x000000000000000000000000000000000000dead",
                     value=1500,
                 ),
                 dict(logIndex=1337),
             )
+
         ]
         transaction_receipt_data.logs = [transaction_logs_data]
         contract_mock = Mock()
@@ -690,14 +725,31 @@ class TestHandleTransactionEvents:
             contract_abi,
         )
         get_contract_events_mock = Mock()
-        get_contract_events_mock.return_value = ["TransferFungibleEvent"]
+        get_contract_events_mock.return_value = ["TransferFungibleEvent","MintFungibleEvent"]
         consumer.contract_parser.get_contract_events = get_contract_events_mock
         mock_get_transaction_events.return_value = [
             (
                 TransferFungibleEvent(
                     contract_address=contract_config_usdt.address,
-                    src="0x000000",
+                    src="0x000000000000000000000000000000000000dead",
                     dst="0xCAFE",
+                    value=2500,
+                ),
+                dict(logIndex=1337),
+            ),
+                        (
+                TransferFungibleEvent(
+                    contract_address=contract_config_usdt.address,
+                    src="0x0000000000000000000000000000000000000000",
+                    dst="0xCAFE",
+                    value=2500,
+                ),
+                dict(logIndex=1337),
+            ),
+            (
+                MintFungibleEvent(
+                    contract_address=contract_config_usdt.address,
+                    account = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
                     value=1500,
                 ),
                 dict(logIndex=1337),
@@ -724,7 +776,11 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
             **transaction_logs_data.dict()
         )
-        consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
+        consumer.db_manager.insert_contract_supply_change.assert_awaited_once_with(
+            address='0xdAC17F958D2ee523a2206206994597C13D831ec7',
+            transaction_hash='0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822', 
+            amount_changed=1500
+        )
         consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
 
     @patch("app.consumer.get_transaction_events")
@@ -752,7 +808,16 @@ class TestHandleTransactionEvents:
             (
                 TransferFungibleEvent(
                     contract_address=contract_config_usdt.address,
-                    src="0x000000",
+                    src="0x0000000000000000000000000000000000000000",
+                    dst="0xCAFE",
+                    value=1500,
+                ),
+                dict(logIndex=1337),
+            ), 
+            (
+                TransferFungibleEvent(
+                    contract_address=contract_config_usdt.address,
+                    src="0x000000000000000000000000000000000000dead",
                     dst="0xCAFE",
                     value=1500,
                 ),
@@ -835,7 +900,12 @@ class TestHandleTransactionEvents:
             **transaction_logs_data.dict()
         )
         consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
-        consumer.db_manager.insert_pair_liquidity_change.assert_awaited_once()        
+        consumer.db_manager.insert_pair_liquidity_change.assert_awaited_once_with(
+          address='0xdAC17F958D2ee523a2206206994597C13D831ec7', 
+          amount0=1500, 
+          amount1=2500,
+          transaction_hash='0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822'
+        )        
  
     @patch("app.consumer.get_transaction_events")
     async def test_mint_pair_event_not_inserted_if_not_in_config(self,
@@ -945,7 +1015,11 @@ class TestHandleTransactionEvents:
             **transaction_logs_data.dict()
         )
         consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
-        consumer.db_manager.insert_pair_liquidity_change.assert_awaited_once()
+        consumer.db_manager.insert_pair_liquidity_change.assert_awaited_once_with(
+            address='0xdAC17F958D2ee523a2206206994597C13D831ec7',
+            amount0=-1500, amount1=-2500, 
+            transaction_hash='0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822'
+        )
 
     @patch("app.consumer.get_transaction_events")
     async def test_burn_pair_event_not_inserted_if_not_in_config(self,
@@ -1060,7 +1134,12 @@ class TestHandleTransactionEvents:
             **transaction_logs_data.dict()
         )
         consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
-        consumer.db_manager.insert_pair_liquidity_change.assert_awaited_once()      
+        consumer.db_manager.insert_pair_liquidity_change.assert_awaited_once_with(
+            address='0xdAC17F958D2ee523a2206206994597C13D831ec7',
+            amount0=200, 
+            amount1=600, 
+            transaction_hash='0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822'
+        )      
 
     @patch("app.consumer.get_transaction_events")
     async def test_swap_pair_event_not_inserted_if_not_in_config(self,
