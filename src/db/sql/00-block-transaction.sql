@@ -16,7 +16,9 @@ BEGIN
        timestamp timestamp NOT NULL,
        miner varchar(256) NOT NULL,
        parent_hash varchar(256) NOT NULL,
-       block_reward numeric(78,18) NOT NULL
+       block_reward numeric(78,18) NOT NULL,
+       uncles varchar(256) ARRAY
+
       )', node_name || '_block') ;
 END
 $func$;
