@@ -75,11 +75,11 @@ class ContractConfig(BaseModel):
 class DataCollectionConfig(BaseSettings):
     """Store data collection configuration settings.
 
-    Each data collection config will start producing transactions depending on its producer_type.
+    Each data collection config will start producing transactions depending on its mode.
     """
 
     mode: DataCollectionMode
-    """Mode of this data collection config."""
+    """Mode of this data collection config. (previously called producer_type)"""
     start_block: Optional[int]
     """Starting block number. Takes precedence over the setting in the db."""
     end_block: Optional[int]

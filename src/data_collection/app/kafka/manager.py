@@ -1,5 +1,5 @@
 import asyncio
-
+from functools import wraps
 from asyncio import TimeoutError
 from typing import Awaitable, Callable, List, Optional
 
@@ -79,6 +79,8 @@ class KafkaManager:
 class KafkaProducerManager(KafkaManager):
     """Manage producing events to a given Kafka topic"""
 
+    MAX_MESSAGES_PER_PARTITION = 1000
+    """Maximum amount of messages (events) stored in a single partition."""
     MESSAGES_PER_BATCH = 1024
     """
     Maximum amount of messages (events) in a single batch
@@ -101,6 +103,45 @@ class KafkaProducerManager(KafkaManager):
         # Start at 0
         self._i_partition = 0
 
+    def limit_topic_capacity(f):
+        """Decorator that limits the amount of messages in a topic to MAX_MESSAGES_PER_PARTITION * n_partitions"""
+
+        async def inner(self, *args, **kwargs):
+            stall_counter = 0
+            waiting_for_space = True
+            while waiting_for_space:
+                # Verify that there is space in the Kafka topic for more transaction hashes
+                if n_txs := await self.redis_manager.get_n_transactions():
+                    # Compute total max allowed messages in all partitions each time
+                    # because # of partitions can change
+                    total_allowed_messages_in_partitions = (
+                        self.MAX_MESSAGES_PER_PARTITION
+                        * await self.number_of_partitions()
+                    )
+                    if n_txs > total_allowed_messages_in_partitions:
+                        if stall_counter % 60 == 0 and stall_counter:
+                            # Log info about the stall every 60 seconds
+                            log.info(f"Producing stalled for {stall_counter} seconds.")
+                        stall_counter += 1
+                        # Sleep if there are too many transactions in the kafka topic
+                        await asyncio.sleep(1)
+                        # Try again after sleeping
+                        continue
+                    else:
+                        waiting_for_space = False
+                    # Print out info about the stall
+                    if stall_counter >= 60:
+                        log.info(
+                            f"Continuing producing after stalling for {stall_counter} seconds."
+                        )
+                elif stall_counter == 0:
+                    # Else if n_txs is None and stall_counter is 0, the topic (each parition) is completely empty
+                    break
+            result = f(*args, **kwargs)
+            return result
+
+        return inner
+
     @property
     async def number_of_partitions(self) -> int:
         """Return the number of partitions in this topic"""
@@ -122,6 +163,7 @@ class KafkaProducerManager(KafkaManager):
             partition = await self.redis_manager.get_lowest_score_partition() or 0
         return partition
 
+    @limit_topic_capacity
     async def send_message(self, msg: str) -> Optional[RecordMetadata]:
         """Send message to a Kafka broker"""
         try:
@@ -152,6 +194,7 @@ class KafkaProducerManager(KafkaManager):
             log.error(f"{err} on {msg}")
             raise err
 
+    @limit_topic_capacity
     async def send_batch(self, msgs: List[str]) -> List[RecordMetadata]:
         """Send a batch of messages to a Kafka broker"""
         if not msgs:

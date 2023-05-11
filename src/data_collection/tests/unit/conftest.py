@@ -180,7 +180,7 @@ def data_collection_config_factory():
     def _data_collection_cfg(contracts: List[ContractConfig]):
         return DataCollectionConfig(
             **{
-                "producer_type": "full",
+                "mode": "full",
                 "start_block": 1337,
                 "end_block": 1338,
                 "contracts": contracts,

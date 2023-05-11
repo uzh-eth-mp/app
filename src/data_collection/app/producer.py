@@ -33,10 +33,41 @@ class DataProducer(DataCollector):
         super().__init__(config)
         self.config = config
         self.kafka_manager: KafkaProducerManager = KafkaProducerManager(
-            kafka_url=config.kafka_url, redis_url=config.redis_url, topic=config.kafka_topic
+            kafka_url=config.kafka_url,
+            redis_url=config.redis_url,
+            topic=config.kafka_topic,
         )
 
-    async def _start_logfilter_producer(self, data_collection_cfg: DataCollectionConfig):
+    async def _init_block_vars(self, data_collection_cfg: DataCollectionConfig):
+        """Initialize start and end block numbers and variable block indices from the config and the database"""
+        # Get block exploration bounds (start and end block number)
+        block_explorer = BlockExplorer(
+            data_collection_cfg=data_collection_cfg,
+            db=self.db_manager,
+            w3=self.node_connector,
+        )
+        start_block, end_block = await block_explorer.get_exploration_bounds()
+
+        # Current block index, last processed block index
+        i_block, i_processed_block = start_block, None
+
+        if end_block is not None:
+            # If end block contains a number, continue until we reach it
+            should_continue = lambda i: i <= end_block
+        else:
+            # Else continue forever until a 'BlockNotFound' exception is raised
+            should_continue = lambda _: True
+
+        end_block_str = f"block #{end_block}" if end_block else "'latest' block"
+        log.info(
+            f"Starting from block #{start_block}, expecting to finish at {end_block_str}"
+        )
+
+        return start_block, end_block, i_block, i_processed_block, should_continue
+
+    async def _start_logfilter_producer(
+        self, data_collection_cfg: DataCollectionConfig
+    ):
         """Start a log filter producer that sends only filtered transactions to kafka"""
         # TODO: Finish this method
         # as of now (March 2023) `eth_getFilterLogs` RPC method of the erigon node is unavailable
@@ -59,73 +90,46 @@ class DataProducer(DataCollector):
         # 3. Iterate until the end
         pass
 
+    async def _start_producer(self, data_collection_cfg: DataCollectionConfig, get_block_reward: bool = False):
+        """Start a regular producer that goes through every block and sends all txs to kafka
 
-    async def _start_full_producer(self, data_collection_cfg: DataCollectionConfig):
-        """Start a regular (full) producer that goes through every block and sends all txs to kafka"""
-        # Get block exploration bounds (start and end block number)
-        block_explorer = BlockExplorer(
-            data_collection_cfg=data_collection_cfg,
-            db=self.db_manager,
-            w3=self.node_connector,
-        )
-        start_block, end_block = await block_explorer.get_exploration_bounds()
-
-        # Current block index, last processed block index
-        i_block, i_processed_block = start_block, None
-
-        if end_block is not None:
-            # If end block contains a number, continue until we reach it
-            should_continue = lambda i: i <= end_block
-        else:
-            # Else continue forever until a 'BlockNotFound' exception is raised
-            should_continue = lambda _: True
-
-        end_block_str = f"block #{end_block}" if end_block else "'latest' block"
-
-        # Log information about the producer
-        n_partitions = await self.kafka_manager.number_of_partitions
-        log.info(
-            f"Found {n_partitions} partition(s) on topic '{self.kafka_manager.topic}'"
-        )
-        log.info(
-            f"Starting from block #{start_block}, expecting to finish at {end_block_str}"
-        )
-
+        Args:
+            data_collection_cfg (DataCollectionConfig): the data collection config object
+            get_block_reward (bool): whether to get the block reward or not
+        """
+        # Initialize block variables
+        (
+            start_block,
+            end_block,
+            i_block,
+            i_processed_block,
+            should_continue,
+        ) = await self._init_block_vars(data_collection_cfg=data_collection_cfg)
         # Start producing transactions
         try:
-            # Keep track of how many times the producer has 'stalled'
-            stall_counter = 0
+            # Timer to track the average time per block
             _initial_time_counter_stamp = time.perf_counter()
             while should_continue(i_block):
-                # Verify that there is space in the Kafka topic for more transaction hashes
-                if n_txs := await self.kafka_manager.redis_manager.get_n_transactions():
-                    if n_txs > self.MAX_ALLOWED_TRANSACTIONS:
-                        if stall_counter % 60 == 0 and stall_counter:
-                            log.info(f"Producing stalled for {stall_counter} seconds.")
-                        stall_counter += 1
-                        # Sleep if there are many transactions in the kafka topic
-                        await asyncio.sleep(1)
-                        # Try again after sleeping
-                        continue
-                    # Reset the stall counter
-                    if stall_counter >= 60:
-                        log.info(f"Continuing producing after stalling for {stall_counter} seconds.")
-                    stall_counter = 0
-
                 # query the node for current block data
                 block_data: BlockData = await self.node_connector.get_block_data(
                     i_block
                 )
 
                 # Insert new block
-                # FIXME: block reward
-                await self._insert_block(block_data=block_data, block_reward=0)
+                block_reward = 0
+                if get_block_reward:
+                    # FIXME: call trace_block to get static block reward
+                    pass
+
+                await self._insert_block(block_data=block_data, block_reward=block_reward)
 
                 if block_data.transactions:
                     # Send all the transaction hashes to Kafka so consumers can process them
                     await self.kafka_manager.send_batch(msgs=block_data.transactions)
                 else:
-                    log.debug(f"Skipped sending block #{block_data.block_number} to kafka as it contains no transactions.")
+                    log.debug(
+                        f"Skipped sending block #{block_data.block_number} to kafka as it contains no transactions."
+                    )
 
                 # Update the processed block variable with current block index
                 i_processed_block = i_block
@@ -141,7 +145,7 @@ class DataProducer(DataCollector):
                     end_block=end_block,
                     progress_log_frequency=self.PROGRESS_LOG_FREQUENCY,
                     initial_time_counter=_initial_time_counter_stamp,
-                    n_transactions=await self.kafka_manager.redis_manager.get_n_transactions()
+                    n_transactions=await self.kafka_manager.redis_manager.get_n_transactions(),
                 )
         except BlockNotFound:
             # OK, BlockNotFound exception is raised when the latest block is reached
@@ -153,18 +157,28 @@ class DataProducer(DataCollector):
                 n_txs = await self.kafka_manager.redis_manager.get_n_transactions()
                 log.info(f"Finished at block #{i_processed_block} | n_txs {n_txs}")
 
-
-    async def _start_producer_task(self, data_collection_cfg: DataCollectionConfig) -> asyncio.Task:
+    async def _start_producer_task(
+        self, data_collection_cfg: DataCollectionConfig
+    ) -> asyncio.Task:
         """
         Start a producer task depending on the data collection config producer type.
         """
         pretty_config = data_collection_cfg.dict(exclude={"contracts"})
-        pretty_config["contracts"] = list(map(lambda c: c.symbol, data_collection_cfg.contracts))
+        pretty_config["contracts"] = list(
+            map(lambda c: c.symbol, data_collection_cfg.contracts)
+        )
         log.info(f"Creating data collection producer task ({pretty_config})")
+        # Log information about the producer
+        n_partitions = await self.kafka_manager.number_of_partitions
+        log.info(
+            f"Found {n_partitions} partition(s) on topic '{self.kafka_manager.topic}'"
+        )
 
         match data_collection_cfg.mode:
             case DataCollectionMode.FULL:
-                return asyncio.create_task(self._start_full_producer(data_collection_cfg))
+                return asyncio.create_task(self._start_producer(data_collection_cfg, get_block_reward=True))
+            case DataCollectionMode.PARTIAL:
+                return asyncio.create_task(self._start_producer(data_collection_cfg, get_block_reward=False))
             case DataCollectionMode.LOG_FILTER:
                 return asyncio.create_task(self._start_logfilter_producer(data_collection_cfg))
 
@@ -182,20 +196,22 @@ class DataProducer(DataCollector):
 
         # Create asyncio tasks for each data collection config
         for data_collection_cfg in data_collection_configs:
-            producer_tasks.append(
-                await self._start_producer_task(data_collection_cfg)
-            )
+            producer_tasks.append(await self._start_producer_task(data_collection_cfg))
 
         # Wait until all tasks finish
         result = await asyncio.gather(*producer_tasks, return_exceptions=True)
         exit_code = 0
 
         # Log exceptions if they occurred
-        for (return_value, cfg) in zip(result, data_collection_configs):
+        for return_value, cfg in zip(result, data_collection_configs):
             if isinstance(return_value, Exception):
                 log.error(
-                    f"Data collection for producer_type=\"{cfg.producer_type}\" with {len(cfg.contracts)} contracts resulted in an exception:",
-                    exc_info=(type(return_value), return_value, return_value.__traceback__)
+                    f'Data collection for mode="{cfg.mode}" with {len(cfg.contracts)} contracts resulted in an exception:',
+                    exc_info=(
+                        type(return_value),
+                        return_value,
+                        return_value.__traceback__,
+                    ),
                 )
                 exit_code = 1
 
