@@ -70,7 +70,7 @@ To create an `.env` file you can copy the provided [`.env.default`](.env.default
 | `ERIGON_HOST` | Host of the erigon node | "host.docker.internal" |
 
 #### 2. cfg.json
-FIXME: finish this section after adding "producer_type" for `config.py`
+FIXME: finish this section after adding "mode" for `config.py`
 
 Generating the latest pairs for a json configuration file can be done with:
 ```

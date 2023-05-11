@@ -6,7 +6,7 @@
     "kafka_topic": "eth",
     "data_collection": [
         {
-            "producer_type": "full",
+            "mode": "full",
             "start_block": 4634748,
             "end_block": 4634749,
             "contracts": [
@@ -543,7 +543,7 @@
             ]
         },
         {
-            "producer_type": "log_filter",
+            "mode": "log_filter",
             "start_block": 4634748,
             "end_block": 4634749,
             "contracts": [
