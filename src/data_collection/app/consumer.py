@@ -7,6 +7,7 @@ from app import init_logger
 from app.config import Config
 from app.kafka.exceptions import KafkaConsumerPartitionsEmptyError
 from app.kafka.manager import KafkaConsumerManager
+from app.model import DataCollectionMode
 from app.model.abi import ContractABI
 from app.model.contract import ContractCategory
 from app.model.transaction import TransactionData, TransactionReceiptData
@@ -28,6 +29,13 @@ from app.web3.transaction_events.types import (
 
 log = init_logger(__name__)
 
+def kafka_logs_filter(record) -> bool:
+    """Filters out some kafka logs"""
+    msg = record.getMessage()
+    should_filter = msg.startswith(
+        "Heartbeat failed for group"
+    ) or msg.startswith("Group Coordinator Request failed:")
+    return not should_filter
 
 class DataConsumer(DataCollector):
     """
@@ -61,14 +69,7 @@ class DataConsumer(DataCollector):
         self._n_consumed_txs = 0
         self._n_processed_txs = 0
 
-        # Filter out some kafka logs
-        def kafka_logs_filter(record) -> bool:
-            msg = record.getMessage()
-            should_filter = msg.startswith(
-                "Heartbeat failed for group"
-            ) or msg.startswith("Group Coordinator Request failed:")
-            return not should_filter
-
+        # Apply kafka log filter to filter out some kafka logs
         kafka_logger = logging.getLogger("aiokafka.consumer.group_coordinator")
         kafka_logger.addFilter(kafka_logs_filter)
 
@@ -243,20 +244,13 @@ class DataConsumer(DataCollector):
                 transaction_hash=tx_data.transaction_hash,
             )
 
-    async def _on_kafka_event(self, event):
-        """Called when a new Kafka event is read from a topic"""
-        # Get transaction hash from Kafka event
-        self._tx_hash = event.value.decode()
-        # Increment number of consumed transactions
-        self._n_consumed_txs += 1
-        # Get transaction data
-        tx_data, w3_tx_data = await self.node_connector.get_transaction_data(
-            self._tx_hash
-        )
-        (
-            tx_receipt_data,
-            w3_tx_receipt,
-        ) = await self.node_connector.get_transaction_receipt_data(self._tx_hash)
+    async def _consume_partial(
+        self, tx_data, tx_receipt_data, w3_tx_data, w3_tx_receipt
+    ):
+        """Called for a partial consume mode of a transaction hash
+
+        Save only the transactions that are related to the contracts in the config and only their respective events.
+        """
         # Select the address that this transaction interacts with or creates
         contract_address = tx_data.to_address or tx_receipt_data.contract_address
         contract_category = self.contract_parser.get_contract_category(contract_address)
@@ -293,6 +287,42 @@ class DataConsumer(DataCollector):
             tx_receipt_data=tx_receipt_data,
             w3_block_hash=w3_tx_data["blockHash"],
         )
+
+    async def _consume_full(self, tx_data, tx_receipt_data, w3_tx_data, w3_tx_receipt):
+        """Called for a full consume mode of a transaction hash
+
+        Save every tx data to db without furhter processing
+        """
+        # 1. Insert transaction + Internal transactions
+        await self._handle_transaction(tx_data=tx_data, tx_receipt_data=tx_receipt_data)
+
+        # 2. Insert transaction logs
+        async with self.db_manager.db.transaction():
+            for tx_log in tx_receipt_data.logs:
+                await self.db_manager.insert_transaction_logs(**tx_log.dict())
+
+    async def _on_kafka_event(self, event):
+        """Called when a new Kafka event is read from a topic"""
+        # Get transaction hash and collection mode from Kafka event
+        mode, self._tx_hash = self.decode_kafka_event(event.value.decode())
+        # Increment number of consumed transactions
+        self._n_consumed_txs += 1
+        # Get transaction data
+        tx_data, w3_tx_data = await self.node_connector.get_transaction_data(
+            self._tx_hash
+        )
+        (
+            tx_receipt_data,
+            w3_tx_receipt,
+        ) = await self.node_connector.get_transaction_receipt_data(self._tx_hash)
+
+        match mode:
+            case DataCollectionMode.FULL:
+                await self._consume_full(tx_data, tx_receipt_data, w3_tx_data, w3_tx_receipt)
+            case DataCollectionMode.PARTIAL:
+                await self._consume_partial(tx_data, tx_receipt_data, w3_tx_data, w3_tx_receipt)
+            case DataCollectionMode.LOG_FILTER:
+                raise NotImplementedError("LOG_FILTER mode not implemented yet")
 
     async def start_consuming_data(self) -> int:
         """
