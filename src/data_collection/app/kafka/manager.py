@@ -230,11 +230,9 @@ class KafkaProducerManager(KafkaManager):
 class KafkaConsumerManager(KafkaManager):
     """Manage consuming events from a given Kafka topic"""
 
-    EVENT_RETRIEVAL_TIMEOUT = 900
-    """How much time (in seconds) to wait for the next event / message
-    from a Kafka topic before timing out the consumer"""
-
-    def __init__(self, kafka_url: str, redis_url: str, topic: str) -> None:
+    def __init__(
+        self, kafka_url: str, redis_url: str, topic: str, event_retrieval_timeout: int
+    ) -> None:
         super().__init__(kafka_url=kafka_url, redis_url=redis_url, topic=topic)
         self._client = AIOKafkaConsumer(
             topic,
@@ -242,16 +240,19 @@ class KafkaConsumerManager(KafkaManager):
             group_id=topic,
             auto_offset_reset="earliest",
         )
+        # How much time (in seconds) to wait for the next event / message
+        # from a Kafka topic before timing out the consumer
+        self.event_retrieval_timeout = event_retrieval_timeout
         # True if an event was received. False otherwise.
         self._event_received = False
 
     async def _event_timeout(self, event):
-        """Raise an exception if event.set() is not called for EVENT_RETRIEVAL_TIMEOUT seconds"""
+        """Raise an exception if event.set() is not called for event_retrieval_timeout seconds"""
         try:
             while True:
-                # Wait for event.set() to be called for EVENT_RETRIEVAL_TIMEOUT seconds
-                await asyncio.wait_for(event.wait(), self.EVENT_RETRIEVAL_TIMEOUT)
-                # Reset the event timeout to wait another EVENT_RETRIEVAL_TIMEOUT seconds for a new Kafka event
+                # Wait for event.set() to be called for event_retrieval_timeout seconds
+                await asyncio.wait_for(event.wait(), self.event_retrieval_timeout)
+                # Reset the event timeout to wait another event_retrieval_timeout seconds for a new Kafka event
                 event.clear()
         except TimeoutError as e:
             # Catch asyncio.TimeoutError from the wait event timeout and reraise it as KafkaConsumerTopicEmptyError
@@ -303,7 +304,7 @@ class KafkaConsumerManager(KafkaManager):
         except KafkaConsumerPartitionsEmptyError:
             # Raised when no message is received within the specified time
             log.info(
-                f"No event received for {self.EVENT_RETRIEVAL_TIMEOUT} seconds - timed out"
+                f"No event received for {self.event_retrieval_timeout} seconds - timed out"
             )
             raise
         finally:

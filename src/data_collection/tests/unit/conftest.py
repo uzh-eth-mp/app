@@ -178,6 +178,10 @@ def config_factory():
                 "kafka_topic": "reeee",
                 "data_collection": data_collection_cfg,
                 "number_of_consumer_tasks": 1337,
+                "web3_requests_timeout": 1337,
+                "web3_requests_retry_limit": 1337,
+                "web3_requests_retry_delay": 1337,
+                "kafka_event_retrieval_timeout": 1337,
             }
         )
 

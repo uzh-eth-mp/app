@@ -1,18 +1,74 @@
-from typing import Any, List, Tuple
+import asyncio
+from typing import Any, Callable, Collection, List, Tuple, Type
 
-from web3 import Web3
-from web3.eth import AsyncEth
-from web3.net import AsyncNet
-from web3.geth import Geth, AsyncGethTxPool, AsyncGethAdmin, AsyncGethPersonal
-from web3.types import TxData, TxReceipt
+from aiohttp.client_exceptions import ClientConnectorError
+from web3 import AsyncWeb3, AsyncHTTPProvider
+from web3.types import (
+    TxData,
+    TxReceipt,
+    AsyncMiddlewareCoroutine,
+    RPCEndpoint,
+    RPCResponse,
+)
+from web3.middleware.exception_retry_request import check_if_retry_on_failure
 
-
+from app import init_logger
 from app.model.block import BlockData
 from app.model.transaction import (
     TransactionData,
     TransactionReceiptData,
     InternalTransactionData,
 )
+
+log = init_logger(__name__)
+
+
+def async_exception_retry_middleware(
+    make_request: Callable[[RPCEndpoint, Any], RPCResponse],
+    w3: AsyncWeb3,
+    errors: Collection[Type[BaseException]],
+    retries: int,
+    delay: int,
+) -> AsyncMiddlewareCoroutine:
+    async def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
+        if check_if_retry_on_failure(method):
+            for i in range(retries):
+                try:
+                    return await make_request(method, params)
+                except errors as e:
+                    request_details_str = f"(method='{method}',params={params})"
+                    if i < retries - 1:
+                        log.debug(
+                            f"Request {request_details_str} failed: {repr(e)}. Retrying after {delay}s ({i+1})"
+                        )
+                        await asyncio.sleep(delay)
+                        continue
+                    else:
+                        log.error(
+                            f"Failed to make request {request_details_str} after {retries} retries. {repr(e)}"
+                        )
+                        raise
+            return None
+        else:
+            return await make_request(method, params)
+
+    return middleware
+
+
+def async_http_retry_request_middleware(
+    retries: int = 10,
+    delay: int = 5,
+) -> AsyncMiddlewareCoroutine:
+    async def inner(make_request: Callable[[RPCEndpoint, Any], Any], w3: AsyncWeb3):
+        return async_exception_retry_middleware(
+            make_request,
+            w3,
+            (asyncio.TimeoutError, ClientConnectorError),
+            retries=retries,
+            delay=delay,
+        )
+
+    return inner
 
 
 class NodeConnector:
@@ -22,7 +78,9 @@ class NodeConnector:
     are required by this app.
     """
 
-    def __init__(self, node_url: str) -> None:
+    def __init__(
+        self, node_url: str, timeout: int, retry_limit: int, retry_delay: int
+    ) -> None:
         """
         Args:
             node_url: the RPC API URL for connecting
@@ -34,24 +92,16 @@ class NodeConnector:
         # be "localhost" otherwise it returns a 403 response code.
         headers = {"Host": "localhost", "Content-Type": "application/json"}
 
-        self.w3 = Web3(
-            provider=Web3.AsyncHTTPProvider(
+        self.w3 = AsyncWeb3(
+            provider=AsyncHTTPProvider(
                 endpoint_uri=node_url,
-                request_kwargs={"headers": headers, "timeout": 600},
+                request_kwargs={"headers": headers, "timeout": timeout},
             ),
-            modules={
-                "eth": (AsyncEth,),
-                "net": (AsyncNet,),
-                "geth": (
-                    Geth,
-                    {
-                        "txpool": (AsyncGethTxPool,),
-                        "perosnal": (AsyncGethPersonal,),
-                        "admin": (AsyncGethAdmin,),
-                    },
-                ),
-            },
-            middlewares=[],
+            middlewares=[
+                async_http_retry_request_middleware(
+                    retries=retry_limit, delay=retry_delay
+                )
+            ],
         )
 
     async def get_block_data(self, block_id: str = "latest") -> BlockData:
