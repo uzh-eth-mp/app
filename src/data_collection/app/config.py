@@ -148,3 +148,15 @@ class Config(BaseSettings):
 
     number_of_consumer_tasks: int = Field(..., env="N_CONSUMER_INSTANCES")
     """The number of consumer (`DataConsumer`) tasks that will be started"""
+
+    web3_requests_timeout: int = Field(..., env="WEB3_REQUESTS_TIMEOUT")
+    """Timeout for web3 requests in seconds"""
+
+    web3_requests_retry_limit: int = Field(..., env="WEB3_REQUESTS_RETRY_LIMIT")
+    """The number of retries for web3 requests"""
+
+    web3_requests_retry_delay: int = Field(..., env="WEB3_REQUESTS_RETRY_DELAY")
+    """The delay between retries for web3 requests in seconds"""
+
+    kafka_event_retrieval_timeout: int = Field(..., env="KAFKA_EVENT_RETRIEVAL_TIMEOUT")
+    """Timeout for retrieving events from Kafka in seconds. After this time runs out, the consumers will shut down."""

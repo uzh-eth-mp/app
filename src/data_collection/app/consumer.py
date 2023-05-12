@@ -41,6 +41,7 @@ class DataConsumer(DataCollector):
             kafka_url=config.kafka_url,
             redis_url=config.redis_url,
             topic=config.kafka_topic,
+            event_retrieval_timeout=config.kafka_event_retrieval_timeout,
         )
         # Create a set from all the contracts (we want to save any of these transactions)
         contracts = set()

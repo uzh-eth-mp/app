@@ -27,7 +27,8 @@ def async_exception_retry_middleware(
     make_request: Callable[[RPCEndpoint, Any], RPCResponse],
     w3: AsyncWeb3,
     errors: Collection[Type[BaseException]],
-    retries: int = 10,
+    retries: int,
+    delay: int,
 ) -> AsyncMiddlewareCoroutine:
     async def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
         if check_if_retry_on_failure(method):
@@ -38,9 +39,9 @@ def async_exception_retry_middleware(
                     request_details_str = f"(method='{method}',params={params})"
                     if i < retries - 1:
                         log.debug(
-                            f"Request {request_details_str} failed: {repr(e)}. Retrying after 5s ({i+1})"
+                            f"Request {request_details_str} failed: {repr(e)}. Retrying after {delay}s ({i+1})"
                         )
-                        await asyncio.sleep(5)
+                        await asyncio.sleep(delay)
                         continue
                     else:
                         log.error(
@@ -54,12 +55,20 @@ def async_exception_retry_middleware(
     return middleware
 
 
-async def async_http_retry_request_middleware(
-    make_request: Callable[[RPCEndpoint, Any], Any], w3: AsyncWeb3
+def async_http_retry_request_middleware(
+    retries: int = 10,
+    delay: int = 5,
 ) -> AsyncMiddlewareCoroutine:
-    return async_exception_retry_middleware(
-        make_request, w3, (asyncio.TimeoutError, ClientConnectorError)
-    )
+    async def inner(make_request: Callable[[RPCEndpoint, Any], Any], w3: AsyncWeb3):
+        return async_exception_retry_middleware(
+            make_request,
+            w3,
+            (asyncio.TimeoutError, ClientConnectorError),
+            retries=retries,
+            delay=delay,
+        )
+
+    return inner
 
 
 class NodeConnector:
@@ -69,7 +78,9 @@ class NodeConnector:
     are required by this app.
     """
 
-    def __init__(self, node_url: str) -> None:
+    def __init__(
+        self, node_url: str, timeout: int, retry_limit: int, retry_delay: int
+    ) -> None:
         """
         Args:
             node_url: the RPC API URL for connecting
@@ -84,9 +95,13 @@ class NodeConnector:
         self.w3 = AsyncWeb3(
             provider=AsyncHTTPProvider(
                 endpoint_uri=node_url,
-                request_kwargs={"headers": headers, "timeout": 30},
+                request_kwargs={"headers": headers, "timeout": timeout},
             ),
-            middlewares=[async_http_retry_request_middleware],
+            middlewares=[
+                async_http_retry_request_middleware(
+                    retries=retry_limit, delay=retry_delay
+                )
+            ],
         )
 
     async def get_block_data(self, block_id: str = "latest") -> BlockData:

@@ -17,7 +17,12 @@ class DataCollector:
     def __init__(self, config: Config) -> None:
         # Initialize the manager objects
         self.kafka_manager: KafkaManager = None
-        self.node_connector = NodeConnector(node_url=config.node_url)
+        self.node_connector = NodeConnector(
+            node_url=config.node_url,
+            timeout=config.web3_requests_timeout,
+            retry_limit=config.web3_requests_retry_limit,
+            retry_delay=config.web3_requests_retry_delay,
+        )
         self.db_manager = DatabaseManager(
             postgresql_dsn=config.db_dsn, node_name=config.kafka_topic
         )

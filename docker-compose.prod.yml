@@ -26,11 +26,11 @@ services:
       - "host.docker.internal:host-gateway"
     deploy:
       replicas: ${N_CONSUMERS}
-    restart_policy:
-      condition: on-failure
-      delay: 5s
-      max_attempts: 3
-      window: 120s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
 
   data_consumer_etc:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/etc.json --mode consumer"
@@ -39,11 +39,11 @@ services:
       - "host.docker.internal:host-gateway"
     deploy:
       replicas: ${N_CONSUMERS}
-    restart_policy:
-      condition: on-failure
-      delay: 5s
-      max_attempts: 3
-      window: 120s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
 
   data_consumer_bsc:
     command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/prod/bsc.json --mode consumer"
@@ -52,8 +52,8 @@ services:
       - "host.docker.internal:host-gateway"
     deploy:
       replicas: ${N_CONSUMERS}
-    restart_policy:
-      condition: on-failure
-      delay: 5s
-      max_attempts: 3
-      window: 120s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
