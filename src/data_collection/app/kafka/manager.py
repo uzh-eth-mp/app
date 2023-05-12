@@ -116,7 +116,7 @@ class KafkaProducerManager(KafkaManager):
                     # because # of partitions can change
                     total_allowed_messages_in_partitions = (
                         self.MAX_MESSAGES_PER_PARTITION
-                        * await self.number_of_partitions()
+                        * await self.number_of_partitions
                     )
                     if n_txs > total_allowed_messages_in_partitions:
                         if stall_counter % 60 == 0 and stall_counter:
@@ -137,7 +137,7 @@ class KafkaProducerManager(KafkaManager):
                 elif stall_counter == 0:
                     # Else if n_txs is None and stall_counter is 0, the topic (each parition) is completely empty
                     break
-            result = f(*args, **kwargs)
+            result = await f(self, *args, **kwargs)
             return result
 
         return inner

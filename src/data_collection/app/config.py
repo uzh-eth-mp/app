@@ -112,12 +112,15 @@ class DataCollectionConfig(BaseSettings):
         return values
 
     @root_validator
-    def mode_not_missing_topics(cls, values):
-        """Validate topics not missing when mode = LOG_FILTER"""
+    def mode_not_missing_fields(cls, values):
+        """Validate fields not missing for each mode"""
         mode = values.get("mode")
         if mode == DataCollectionMode.LOG_FILTER:
             if values.get("topics") is None:
                 raise ValueError(f'"mode": "log_filter" requires "topics" field')
+        elif mode == DataCollectionMode.PARTIAL:
+            if values.get("contracts") is None:
+                raise ValueError(f'"mode": "partial" requires "contracts" field')
         return values
 
 
