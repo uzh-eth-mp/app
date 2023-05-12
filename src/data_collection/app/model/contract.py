@@ -1,7 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from enum import Enum
 
 from typing import Optional
+
+from app.model import  convert_string_to_bytes
 
 
 class ContractCategory(Enum):
@@ -34,6 +36,10 @@ class TokenContractData(BaseModel):
     total_supply: Optional[float]
     token_category: str
 
+    _convert_hexstr_to_bytea = validator("address", "symbol", "name"
+    , allow_reuse=True)(convert_string_to_bytes) 
+
+
 
 class PairContractData(BaseModel):
     """Wrapper for web3 pair contract data that gets inserted into the db"""
@@ -48,3 +54,9 @@ class PairContractData(BaseModel):
     reserve1: int
     factory: bytes
     """Address of the factory that created this pair contract"""
+
+
+    _convert_hexstr_to_bytea = validator("address", "token0", "token1", "factory"
+    , allow_reuse=True)(convert_string_to_bytes) 
+
+

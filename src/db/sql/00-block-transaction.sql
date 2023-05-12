@@ -65,12 +65,12 @@ BEGIN
        unique_id UUID DEFAULT gen_random_uuid (),
        transaction_hash bytea REFERENCES %I NOT NULL,
        from_address bytea NOT NULL ,
-       to_address bytea NOT NULL,
+       to_address bytea,
        value numeric(78,18),
        gas_limit bigint NOT NULL,
        gas_used bigint,
-       input_data bytea NOT NULL,
-       call_type bytea NOT NULL,
+       input_data bytea,
+       call_type bytea,
        PRIMARY KEY (unique_id)
       )', node_name || '_internal_transaction', node_name || '_transaction');
 END
