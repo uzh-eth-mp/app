@@ -16,7 +16,7 @@ BEGIN
        timestamp timestamp NOT NULL,
        miner bytea NOT NULL,
        parent_hash bytea NOT NULL,
-       block_reward numeric(78,18) NOT NULL,
+       static_block_reward numeric(78,18) NOT NULL,
        uncles bytea ARRAY
 
       )', node_name || '_block') ;

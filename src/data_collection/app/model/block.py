@@ -10,16 +10,16 @@ class BlockData(Web3BaseModel):
     """Describes a block given by `get_block`"""
 
     block_number: int = Field(..., alias="number")
-    block_hash: str = Field(..., alias="hash")
-    nonce: str
+    block_hash: bytes = Field(..., alias="hash")
+    nonce: bytes
     difficulty: int
     gas_limit: int = Field(..., alias="gasLimit")
     gas_used: int = Field(..., alias="gasUsed")
     timestamp: datetime
-    transactions: List[str]
-    miner: str
-    parent_hash: str = Field(..., alias="parentHash")
-    uncles: List[str]
+    transactions: List[bytes]
+    miner: bytes
+    parent_hash: bytes = Field(..., alias="parentHash")
+    uncles: List[bytes]
 
     @validator("timestamp", pre=True)
     def timestamp_to_datetime(cls, v):
