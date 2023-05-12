@@ -6,9 +6,8 @@ from hexbytes import HexBytes
 from pydantic import BaseModel, root_validator, validator
 
 
-def convert_string_to_bytes(cls,v): 
-    return bytes(v)
-    
+def convert_string_to_bytes(cls, v):
+    return v.encode()
 
 
 class DataCollectionMode(Enum):
@@ -39,4 +38,3 @@ class Web3BaseModel(BaseModel):
                     map(lambda v: v.hex() if isinstance(v, HexBytes) else v, value)
                 )
         return values
-

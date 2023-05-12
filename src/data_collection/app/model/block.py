@@ -26,8 +26,11 @@ class BlockData(Web3BaseModel):
         """Integer timestamp to datetime.datetime validator"""
         return datetime.fromtimestamp(v)
 
-    _convert_hexstr_to_bytea = validator("block_hash", "nonce", "miner", "parent_hash"
-    , allow_reuse=True)(convert_string_to_bytes) 
+    _convert_hexstr_to_bytea = validator(
+        "block_hash", "nonce", "miner", "parent_hash", allow_reuse=True, pre=True
+    )(convert_string_to_bytes)
 
-    _convert_list_hexstr_to_bytea = validator("transactions", "uncles", allow_reuse=True, each_item=True)
-    (convert_string_to_bytes) 
+    _convert_list_hexstr_to_bytea = validator(
+        "transactions", "uncles", allow_reuse=True, each_item=True, pre=True
+    )
+    (convert_string_to_bytes)
