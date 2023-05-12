@@ -214,6 +214,14 @@ def config_factory():
 
 
 @pytest.fixture
+def default_config(
+    config_factory, data_collection_config_factory, contract_config_usdt
+):
+    """Return default config with only USDT contract"""
+    return config_factory([data_collection_config_factory([contract_config_usdt])])
+
+
+@pytest.fixture
 def consumer_factory():
     def _consumer(config: Config, contract_abi: ContractABI):
         from app.consumer import DataConsumer

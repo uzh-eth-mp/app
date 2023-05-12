@@ -48,5 +48,5 @@ class DataCollector:
     def decode_kafka_event(self, event: str) -> Tuple[str, DataCollectionMode]:
         """Decode a kafka event into a transaction hash and a data collection mode"""
         sep = self.KAFKA_EVENT_SEPARATOR
-        mode, tx_hash = event.split(sep)
-        return tx_hash, DataCollectionMode(mode)
+        mode_str, tx_hash = event.split(sep)
+        return DataCollectionMode(mode_str), tx_hash
