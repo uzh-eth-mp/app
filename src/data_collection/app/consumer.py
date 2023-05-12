@@ -302,6 +302,9 @@ class DataConsumer(DataCollector):
             for tx_log in tx_receipt_data.logs:
                 await self.db_manager.insert_transaction_logs(**tx_log.dict())
 
+        # Increment number of processed transactions
+        self._n_processed_txs += 1
+
     async def _on_kafka_event(self, event):
         """Called when a new Kafka event is read from a topic"""
         # Get transaction hash and collection mode from Kafka event
