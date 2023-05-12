@@ -88,9 +88,11 @@ class DataProducer(DataCollector):
         # 1. Insert block if needed
         # 2. Send batch of txs to kafka
         # 3. Iterate until the end
-        pass
+        raise NotImplementedError("Log filter producer is not implemented yet")
 
-    async def _start_producer(self, data_collection_cfg: DataCollectionConfig, get_block_reward: bool = False):
+    async def _start_producer(
+        self, data_collection_cfg: DataCollectionConfig, get_block_reward: bool = False
+    ):
         """Start a regular producer that goes through every block and sends all txs to kafka
 
         Args:
@@ -121,11 +123,17 @@ class DataProducer(DataCollector):
                     # FIXME: call trace_block to get static block reward
                     pass
 
-                await self._insert_block(block_data=block_data, block_reward=block_reward)
+                await self._insert_block(
+                    block_data=block_data, block_reward=block_reward
+                )
 
                 if block_data.transactions:
+                    messages = [
+                        self.encode_kafka_event(tx_hash, data_collection_cfg.mode)
+                        for tx_hash in block_data.transactions
+                    ]
                     # Send all the transaction hashes to Kafka so consumers can process them
-                    await self.kafka_manager.send_batch(msgs=block_data.transactions)
+                    await self.kafka_manager.send_batch(msgs=messages)
                 else:
                     log.debug(
                         f"Skipped sending block #{block_data.block_number} to kafka as it contains no transactions."

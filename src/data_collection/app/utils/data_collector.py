@@ -1,10 +1,11 @@
 from __future__ import annotations
+from typing import Tuple
 
 from app.config import Config
 from app.kafka.manager import KafkaManager
+from app.model import DataCollectionMode
 from app.web3.node_connector import NodeConnector
 from app.db.manager import DatabaseManager
-from app.db.redis import RedisManager
 
 
 class DataCollector:
@@ -13,6 +14,8 @@ class DataCollector:
 
     Manages Kafka, PostgreSQL and node connections.
     """
+
+    KAFKA_EVENT_SEPARATOR = ":"
 
     def __init__(self, config: Config) -> None:
         # Initialize the manager objects
@@ -36,3 +39,14 @@ class DataCollector:
 
     async def __aexit__(self, exc_type, exc, tb):
         await self.kafka_manager.disconnect()
+
+    def encode_kafka_event(self, tx_hash: str, mode: DataCollectionMode) -> str:
+        """Create kafka event from a transaction hash and a data collection mode"""
+        sep = self.KAFKA_EVENT_SEPARATOR
+        return f"{mode.value}{sep}{tx_hash}"
+
+    def decode_kafka_event(self, event: str) -> Tuple[str, DataCollectionMode]:
+        """Decode a kafka event into a transaction hash and a data collection mode"""
+        sep = self.KAFKA_EVENT_SEPARATOR
+        mode, tx_hash = event.split(sep)
+        return tx_hash, DataCollectionMode(mode)
