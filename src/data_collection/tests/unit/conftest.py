@@ -12,8 +12,19 @@ from app.model.transaction import (
     TransactionReceiptData,
     TransactionLogsData,
 )
+from app.web3.transaction_events.types import *
 
 shared_tx_hash = "0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822"
+
+
+@pytest.fixture(
+    params=[
+        "0x0000000000000000000000000000000000000000",
+        "0x000000000000000000000000000000000000dead",
+    ]
+)
+def dead_address(request) -> str:
+    return request.param
 
 
 @pytest.fixture
@@ -197,3 +208,66 @@ def consumer_factory():
         return consumer
 
     return _consumer
+
+
+# Events
+@pytest.fixture
+def transfer_fungible_event(contract_config_usdt):
+    return TransferFungibleEvent(
+        contract_address=contract_config_usdt.address,
+        src="0xF00D",
+        dst="0xCAFE",
+        value=1500,
+    )
+
+
+@pytest.fixture
+def mint_fungible_event(contract_config_usdt):
+    return MintFungibleEvent(
+        contract_address=contract_config_usdt.address,
+        account="0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+        value=1500,
+    )
+
+
+@pytest.fixture
+def burn_fungible_event(contract_config_usdt):
+    return BurnFungibleEvent(
+        contract_address=contract_config_usdt.address,
+        account="0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+        value=1500,
+    )
+
+
+@pytest.fixture
+def mint_pair_event(contract_config_pair_usdc_weth):
+    return MintPairEvent(
+        contract_address=contract_config_pair_usdc_weth.address,
+        sender="0xF00D",
+        amount0=1500,
+        amount1=2500,
+    )
+
+
+@pytest.fixture
+def burn_pair_event(contract_config_pair_usdc_weth):
+    return BurnPairEvent(
+        contract_address=contract_config_pair_usdc_weth.address,
+        src="0xF00D",
+        dst="0xCAFE",
+        amount0=1500,
+        amount1=2500,
+    )
+
+
+@pytest.fixture
+def swap_pair_event(contract_config_pair_usdc_weth):
+    return SwapPairEvent(
+        contract_address=contract_config_pair_usdc_weth.address,
+        src="0xF00D",
+        dst="0xCAFE",
+        in0=1200,
+        in1=1500,
+        out0=1000,
+        out1=900,
+    )
