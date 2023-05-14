@@ -756,6 +756,145 @@ class TestHandleTransactionEvents:
             transaction_hash=transaction_data.transaction_hash,
         )
 
+    @patch("app.consumer.get_transaction_events")
+    async def test_mint_burn_fungible_combination(
+        self,
+        mock_get_transaction_events,
+        consumer_factory,
+        config_factory,
+        data_collection_config_factory,
+        burn_fungible_event,
+        mint_fungible_event,
+        contract_config_usdt,
+        contract_abi,
+        transaction_data,
+        transaction_receipt_data,
+        transaction_logs_data,
+    ):
+        """Test that multiple mint/burn fungible events together are handled correctly"""
+        # Arrange
+        consumer = consumer_factory(
+            config_factory([data_collection_config_factory([contract_config_usdt])]),
+            contract_abi,
+        )
+        get_contract_events_mock = Mock()
+        get_contract_events_mock.return_value = [
+            "MintFungibleEvent",
+            "BurnFungibleEvent",
+        ]
+        consumer.contract_parser.get_contract_events = get_contract_events_mock
+        mock_get_transaction_events.return_value = [
+            (burn_fungible_event, dict(logIndex=1337)),
+            (burn_fungible_event, dict(logIndex=1338)),
+            (mint_fungible_event, dict(logIndex=1339)),
+            (mint_fungible_event, dict(logIndex=1340)),
+            (mint_fungible_event, dict(logIndex=1341)),
+        ]
+        logs = [transaction_logs_data] * 5
+        for i, log in enumerate(logs):
+            log.log_index = 1337 + i
+        transaction_receipt_data.logs = logs
+        contract_mock = Mock()
+        contract_mock.address = contract_config_usdt.address
+        consumer.db_manager.insert_transaction_logs = AsyncMock()
+        consumer.db_manager.insert_contract_supply_change = AsyncMock()
+        consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
+
+        # Act
+        await consumer._handle_transaction_events(
+            contract=contract_mock,
+            category=Mock(),
+            tx_data=transaction_data,
+            tx_receipt=Mock(),
+            tx_receipt_data=transaction_receipt_data,
+            w3_block_hash=Mock(),
+        )
+
+        # Assert
+        consumer.db_manager.insert_transaction_logs.assert_awaited_with(
+            **logs[4].dict()
+        )
+        assert consumer.db_manager.insert_transaction_logs.await_count == 5
+        consumer.db_manager.insert_contract_supply_change.assert_awaited_once_with(
+            address="0xdAC17F958D2ee523a2206206994597C13D831ec7",
+            transaction_hash="0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822",
+            amount_changed=1500,
+        )
+        consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
+
+    @patch("app.consumer.get_transaction_events")
+    async def test_mint_burn_swap_pair_combination(
+        self,
+        mock_get_transaction_events,
+        consumer_factory,
+        config_factory,
+        data_collection_config_factory,
+        burn_pair_event,
+        mint_pair_event,
+        swap_pair_event,
+        contract_config_pair_usdc_weth,
+        contract_abi,
+        transaction_data,
+        transaction_receipt_data,
+        transaction_logs_data,
+    ):
+        """Test that multiple mint/burn/swap pair events together are handled correctly"""
+        # Arrange
+        consumer = consumer_factory(
+            config_factory(
+                [data_collection_config_factory([contract_config_pair_usdc_weth])]
+            ),
+            contract_abi,
+        )
+        get_contract_events_mock = Mock()
+        get_contract_events_mock.return_value = [
+            "MintPairEvent",
+            "BurnPairEvent",
+            "SwapPairEvent",
+        ]
+        consumer.contract_parser.get_contract_events = get_contract_events_mock
+        mock_get_transaction_events.return_value = [
+            (burn_pair_event, dict(logIndex=1337)),
+            (mint_pair_event, dict(logIndex=1338)),
+            (burn_pair_event, dict(logIndex=1339)),
+            (mint_pair_event, dict(logIndex=1340)),
+            (swap_pair_event, dict(logIndex=1341)),
+            (swap_pair_event, dict(logIndex=1342)),
+            (mint_pair_event, dict(logIndex=1343)),
+        ]
+        logs = [transaction_logs_data] * 7
+        for i, log in enumerate(logs):
+            log.log_index = 1337 + i
+        transaction_receipt_data.logs = logs
+        contract_mock = Mock()
+        contract_mock.address = contract_config_pair_usdc_weth.address
+        consumer.db_manager.insert_transaction_logs = AsyncMock()
+        consumer.db_manager.insert_contract_supply_change = AsyncMock()
+        consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
+
+        # Act
+        await consumer._handle_transaction_events(
+            contract=contract_mock,
+            category=Mock(),
+            tx_data=transaction_data,
+            tx_receipt=Mock(),
+            tx_receipt_data=transaction_receipt_data,
+            w3_block_hash=Mock(),
+        )
+
+        # Assert
+        consumer.db_manager.insert_transaction_logs.assert_awaited_with(
+            **logs[6].dict()
+        )
+        assert consumer.db_manager.insert_transaction_logs.await_count == 7
+        consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
+        consumer.db_manager.insert_pair_liquidity_change.assert_awaited_with(
+            address=contract_config_pair_usdc_weth.address,
+            amount0=1900,
+            amount1=3700,
+            transaction_hash=transaction_data.transaction_hash,
+        )
+
 
 class TestOnKafkaEvent:
     """Tests for _on_kafka_event method in DataConsumer"""
