@@ -9,6 +9,7 @@ from app.web3.transaction_events.types import (
     MintPairEvent,
     BurnPairEvent,
     SwapPairEvent,
+    TransferNonFungibleEvent,
 )
 
 
@@ -228,9 +229,23 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
 
     @patch("app.consumer.get_transaction_events")
-    async def test_transfer_fungible_event_inserted(
+    @pytest.mark.parametrize(
+        "event,supply_change,liquidity_change",
+        [
+            ("transfer_fungible_event", None, None),
+            ("mint_fungible_event", 1500, None),
+            ("burn_fungible_event", -1500, None),
+            ("mint_pair_event", None, (1500, 2500)),
+            ("burn_pair_event", None, (-1500, -2500)),
+            ("swap_pair_event", None, (200, 600)),
+        ],
+    )
+    async def test_event_inserted_if_in_config(
         self,
         mock_get_transaction_events,
+        event,
+        supply_change,
+        liquidity_change,
         consumer_factory,
         config_factory,
         data_collection_config_factory,
@@ -239,30 +254,28 @@ class TestHandleTransactionEvents:
         transaction_data,
         transaction_receipt_data,
         transaction_logs_data,
+        request,
     ):
-        """Test that transfer fungible event is inserted"""
+        """Test every event is inserted if event found and is present in config"""
         # Arrange
         consumer = consumer_factory(
             config_factory([data_collection_config_factory([contract_config_usdt])]),
             contract_abi,
         )
         get_contract_events_mock = Mock()
-        get_contract_events_mock.return_value = ["TransferFungibleEvent"]
+        get_contract_events_mock.return_value = [
+            request.getfixturevalue(event).__class__.__name__
+        ]
         consumer.contract_parser.get_contract_events = get_contract_events_mock
         mock_get_transaction_events.return_value = [
             (
-                TransferFungibleEvent(
-                    contract_address=contract_config_usdt.address,
-                    src="0xF00D",
-                    dst="0xCAFE",
-                    value=1500,
-                ),
+                request.getfixturevalue(event),
                 dict(logIndex=1337),
             )
         ]
         transaction_receipt_data.logs = [transaction_logs_data]
         contract_mock = Mock()
-        contract_mock.address = contract_config_usdt.address
+        contract_mock.address = request.getfixturevalue(event).contract_address
         consumer.db_manager.insert_transaction_logs = AsyncMock()
         consumer.db_manager.insert_contract_supply_change = AsyncMock()
         consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
@@ -281,125 +294,23 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
             **transaction_logs_data.dict()
         )
-        consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
-        consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
-
-    @patch("app.consumer.get_transaction_events")
-    async def test_mint_fungible_event_inserted(
-        self,
-        mock_get_transaction_events,
-        consumer_factory,
-        config_factory,
-        data_collection_config_factory,
-        contract_config_usdt,
-        contract_abi,
-        transaction_data,
-        transaction_receipt_data,
-        transaction_logs_data,
-    ):
-        """Test that mint fungible event is inserted"""
-
-        # Arrange
-        consumer = consumer_factory(
-            config_factory([data_collection_config_factory([contract_config_usdt])]),
-            contract_abi,
-        )
-        get_contract_events_mock = Mock()
-        get_contract_events_mock.return_value = ["MintFungibleEvent"]
-        consumer.contract_parser.get_contract_events = get_contract_events_mock
-        mock_get_transaction_events.return_value = [
-            (
-                MintFungibleEvent(
-                    contract_address=contract_config_usdt.address,
-                    account="0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-                    value=1500,
-                ),
-                dict(logIndex=1337),
+        if supply_change:
+            consumer.db_manager.insert_contract_supply_change.assert_awaited_once_with(
+                address=request.getfixturevalue(event).contract_address,
+                transaction_hash=transaction_data.transaction_hash,
+                amount_changed=supply_change,
             )
-        ]
-        transaction_receipt_data.logs = [transaction_logs_data]
-        contract_mock = Mock()
-        contract_mock.address = contract_config_usdt.address
-        consumer.db_manager.insert_transaction_logs = AsyncMock()
-        consumer.db_manager.insert_contract_supply_change = AsyncMock()
-        consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
-
-        # Act
-        await consumer._handle_transaction_events(
-            contract=contract_mock,
-            category=Mock(),
-            tx_data=transaction_data,
-            tx_receipt=Mock(),
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash=Mock(),
-        )
-
-        # Assert
-        consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
-            **transaction_logs_data.dict()
-        )
-        consumer.db_manager.insert_contract_supply_change.assert_awaited_once()
-        consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
-
-    @patch("app.consumer.get_transaction_events")
-    async def test_burn_fungible_event_inserted(
-        self,
-        mock_get_transaction_events,
-        consumer_factory,
-        config_factory,
-        data_collection_config_factory,
-        contract_config_usdt,
-        contract_abi,
-        transaction_data,
-        transaction_receipt_data,
-        transaction_logs_data,
-    ):
-        """Test that burn fungible event is inserted"""
-        # Arrange
-        consumer = consumer_factory(
-            config_factory([data_collection_config_factory([contract_config_usdt])]),
-            contract_abi,
-        )
-        get_contract_events_mock = Mock()
-        get_contract_events_mock.return_value = ["BurnFungibleEvent"]
-        consumer.contract_parser.get_contract_events = get_contract_events_mock
-        mock_get_transaction_events.return_value = [
-            (
-                BurnFungibleEvent(
-                    contract_address=contract_config_usdt.address,
-                    account="0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-                    value=1500,
-                ),
-                dict(logIndex=1337),
+        else:
+            consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
+        if liquidity_change:
+            consumer.db_manager.insert_pair_liquidity_change.assert_awaited_once_with(
+                address=request.getfixturevalue(event).contract_address,
+                amount0=liquidity_change[0],
+                amount1=liquidity_change[1],
+                transaction_hash=transaction_data.transaction_hash,
             )
-        ]
-        transaction_receipt_data.logs = [transaction_logs_data]
-        contract_mock = Mock()
-        contract_mock.address = contract_config_usdt.address
-        consumer.db_manager.insert_transaction_logs = AsyncMock()
-        consumer.db_manager.insert_contract_supply_change = AsyncMock()
-        consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
-
-        # Act
-        await consumer._handle_transaction_events(
-            contract=contract_mock,
-            category=Mock(),
-            tx_data=transaction_data,
-            tx_receipt=Mock(),
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash=Mock(),
-        )
-
-        # Assert
-        consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
-            **transaction_logs_data.dict()
-        )
-        consumer.db_manager.insert_contract_supply_change.assert_awaited_once_with(
-            address="0xdAC17F958D2ee523a2206206994597C13D831ec7",
-            transaction_hash="0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822",
-            amount_changed=-1500,
-        )
-        consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
+        else:
+            consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
 
     @patch("app.consumer.get_transaction_events")
     async def test_transfer_fungible_to_dead_address_event_inserted(
@@ -659,9 +570,10 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
 
     @patch("app.consumer.get_transaction_events")
-    async def test_mint_pair_event_inserted(
+    async def test_mint_pair_event_from_dead_address(
         self,
         mock_get_transaction_events,
+        dead_address,
         consumer_factory,
         config_factory,
         data_collection_config_factory,
@@ -671,8 +583,7 @@ class TestHandleTransactionEvents:
         transaction_receipt_data,
         transaction_logs_data,
     ):
-        """Test that mint pair event is inserted"""
-        # Arrange
+        """Test that mint pair event from dead address is inserted as log and mint event"""
         consumer = consumer_factory(
             config_factory([data_collection_config_factory([contract_config_usdt])]),
             contract_abi,
@@ -684,7 +595,7 @@ class TestHandleTransactionEvents:
             (
                 MintPairEvent(
                     contract_address=contract_config_usdt.address,
-                    sender="0xF00D",
+                    sender=dead_address,
                     amount0=1500,
                     amount1=2500,
                 ),
@@ -721,9 +632,10 @@ class TestHandleTransactionEvents:
         )
 
     @patch("app.consumer.get_transaction_events")
-    async def test_mint_pair_event_from_dead_address(
+    async def test_burn_pair_event_from_dead_address_inserted(
         self,
         mock_get_transaction_events,
+        dead_address,
         consumer_factory,
         config_factory,
         data_collection_config_factory,
@@ -733,77 +645,7 @@ class TestHandleTransactionEvents:
         transaction_receipt_data,
         transaction_logs_data,
     ):
-        """Test that mint pair event from dead address is inserted as log and mint event"""
-        consumer = consumer_factory(
-            config_factory([data_collection_config_factory([contract_config_usdt])]),
-            contract_abi,
-        )
-        get_contract_events_mock = Mock()
-        get_contract_events_mock.return_value = ["MintPairEvent"]
-        consumer.contract_parser.get_contract_events = get_contract_events_mock
-        mock_get_transaction_events.return_value = [
-            (
-                MintPairEvent(
-                    contract_address=contract_config_usdt.address,
-                    sender="0x0000000000000000000000000000000000000000",
-                    amount0=1500,
-                    amount1=2500,
-                ),
-                dict(logIndex=1337),
-            ),
-            (
-                MintPairEvent(
-                    contract_address=contract_config_usdt.address,
-                    sender="0x000000000000000000000000000000000000dead",
-                    amount0=1500,
-                    amount1=2500,
-                ),
-                dict(logIndex=1337),
-            ),
-        ]
-        transaction_receipt_data.logs = [transaction_logs_data]
-        contract_mock = Mock()
-        contract_mock.address = contract_config_usdt.address
-        consumer.db_manager.insert_transaction_logs = AsyncMock()
-        consumer.db_manager.insert_contract_supply_change = AsyncMock()
-        consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
-
-        # Act
-        await consumer._handle_transaction_events(
-            contract=contract_mock,
-            category=Mock(),
-            tx_data=transaction_data,
-            tx_receipt=Mock(),
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash=Mock(),
-        )
-
-        # Assert
-        consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
-            **transaction_logs_data.dict()
-        )
-        consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
-        consumer.db_manager.insert_pair_liquidity_change.assert_awaited_once_with(
-            address="0xdAC17F958D2ee523a2206206994597C13D831ec7",
-            amount0=3000,
-            amount1=5000,
-            transaction_hash="0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822",
-        )
-
-    @patch("app.consumer.get_transaction_events")
-    async def test_burn_pair_event_inserted(
-        self,
-        mock_get_transaction_events,
-        consumer_factory,
-        config_factory,
-        data_collection_config_factory,
-        contract_config_usdt,
-        contract_abi,
-        transaction_data,
-        transaction_receipt_data,
-        transaction_logs_data,
-    ):
-        """Test that burn pair event is inserted"""
+        """Test that burn pair event to dead address is inserted as log and burn event"""
         # Arrange
         consumer = consumer_factory(
             config_factory([data_collection_config_factory([contract_config_usdt])]),
@@ -816,8 +658,8 @@ class TestHandleTransactionEvents:
             (
                 BurnPairEvent(
                     contract_address=contract_config_usdt.address,
-                    src="0xF00D",
-                    dst="0xCAFE",
+                    src="0xCAFE",
+                    dst=dead_address,
                     amount0=1500,
                     amount1=2500,
                 ),
@@ -854,55 +696,41 @@ class TestHandleTransactionEvents:
         )
 
     @patch("app.consumer.get_transaction_events")
-    async def test_burn_pair_event_from_dead_address_inserted(
+    async def test_transfer_non_fungible_inserts_nft_transfer(
         self,
         mock_get_transaction_events,
         consumer_factory,
         config_factory,
         data_collection_config_factory,
-        contract_config_usdt,
+        transfer_non_fungible_event,
+        contract_config_bayc,
         contract_abi,
         transaction_data,
         transaction_receipt_data,
         transaction_logs_data,
     ):
-        """Test that burn pair event to dead address is inserted as log and burn event"""
+        """Test TransferNonFungibleEvent is inserted as NFT transfer"""
         # Arrange
         consumer = consumer_factory(
-            config_factory([data_collection_config_factory([contract_config_usdt])]),
+            config_factory([data_collection_config_factory([contract_config_bayc])]),
             contract_abi,
         )
         get_contract_events_mock = Mock()
-        get_contract_events_mock.return_value = ["BurnPairEvent"]
+        get_contract_events_mock.return_value = ["TransferNonFungibleEvent"]
         consumer.contract_parser.get_contract_events = get_contract_events_mock
         mock_get_transaction_events.return_value = [
             (
-                BurnPairEvent(
-                    contract_address=contract_config_usdt.address,
-                    src="0xCAFE",
-                    dst="0x0000000000000000000000000000000000000000",
-                    amount0=1500,
-                    amount1=2500,
-                ),
-                dict(logIndex=1337),
-            ),
-            (
-                BurnPairEvent(
-                    contract_address=contract_config_usdt.address,
-                    src="0xCAFE",
-                    dst="0x000000000000000000000000000000000000dead",
-                    amount0=1500,
-                    amount1=2500,
-                ),
+                transfer_non_fungible_event,
                 dict(logIndex=1337),
             ),
         ]
         transaction_receipt_data.logs = [transaction_logs_data]
         contract_mock = Mock()
-        contract_mock.address = contract_config_usdt.address
+        contract_mock.address = contract_config_bayc.address
         consumer.db_manager.insert_transaction_logs = AsyncMock()
         consumer.db_manager.insert_contract_supply_change = AsyncMock()
         consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
+        consumer.db_manager.insert_nft_transfer = AsyncMock()
 
         # Act
         await consumer._handle_transaction_events(
@@ -919,76 +747,13 @@ class TestHandleTransactionEvents:
             **transaction_logs_data.dict()
         )
         consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
-        consumer.db_manager.insert_pair_liquidity_change.assert_awaited_once_with(
-            address="0xdAC17F958D2ee523a2206206994597C13D831ec7",
-            amount0=-3000,
-            amount1=-5000,
-            transaction_hash="0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822",
-        )
-
-    @patch("app.consumer.get_transaction_events")
-    async def test_swap_pair_event_inserted(
-        self,
-        mock_get_transaction_events,
-        consumer_factory,
-        config_factory,
-        data_collection_config_factory,
-        contract_config_usdt,
-        contract_abi,
-        transaction_data,
-        transaction_receipt_data,
-        transaction_logs_data,
-    ):
-        """Test that swap pair event is inserted"""
-        # Arrange
-        consumer = consumer_factory(
-            config_factory([data_collection_config_factory([contract_config_usdt])]),
-            contract_abi,
-        )
-        get_contract_events_mock = Mock()
-        get_contract_events_mock.return_value = ["SwapPairEvent"]
-        consumer.contract_parser.get_contract_events = get_contract_events_mock
-        mock_get_transaction_events.return_value = [
-            (
-                SwapPairEvent(
-                    contract_address=contract_config_usdt.address,
-                    src="0xF00D",
-                    dst="0xCAFE",
-                    in0=1200,
-                    in1=1500,
-                    out0=1000,
-                    out1=900,
-                ),
-                dict(logIndex=1337),
-            )
-        ]
-        transaction_receipt_data.logs = [transaction_logs_data]
-        contract_mock = Mock()
-        contract_mock.address = contract_config_usdt.address
-        consumer.db_manager.insert_transaction_logs = AsyncMock()
-        consumer.db_manager.insert_contract_supply_change = AsyncMock()
-        consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
-
-        # Act
-        await consumer._handle_transaction_events(
-            contract=contract_mock,
-            category=Mock(),
-            tx_data=transaction_data,
-            tx_receipt=Mock(),
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash=Mock(),
-        )
-
-        # Assert
-        consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
-            **transaction_logs_data.dict()
-        )
-        consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
-        consumer.db_manager.insert_pair_liquidity_change.assert_awaited_once_with(
-            address="0xdAC17F958D2ee523a2206206994597C13D831ec7",
-            amount0=200,
-            amount1=600,
-            transaction_hash="0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822",
+        consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
+        consumer.db_manager.insert_nft_transfer.assert_awaited_once_with(
+            address="0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
+            from_address="0xF00D",
+            to_address="0xCAFE",
+            token_id=1337,
+            transaction_hash=transaction_data.transaction_hash,
         )
 
 

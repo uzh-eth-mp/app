@@ -162,6 +162,20 @@ def contract_config_pair_weth_usdt() -> ContractConfig:
 
 
 @pytest.fixture
+def contract_config_bayc() -> ContractConfig:
+    return ContractConfig(
+        **{
+            "address": "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
+            "symbol": "BAYC",
+            "category": "erc721",
+            "events": [
+                "TransferNonFungibleEvent",
+            ],
+        }
+    )
+
+
+@pytest.fixture
 def data_collection_config_factory():
     def _data_collection_cfg(contracts: List[ContractConfig]):
         return DataCollectionConfig(
@@ -270,4 +284,14 @@ def swap_pair_event(contract_config_pair_usdc_weth):
         in1=1500,
         out0=1000,
         out1=900,
+    )
+
+
+@pytest.fixture
+def transfer_non_fungible_event(contract_config_bayc):
+    return TransferNonFungibleEvent(
+        contract_address=contract_config_bayc.address,
+        src="0xF00D",
+        dst="0xCAFE",
+        tokenId=1337,
     )
