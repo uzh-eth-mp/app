@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import Mock, AsyncMock, patch
 
+from app.model import DataCollectionMode
 from app.model.transaction import InternalTransactionData
 from app.web3.transaction_events.types import (
     TransferFungibleEvent,
@@ -51,7 +52,7 @@ class TestHandleTransaction:
             gas_used=transaction_receipt_data.gas_used,
             is_token_tx=True,
             transaction_fee=transaction_data.gas_price
-            * transaction_receipt_data.gas_used
+            * transaction_receipt_data.gas_used,
         )
         consumer.db_manager.insert_internal_transactions.assert_not_awaited()
 
@@ -96,7 +97,7 @@ class TestHandleTransaction:
             gas_used=transaction_receipt_data.gas_used,
             is_token_tx=True,
             transaction_fee=transaction_data.gas_price
-            * transaction_receipt_data.gas_used
+            * transaction_receipt_data.gas_used,
         )
         consumer.node_connector.get_internal_transactions.assert_awaited_once_with(
             transaction_data.transaction_hash
@@ -104,7 +105,7 @@ class TestHandleTransaction:
         assert consumer.db_manager.insert_internal_transaction.await_count == 2
         consumer.db_manager.insert_internal_transaction.assert_awaited_with(
             **internal_tx_data.dict(),
-            transaction_hash=transaction_data.transaction_hash
+            transaction_hash=transaction_data.transaction_hash,
         )
 
     async def test_transaction_fee_correct(self):
@@ -897,24 +898,78 @@ class TestHandleTransactionEvents:
 
 
 class TestOnKafkaEvent:
-    """Tests for _on_kafka_event method in DataConsumer"""
+    """Tests for methods related to direct kafka event handling in DataConsumer"""
 
-    async def test_event_handled(self):
-        """Test that a regular event (transaction) is handled"""
-        # TODO: Implement
-        pass
+    @pytest.mark.parametrize(
+        "mode", [DataCollectionMode.FULL, DataCollectionMode.PARTIAL]
+    )
+    async def test_on_kafka_event(
+        self,
+        mode,
+        consumer_factory,
+        config_factory,
+        data_collection_config_factory,
+        contract_config_usdt,
+        contract_abi,
+    ):
+        """Test that a regular event (transaction) is handled for two modes: full and partial"""
+        # Arrange
+        data_collection_config = data_collection_config_factory([contract_config_usdt])
+        data_collection_config.mode = mode
+        consumer = consumer_factory(
+            config_factory([data_collection_config]),
+            contract_abi,
+        )
+        consumer.node_connector.get_transaction_data = AsyncMock()
+        consumer.node_connector.get_transaction_data.return_value = (None, None)
+        consumer.node_connector.get_transaction_receipt_data = AsyncMock()
+        consumer.node_connector.get_transaction_receipt_data.return_value = (None, None)
+        consumer._consume_full = AsyncMock()
+        consumer._consume_partial = AsyncMock()
+        kafka_event = Mock()
+        kafka_event.value = f"{mode.value}:0x1234".encode()
 
-    async def test_event_not_handled_if_contract_is_not_in_config(self):
-        """Test that an event is not handled if contract is not in config"""
-        # TODO: Implement
-        pass
+        # Act
+        await consumer._on_kafka_event(event=kafka_event)
 
-    async def test_event_not_handled_if_event_is_not_in_config(self):
-        """Test that an event is not handled if event is not in config"""
-        # TODO: Implement
-        pass
+        # Assert
+        consumer.node_connector.get_transaction_data.assert_awaited_once()
+        consumer.node_connector.get_transaction_receipt_data.assert_awaited_once()
+        if mode == DataCollectionMode.FULL:
+            consumer._consume_full.assert_awaited_once()
+            consumer._consume_partial.assert_not_awaited()
+        elif mode == DataCollectionMode.PARTIAL:
+            consumer._consume_full.assert_not_awaited()
+            consumer._consume_partial.assert_awaited_once()
 
-    async def test_handle_contract_creation_called_if_needed(self):
-        """Test that handle_contract_creation is called if a new contract is created"""
-        # TODO: Implement
+        assert consumer._n_consumed_txs == 1
+
+    async def test_consume_full_flow(
+        self,
+        default_consumer,
+        transaction_data,
+        transaction_receipt_data,
+        transaction_logs_data,
+    ):
+        """Test _consume_full flow"""
+        default_consumer._handle_transaction = AsyncMock()
+        default_consumer.db_manager.insert_transaction_logs = AsyncMock()
+        transaction_receipt_data.logs = [transaction_logs_data]
+
+        await default_consumer._consume_full(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+        )
+
+        default_consumer._handle_transaction.assert_awaited_once_with(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+        )
+        default_consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
+            **transaction_logs_data.dict()
+        )
+        assert default_consumer._n_processed_txs == 1
+
+    async def test_consume_partial_flow(self):
+        """Test _consume_partial flow"""
         pass

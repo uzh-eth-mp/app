@@ -236,6 +236,21 @@ def consumer_factory():
     return _consumer
 
 
+@pytest.fixture
+async def default_consumer(
+    consumer_factory,
+    config_factory,
+    data_collection_config_factory,
+    contract_config_usdt,
+    contract_abi,
+):
+    """Return default consumer with only USDT contract"""
+    return consumer_factory(
+        config_factory([data_collection_config_factory([contract_config_usdt])]),
+        contract_abi,
+    )
+
+
 # Events
 @pytest.fixture
 def transfer_fungible_event(contract_config_usdt):

@@ -289,7 +289,7 @@ class DataConsumer(DataCollector):
             w3_block_hash=w3_tx_data["blockHash"],
         )
 
-    async def _consume_full(self, tx_data, tx_receipt_data, w3_tx_data, w3_tx_receipt):
+    async def _consume_full(self, tx_data, tx_receipt_data):
         """Called for a full consume mode of a transaction hash
 
         Save every tx data to db without furhter processing
@@ -322,7 +322,7 @@ class DataConsumer(DataCollector):
 
         match mode:
             case DataCollectionMode.FULL:
-                await self._consume_full(tx_data, tx_receipt_data, w3_tx_data, w3_tx_receipt)
+                await self._consume_full(tx_data, tx_receipt_data)
             case DataCollectionMode.PARTIAL:
                 await self._consume_partial(tx_data, tx_receipt_data, w3_tx_data, w3_tx_receipt)
             case DataCollectionMode.LOG_FILTER:
