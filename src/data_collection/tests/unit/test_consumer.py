@@ -1,7 +1,8 @@
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, AsyncMock, patch, MagicMock
 
 from app.model import DataCollectionMode
+from app.model.contract import ContractCategory
 from app.model.transaction import InternalTransactionData
 from app.web3.transaction_events.types import (
     TransferFungibleEvent,
@@ -9,8 +10,6 @@ from app.web3.transaction_events.types import (
     MintFungibleEvent,
     MintPairEvent,
     BurnPairEvent,
-    SwapPairEvent,
-    TransferNonFungibleEvent,
 )
 
 
@@ -970,6 +969,120 @@ class TestOnKafkaEvent:
         )
         assert default_consumer._n_processed_txs == 1
 
-    async def test_consume_partial_flow(self):
-        """Test _consume_partial flow"""
-        pass
+    async def test_consume_partial_unknown_contract_flow(
+        self, default_consumer, transaction_data, transaction_receipt_data
+    ):
+        """Test _consume_partial flow if an unknown contract is encountered"""
+        transaction_data.to_address = "0x1234"
+        transaction_receipt_data.contract_address = "0x1234"
+        default_consumer._handle_contract_creation = AsyncMock()
+        default_consumer._handle_transaction = AsyncMock()
+        default_consumer._handle_transaction_events = AsyncMock()
+        w3_tx_data = MagicMock()
+        w3_block_kv = {"blockHash": "0x0000"}
+        w3_tx_data.__get__item.side_effect = w3_block_kv.__getitem__
+        default_consumer.contract_parser.get_contract_category.return_value = None
+
+        await default_consumer._consume_partial(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            w3_tx_data=w3_tx_data,
+            w3_tx_receipt=Mock(),
+        )
+
+        assert default_consumer._n_processed_txs == 0
+        default_consumer._handle_contract_creation.assert_not_awaited()
+        default_consumer._handle_transaction.assert_not_awaited()
+        default_consumer._handle_transaction_events.assert_not_awaited()
+
+    async def test_consume_partial_known_contract_flow(
+        self,
+        default_consumer,
+        transaction_data,
+        transaction_receipt_data,
+        contract_config_usdt,
+    ):
+        """Test _consume_partial flow if a known contract is encountered"""
+        transaction_data.to_address = contract_config_usdt.address
+        transaction_receipt_data.contract_address = contract_config_usdt.address
+        default_consumer._handle_contract_creation = AsyncMock()
+        default_consumer._handle_transaction = AsyncMock()
+        default_consumer._handle_transaction_events = AsyncMock()
+        default_consumer.contract_parser.get_contract_category.return_value = (
+            ContractCategory(contract_config_usdt.category)
+        )
+        contract_mock = Mock()
+        default_consumer.contract_parser.get_contract.return_value = contract_mock
+        w3_tx_data = MagicMock()
+        w3_tx_data.__getitem__.side_effect = dict(blockHash="0x0000").__getitem__
+        w3_tx_receipt = Mock()
+
+        await default_consumer._consume_partial(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            w3_tx_data=w3_tx_data,
+            w3_tx_receipt=w3_tx_receipt,
+        )
+
+        assert default_consumer._n_processed_txs == 1
+        default_consumer._handle_contract_creation.assert_not_awaited()
+        default_consumer._handle_transaction.assert_awaited_once_with(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+        )
+        default_consumer._handle_transaction_events.assert_awaited_once_with(
+            contract=contract_mock,
+            category=ContractCategory.ERC20,
+            tx_data=transaction_data,
+            tx_receipt=w3_tx_receipt,
+            tx_receipt_data=transaction_receipt_data,
+            w3_block_hash="0x0000",
+        )
+
+    async def test_consume_partial_contract_creation_flow(
+        self,
+        default_consumer,
+        transaction_data,
+        transaction_receipt_data,
+        contract_config_usdt,
+    ):
+        """Test _consume_partial flow if a contract is being created within this transaction"""
+        transaction_data.to_address = None
+        transaction_receipt_data.contract_address = contract_config_usdt.address
+        default_consumer._handle_contract_creation = AsyncMock()
+        default_consumer._handle_transaction = AsyncMock()
+        default_consumer._handle_transaction_events = AsyncMock()
+        default_consumer.contract_parser.get_contract_category.return_value = (
+            ContractCategory(contract_config_usdt.category)
+        )
+        contract_mock = Mock()
+        default_consumer.contract_parser.get_contract.return_value = contract_mock
+        w3_tx_data = MagicMock()
+        w3_tx_data.__getitem__.side_effect = dict(blockHash="0x0000").__getitem__
+        w3_tx_receipt = Mock()
+
+        await default_consumer._consume_partial(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            w3_tx_data=w3_tx_data,
+            w3_tx_receipt=w3_tx_receipt,
+        )
+
+        assert default_consumer._n_processed_txs == 1
+        default_consumer._handle_contract_creation.assert_awaited_once_with(
+            contract=contract_mock,
+            tx_data=transaction_data,
+            category=ContractCategory.ERC20,
+        )
+        default_consumer._handle_transaction.assert_awaited_once_with(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+        )
+        default_consumer._handle_transaction_events.assert_awaited_once_with(
+            contract=contract_mock,
+            category=ContractCategory.ERC20,
+            tx_data=transaction_data,
+            tx_receipt=w3_tx_receipt,
+            tx_receipt_data=transaction_receipt_data,
+            w3_block_hash="0x0000",
+        )
