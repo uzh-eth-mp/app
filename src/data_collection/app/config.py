@@ -16,6 +16,7 @@ from pydantic import (
 
 import app.web3.transaction_events.types as w3t
 from app.model import DataCollectionMode
+from app.model.contract import ContractCategory
 
 
 class ContractConfig(BaseModel):
@@ -28,7 +29,7 @@ class ContractConfig(BaseModel):
     """The address of the smart contract"""
     symbol: str
     """The symbol / name / description of the contract"""
-    category: str
+    category: ContractCategory
     """The category of the contract. Mapped to contract.ContractCategory Enum."""
     events: confrozenset(item_type=constr(regex="^[A-Z][A-Za-z]*$"))
     """Constrained set of events that will be processed (stored into DB) for this contract.
@@ -69,7 +70,9 @@ class ContractConfig(BaseModel):
         )
 
     def __hash__(self) -> int:
-        return hash(self.address + self.symbol + self.category + "".join(self.events))
+        return hash(
+            self.address + self.symbol + self.category.value + "".join(self.events)
+        )
 
 
 class DataCollectionConfig(BaseSettings):

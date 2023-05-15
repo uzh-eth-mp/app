@@ -24,7 +24,6 @@ class ContractParser:
         # Cache for 'ContractConfig' indexed by address
         self._contracts_config_cache: Dict[str, ContractConfig] = dict()
         for contract in contracts:
-            contract.category = ContractCategory(contract.category)
             self._contracts_config_cache[contract.address.lower()] = contract
 
         # Cache for 'Contract' instances indexed by address
