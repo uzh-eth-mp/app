@@ -1,6 +1,8 @@
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, AsyncMock, patch, MagicMock
 
+from app.model import DataCollectionMode
+from app.model.contract import ContractCategory
 from app.model.transaction import InternalTransactionData
 from app.web3.transaction_events.types import (
     TransferFungibleEvent,
@@ -8,8 +10,6 @@ from app.web3.transaction_events.types import (
     MintFungibleEvent,
     MintPairEvent,
     BurnPairEvent,
-    SwapPairEvent,
-    TransferNonFungibleEvent,
 )
 
 
@@ -51,7 +51,7 @@ class TestHandleTransaction:
             gas_used=transaction_receipt_data.gas_used,
             is_token_tx=True,
             transaction_fee=transaction_data.gas_price
-            * transaction_receipt_data.gas_used
+            * transaction_receipt_data.gas_used,
         )
         consumer.db_manager.insert_internal_transactions.assert_not_awaited()
 
@@ -96,7 +96,7 @@ class TestHandleTransaction:
             gas_used=transaction_receipt_data.gas_used,
             is_token_tx=True,
             transaction_fee=transaction_data.gas_price
-            * transaction_receipt_data.gas_used
+            * transaction_receipt_data.gas_used,
         )
         consumer.node_connector.get_internal_transactions.assert_awaited_once_with(
             transaction_data.transaction_hash
@@ -104,7 +104,7 @@ class TestHandleTransaction:
         assert consumer.db_manager.insert_internal_transaction.await_count == 2
         consumer.db_manager.insert_internal_transaction.assert_awaited_with(
             **internal_tx_data.dict(),
-            transaction_hash=transaction_data.transaction_hash
+            transaction_hash=transaction_data.transaction_hash,
         )
 
     async def test_transaction_fee_correct(self):
@@ -897,24 +897,192 @@ class TestHandleTransactionEvents:
 
 
 class TestOnKafkaEvent:
-    """Tests for _on_kafka_event method in DataConsumer"""
+    """Tests for methods related to direct kafka event handling in DataConsumer"""
 
-    async def test_event_handled(self):
-        """Test that a regular event (transaction) is handled"""
-        # TODO: Implement
-        pass
+    @pytest.mark.parametrize(
+        "mode", [DataCollectionMode.FULL, DataCollectionMode.PARTIAL]
+    )
+    async def test_on_kafka_event(
+        self,
+        mode,
+        consumer_factory,
+        config_factory,
+        data_collection_config_factory,
+        contract_config_usdt,
+        contract_abi,
+    ):
+        """Test that a regular event (transaction) is handled for two modes: full and partial"""
+        # Arrange
+        data_collection_config = data_collection_config_factory([contract_config_usdt])
+        data_collection_config.mode = mode
+        consumer = consumer_factory(
+            config_factory([data_collection_config]),
+            contract_abi,
+        )
+        consumer.node_connector.get_transaction_data = AsyncMock()
+        consumer.node_connector.get_transaction_data.return_value = (None, None)
+        consumer.node_connector.get_transaction_receipt_data = AsyncMock()
+        consumer.node_connector.get_transaction_receipt_data.return_value = (None, None)
+        consumer._consume_full = AsyncMock()
+        consumer._consume_partial = AsyncMock()
+        kafka_event = Mock()
+        kafka_event.value = f"{mode.value}:0x1234".encode()
 
-    async def test_event_not_handled_if_contract_is_not_in_config(self):
-        """Test that an event is not handled if contract is not in config"""
-        # TODO: Implement
-        pass
+        # Act
+        await consumer._on_kafka_event(event=kafka_event)
 
-    async def test_event_not_handled_if_event_is_not_in_config(self):
-        """Test that an event is not handled if event is not in config"""
-        # TODO: Implement
-        pass
+        # Assert
+        consumer.node_connector.get_transaction_data.assert_awaited_once()
+        consumer.node_connector.get_transaction_receipt_data.assert_awaited_once()
+        if mode == DataCollectionMode.FULL:
+            consumer._consume_full.assert_awaited_once()
+            consumer._consume_partial.assert_not_awaited()
+        elif mode == DataCollectionMode.PARTIAL:
+            consumer._consume_full.assert_not_awaited()
+            consumer._consume_partial.assert_awaited_once()
 
-    async def test_handle_contract_creation_called_if_needed(self):
-        """Test that handle_contract_creation is called if a new contract is created"""
-        # TODO: Implement
-        pass
+        assert consumer._n_consumed_txs == 1
+
+    async def test_consume_full_flow(
+        self,
+        default_consumer,
+        transaction_data,
+        transaction_receipt_data,
+        transaction_logs_data,
+    ):
+        """Test _consume_full flow"""
+        default_consumer._handle_transaction = AsyncMock()
+        default_consumer.db_manager.insert_transaction_logs = AsyncMock()
+        transaction_receipt_data.logs = [transaction_logs_data]
+
+        await default_consumer._consume_full(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+        )
+
+        default_consumer._handle_transaction.assert_awaited_once_with(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+        )
+        default_consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
+            **transaction_logs_data.dict()
+        )
+        assert default_consumer._n_processed_txs == 1
+
+    async def test_consume_partial_unknown_contract_flow(
+        self, default_consumer, transaction_data, transaction_receipt_data
+    ):
+        """Test _consume_partial flow if an unknown contract is encountered"""
+        transaction_data.to_address = "0x1234"
+        transaction_receipt_data.contract_address = "0x1234"
+        default_consumer._handle_contract_creation = AsyncMock()
+        default_consumer._handle_transaction = AsyncMock()
+        default_consumer._handle_transaction_events = AsyncMock()
+        w3_tx_data = MagicMock()
+        w3_block_kv = {"blockHash": "0x0000"}
+        w3_tx_data.__get__item.side_effect = w3_block_kv.__getitem__
+        default_consumer.contract_parser.get_contract_category.return_value = None
+
+        await default_consumer._consume_partial(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            w3_tx_data=w3_tx_data,
+            w3_tx_receipt=Mock(),
+        )
+
+        assert default_consumer._n_processed_txs == 0
+        default_consumer._handle_contract_creation.assert_not_awaited()
+        default_consumer._handle_transaction.assert_not_awaited()
+        default_consumer._handle_transaction_events.assert_not_awaited()
+
+    async def test_consume_partial_known_contract_flow(
+        self,
+        default_consumer,
+        transaction_data,
+        transaction_receipt_data,
+        contract_config_usdt,
+    ):
+        """Test _consume_partial flow if a known contract is encountered"""
+        transaction_data.to_address = contract_config_usdt.address
+        transaction_receipt_data.contract_address = contract_config_usdt.address
+        default_consumer._handle_contract_creation = AsyncMock()
+        default_consumer._handle_transaction = AsyncMock()
+        default_consumer._handle_transaction_events = AsyncMock()
+        default_consumer.contract_parser.get_contract_category.return_value = (
+            ContractCategory(contract_config_usdt.category)
+        )
+        contract_mock = Mock()
+        default_consumer.contract_parser.get_contract.return_value = contract_mock
+        w3_tx_data = MagicMock()
+        w3_tx_data.__getitem__.side_effect = dict(blockHash="0x0000").__getitem__
+        w3_tx_receipt = Mock()
+
+        await default_consumer._consume_partial(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            w3_tx_data=w3_tx_data,
+            w3_tx_receipt=w3_tx_receipt,
+        )
+
+        assert default_consumer._n_processed_txs == 1
+        default_consumer._handle_contract_creation.assert_not_awaited()
+        default_consumer._handle_transaction.assert_awaited_once_with(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+        )
+        default_consumer._handle_transaction_events.assert_awaited_once_with(
+            contract=contract_mock,
+            category=ContractCategory.ERC20,
+            tx_data=transaction_data,
+            tx_receipt=w3_tx_receipt,
+            tx_receipt_data=transaction_receipt_data,
+            w3_block_hash="0x0000",
+        )
+
+    async def test_consume_partial_contract_creation_flow(
+        self,
+        default_consumer,
+        transaction_data,
+        transaction_receipt_data,
+        contract_config_usdt,
+    ):
+        """Test _consume_partial flow if a contract is being created within this transaction"""
+        transaction_data.to_address = None
+        transaction_receipt_data.contract_address = contract_config_usdt.address
+        default_consumer._handle_contract_creation = AsyncMock()
+        default_consumer._handle_transaction = AsyncMock()
+        default_consumer._handle_transaction_events = AsyncMock()
+        default_consumer.contract_parser.get_contract_category.return_value = (
+            ContractCategory(contract_config_usdt.category)
+        )
+        contract_mock = Mock()
+        default_consumer.contract_parser.get_contract.return_value = contract_mock
+        w3_tx_data = MagicMock()
+        w3_tx_data.__getitem__.side_effect = dict(blockHash="0x0000").__getitem__
+        w3_tx_receipt = Mock()
+
+        await default_consumer._consume_partial(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            w3_tx_data=w3_tx_data,
+            w3_tx_receipt=w3_tx_receipt,
+        )
+
+        assert default_consumer._n_processed_txs == 1
+        default_consumer._handle_contract_creation.assert_awaited_once_with(
+            contract=contract_mock,
+            tx_data=transaction_data,
+            category=ContractCategory.ERC20,
+        )
+        default_consumer._handle_transaction.assert_awaited_once_with(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+        )
+        default_consumer._handle_transaction_events.assert_awaited_once_with(
+            contract=contract_mock,
+            category=ContractCategory.ERC20,
+            tx_data=transaction_data,
+            tx_receipt=w3_tx_receipt,
+            tx_receipt_data=transaction_receipt_data,
+            w3_block_hash="0x0000",
+        )

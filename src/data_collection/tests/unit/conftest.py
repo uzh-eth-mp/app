@@ -180,7 +180,7 @@ def data_collection_config_factory():
     def _data_collection_cfg(contracts: List[ContractConfig]):
         return DataCollectionConfig(
             **{
-                "producer_type": "full",
+                "mode": "full",
                 "start_block": 1337,
                 "end_block": 1338,
                 "contracts": contracts,
@@ -214,6 +214,14 @@ def config_factory():
 
 
 @pytest.fixture
+def default_config(
+    config_factory, data_collection_config_factory, contract_config_usdt
+):
+    """Return default config with only USDT contract"""
+    return config_factory([data_collection_config_factory([contract_config_usdt])])
+
+
+@pytest.fixture
 def consumer_factory():
     def _consumer(config: Config, contract_abi: ContractABI):
         from app.consumer import DataConsumer
@@ -226,6 +234,21 @@ def consumer_factory():
         return consumer
 
     return _consumer
+
+
+@pytest.fixture
+async def default_consumer(
+    consumer_factory,
+    config_factory,
+    data_collection_config_factory,
+    contract_config_usdt,
+    contract_abi,
+):
+    """Return default consumer with only USDT contract"""
+    return consumer_factory(
+        config_factory([data_collection_config_factory([contract_config_usdt])]),
+        contract_abi,
+    )
 
 
 # Events

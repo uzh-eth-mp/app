@@ -1,5 +1,5 @@
 import asyncio
-
+from functools import wraps
 from asyncio import TimeoutError
 from typing import Awaitable, Callable, List, Optional
 
@@ -79,6 +79,8 @@ class KafkaManager:
 class KafkaProducerManager(KafkaManager):
     """Manage producing events to a given Kafka topic"""
 
+    MAX_MESSAGES_PER_PARTITION = 1000
+    """Maximum amount of messages (events) stored in a single partition."""
     MESSAGES_PER_BATCH = 1024
     """
     Maximum amount of messages (events) in a single batch
@@ -101,6 +103,47 @@ class KafkaProducerManager(KafkaManager):
         # Start at 0
         self._i_partition = 0
 
+    def limit_topic_capacity(f):
+        """Decorator that limits the amount of messages in a topic to MAX_MESSAGES_PER_PARTITION * n_partitions"""
+
+        async def inner(self, *args, **kwargs):
+            stall_counter = 0
+            waiting_for_space = True
+            while waiting_for_space:
+                # Verify that there is space in the Kafka topic for more transaction hashes
+                if n_txs := await self.redis_manager.get_n_transactions():
+                    # Compute total max allowed messages in all partitions each time
+                    # because # of partitions can change
+                    n_part = await self.number_of_partitions
+                    total_allowed_messages_in_partitions = (
+                        self.MAX_MESSAGES_PER_PARTITION * n_part
+                    )
+                    if n_txs > total_allowed_messages_in_partitions:
+                        if stall_counter % 60 == 0 and stall_counter:
+                            # Log info about the stall every 60 seconds
+                            log.warning(
+                                f"Producing stalled for {stall_counter} seconds."
+                            )
+                        stall_counter += 1
+                        # Sleep if there are too many transactions in the kafka topic
+                        await asyncio.sleep(1)
+                        # Try again after sleeping
+                        continue
+                    else:
+                        waiting_for_space = False
+                    # Print out info about the stall
+                    if stall_counter >= 60:
+                        log.info(
+                            f"Continuing producing after stalling for {stall_counter} seconds."
+                        )
+                elif stall_counter == 0:
+                    # Else if n_txs is None and stall_counter is 0, the topic (each parition) is completely empty
+                    break
+            result = await f(self, *args, **kwargs)
+            return result
+
+        return inner
+
     @property
     async def number_of_partitions(self) -> int:
         """Return the number of partitions in this topic"""
@@ -122,6 +165,7 @@ class KafkaProducerManager(KafkaManager):
             partition = await self.redis_manager.get_lowest_score_partition() or 0
         return partition
 
+    @limit_topic_capacity
     async def send_message(self, msg: str) -> Optional[RecordMetadata]:
         """Send message to a Kafka broker"""
         try:
@@ -152,6 +196,7 @@ class KafkaProducerManager(KafkaManager):
             log.error(f"{err} on {msg}")
             raise err
 
+    @limit_topic_capacity
     async def send_batch(self, msgs: List[str]) -> List[RecordMetadata]:
         """Send a batch of messages to a Kafka broker"""
         if not msgs:
@@ -167,7 +212,6 @@ class KafkaProducerManager(KafkaManager):
 
             # Save `RecordMetadata` for each batch that was sent successfully
             batches_recordmetadata = []
-
             # Send each chunk in a separate batch
             for chunk in chunks:
                 kafka_batch = self._client.create_batch()
@@ -243,59 +287,78 @@ class KafkaConsumerManager(KafkaManager):
         # How much time (in seconds) to wait for the next event / message
         # from a Kafka topic before timing out the consumer
         self.event_retrieval_timeout = event_retrieval_timeout
-        # True if an event was received. False otherwise.
-        self._event_received = False
 
-    async def _event_timeout(self, event):
+        ##  Events
+        # asyncio Event that is used for timing out
+        # when no message from Kafka is received for some time
+        self.kafka_timeout_event = asyncio.Event()
+
+        # asyncio Event that is used for indefinite waiting while
+        # consumer is consuming messages from Kafka
+        self.kafka_consuming_event = asyncio.Event()
+
+    async def _event_timeout_task(self):
         """Raise an exception if event.set() is not called for event_retrieval_timeout seconds"""
         try:
             while True:
                 # Wait for event.set() to be called for event_retrieval_timeout seconds
-                await asyncio.wait_for(event.wait(), self.event_retrieval_timeout)
+                await asyncio.wait_for(
+                    self.kafka_timeout_event.wait(), self.event_retrieval_timeout
+                )
                 # Reset the event timeout to wait another event_retrieval_timeout seconds for a new Kafka event
-                event.clear()
+                self.kafka_timeout_event.clear()
+                # Wait for the consumer to finish consuming the event
+                await asyncio.wait_for(self.kafka_consuming_event.wait(), None)
+                # Reset the consuming event
+                self.kafka_consuming_event.clear()
         except TimeoutError as e:
             # Catch asyncio.TimeoutError from the wait event timeout and reraise it as KafkaConsumerTopicEmptyError
             # because there are no more events in the partitions
             raise KafkaConsumerPartitionsEmptyError from e
 
-    async def _start_listening_on_topic(
+    async def _start_listening_on_topic_task(
         self,
         on_event_callback: Callable[[str], Awaitable[None]],
-        wait_event: asyncio.Event,
     ):
         """Listen for new Kafka messages on a predefined topic"""
-        # Wait for new events from Kafka and call the callback
-        async for event in self._client:
-            # Notify the wait_event that we've received a new Kafka topic event
-            wait_event.set()
-            # Decrement the amount of events / messages in the partition
-            # this event was retrieved from
-            await self.redis_manager.decr_transactions(event.partition)
-            # Await the async callback
-            await on_event_callback(event)
+        try:
+            # Wait for new events from Kafka and call the callback
+            async for event in self._client:
+                # Notify the timeout task that we've received a new Kafka topic message
+                self.kafka_timeout_event.set()
+                # Decrement the amount of events / messages in the partition
+                # this message was retrieved from
+                await self.redis_manager.decr_transactions(event.partition)
+                # Await the async callback
+                await on_event_callback(event)
+                # Notify the consuming event that we've finished consuming the Kafka message
+                self.kafka_consuming_event.set()
+        except TimeoutError:
+            log.warning("Timed out in the listening on topic task")
+            raise
 
     async def start_consuming(
         self, on_event_callback: Callable[[str], Awaitable[None]]
     ):
-        """Consume messages from a given topic and generate (yield) events"""
+        """Consume messages from a given topic and generate (yield) events
+
+        Args:
+            on_event_callback: a callback function that is called when a new event is received from Kafka
+        """
         try:
+            # Log information about the partitions that this consumer is consuming from
             partitions = list(map(lambda p: p.partition, self._client.assignment()))
             log.info(
                 f"Consuming events in topic '{self.topic}' for partitions: {partitions}"
             )
 
-            # Create an asyncio Event that is used for timing out
-            # when no message from Kafka is received for some time
-            wait_event = asyncio.Event()
-
             # Create a consume task
             consume_task = asyncio.create_task(
-                self._start_listening_on_topic(on_event_callback, wait_event)
+                self._start_listening_on_topic_task(on_event_callback)
             )
 
-            # Create a task for a timeout to run in the background
-            timeout_task = asyncio.create_task(self._event_timeout(wait_event))
+            # Create a task for a timeout counter to run in the background
+            timeout_task = asyncio.create_task(self._event_timeout_task())
 
             # Wait for consuming to finish
             # (with a timeout task that can interrupt the consume task by raising an exception)
@@ -304,7 +367,7 @@ class KafkaConsumerManager(KafkaManager):
         except KafkaConsumerPartitionsEmptyError:
             # Raised when no message is received within the specified time
             log.info(
-                f"No event received for {self.event_retrieval_timeout} seconds - timed out"
+                f"No event received for {self.event_retrieval_timeout} seconds from any partition - timed out"
             )
             raise
         finally:

@@ -10,7 +10,6 @@ from web3.types import (
     RPCEndpoint,
     RPCResponse,
 )
-from web3.middleware.exception_retry_request import check_if_retry_on_failure
 
 from app import init_logger
 from app.model.block import BlockData
@@ -31,26 +30,23 @@ def async_exception_retry_middleware(
     delay: int,
 ) -> AsyncMiddlewareCoroutine:
     async def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
-        if check_if_retry_on_failure(method):
-            for i in range(retries):
-                try:
-                    return await make_request(method, params)
-                except errors as e:
-                    request_details_str = f"(method='{method}',params={params})"
-                    if i < retries - 1:
-                        log.debug(
-                            f"Request {request_details_str} failed: {repr(e)}. Retrying after {delay}s ({i+1})"
-                        )
-                        await asyncio.sleep(delay)
-                        continue
-                    else:
-                        log.error(
-                            f"Failed to make request {request_details_str} after {retries} retries. {repr(e)}"
-                        )
-                        raise
-            return None
-        else:
-            return await make_request(method, params)
+        for i in range(retries):
+            try:
+                return await make_request(method, params)
+            except errors as e:
+                request_details_str = f"(method='{method}',params={params})"
+                if i < retries - 1:
+                    log.warning(
+                        f"Request {request_details_str} failed: {repr(e)}. Retrying after {delay}s ({i+1})"
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+                else:
+                    log.error(
+                        f"Failed to make request {request_details_str} after {retries} retries. {repr(e)}"
+                    )
+                    raise
+        return None
 
     return middleware
 
@@ -63,7 +59,7 @@ def async_http_retry_request_middleware(
         return async_exception_retry_middleware(
             make_request,
             w3,
-            (asyncio.TimeoutError, ClientConnectorError),
+            (asyncio.TimeoutError, ClientConnectorError, TimeoutError),
             retries=retries,
             delay=delay,
         )
@@ -97,12 +93,21 @@ class NodeConnector:
                 endpoint_uri=node_url,
                 request_kwargs={"headers": headers, "timeout": timeout},
             ),
-            middlewares=[
-                async_http_retry_request_middleware(
-                    retries=retry_limit, delay=retry_delay
-                )
-            ],
         )
+        # Add retry middleware for timeouts and other connection errors
+        self._retry_middleware = async_http_retry_request_middleware(
+            retries=retry_limit, delay=retry_delay
+        )
+        self.w3.middleware_onion.add(self._retry_middleware)
+
+    async def _make_request(self, method: RPCEndpoint, params: Any) -> RPCResponse:
+        """Make a web3 request for non standard JSON RPC methods
+
+        Note:
+            E.g. trace_block, trace_replayTransaction
+        """
+        make_req = await self._retry_middleware(self.w3.provider.make_request, self.w3)
+        return await make_req(method, params)
 
     async def get_block_data(self, block_id: str = "latest") -> BlockData:
         """Get block data by number/hash"""
@@ -142,7 +147,7 @@ class NodeConnector:
 
     async def get_block_reward(self, block_id="latest") -> dict[str, Any]:
         """Get block reward of a specific block"""
-        data = await self.w3.provider.make_request("trace_block", [block_id])
+        data = await self._make_request("trace_block", [block_id])
 
         blockReward = 0
         for i in data["result"]:
@@ -156,9 +161,7 @@ class NodeConnector:
         self, tx_hash: str
     ) -> List[InternalTransactionData]:
         """Get internal transaction data by hash"""
-        data = await self.w3.provider.make_request(
-            "trace_replayTransaction", [tx_hash, ["trace"]]
-        )
+        data = await self._make_request("trace_replayTransaction", [tx_hash, ["trace"]])
 
         data_dict = []
         for i in data["result"]["trace"]:
