@@ -1,12 +1,12 @@
 # Data Collection containers
-Code for building producer and consumer docker containers. The code between these containers is shared and only an input argument (`--mode`) into the main module determines whether a producer or consumer is started:
+Code for building producer and consumer docker containers. The code between these containers is shared and only an input argument (`--worker-type`) into the main module determines whether a producer or consumer is started:
 
 ```
 # Start an ETH data producer
-$ python -m app.main --cfg etc/cfg/dev/eth.json --mode producer
+$ python -m app.main --cfg etc/cfg/dev/eth.json --worker-type producer
 
 # Start an ETH data consumer
-$ $ python -m app.main --cfg etc/cfg/dev/eth.json --mode consumer
+$ $ python -m app.main --cfg etc/cfg/dev/eth.json --worker-type consumer
 ```
 
 ## Running the code
@@ -29,7 +29,7 @@ $ source ./venv/bin/activate
 # install requirements
 (venv) $ pip install -r requirements.txt
 # run the code
-$ python -m app.main --cfg etc/cfg/dev/eth.json --mode producer
+$ python -m app.main --cfg etc/cfg/dev/eth.json --worker-type producer
 ```
 
 ## Requirements

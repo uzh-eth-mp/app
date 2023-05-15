@@ -112,9 +112,8 @@ services:
       - kafka
       - redis
       - db
-    environment:
-      - LOG_LEVEL=${LOG_LEVEL}
-      - SENTRY_DSN=${SENTRY_DSN}
+    env_file:
+      - .env
 
   data_producer_etc:
     build:
@@ -124,9 +123,8 @@ services:
       - kafka
       - redis
       - db
-    environment:
-      - LOG_LEVEL=${LOG_LEVEL}
-      - SENTRY_DSN=${SENTRY_DSN}
+    env_file:
+      - .env
 
   data_producer_bsc:
     build:
@@ -136,9 +134,8 @@ services:
       - kafka
       - redis
       - db
-    environment:
-      - LOG_LEVEL=${LOG_LEVEL}
-      - SENTRY_DSN=${SENTRY_DSN}
+    env_file:
+      - .env
 
   # Data consumers
   data_consumer_eth:
@@ -150,10 +147,8 @@ services:
       - kafka
       - redis
       - db
-    environment:
-      - LOG_LEVEL=${LOG_LEVEL}
-      - N_CONSUMER_INSTANCES=${N_CONSUMER_INSTANCES}
-      - SENTRY_DSN=${SENTRY_DSN}
+    env_file:
+      - .env
 
   data_consumer_etc:
     build:
@@ -164,10 +159,8 @@ services:
       - kafka
       - redis
       - db
-    environment:
-      - LOG_LEVEL=${LOG_LEVEL}
-      - N_CONSUMER_INSTANCES=${N_CONSUMER_INSTANCES}
-      - SENTRY_DSN=${SENTRY_DSN}
+    env_file:
+      - .env
 
   data_consumer_bsc:
     build:
@@ -178,11 +171,8 @@ services:
       - kafka
       - redis
       - db
-    environment:
-      - LOG_LEVEL=${LOG_LEVEL}
-      - N_CONSUMER_INSTANCES=${N_CONSUMER_INSTANCES}
-      - SENTRY_DSN=${SENTRY_DSN}
-
+    env_file:
+      - .env
 
 # Kafka related config
 # see: https://github.com/bitnami/bitnami-docker-kafka/blob/a576f9847c9ed455645d6540a7f32e7935e6b4d7/docker-compose.yml#L24

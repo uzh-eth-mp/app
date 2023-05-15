@@ -1,5 +1,4 @@
-from enum import Enum
-from multiprocessing.sharedctypes import Value
+from enum import auto, Enum, StrEnum
 from typing import List
 
 from hexbytes import HexBytes
@@ -10,11 +9,37 @@ def convert_string_to_bytes(cls, v):
     return v.encode()
 
 
-class DataCollectionMode(Enum):
-    """The mode of the application: producing or consuming data"""
+class DataCollectionWorkerType(Enum):
+    """The type of the worker: producing or consuming data"""
 
     PRODUCER = "producer"
     CONSUMER = "consumer"
+
+
+class DataCollectionMode(StrEnum):
+    """The data collection mode."""
+
+    FULL = auto()
+    """FULL data collection mode, ignores "contracts" field in the config file
+
+    Note:
+        producer will go through every block and produce every transaction in this block to a Kafka topic
+        consumer will insert every received transaction to the database
+    """
+    PARTIAL = auto()
+    """PARTIAL data collection mode, respects "contracts" field in the config file
+
+    Note:
+        producer will go through every block and produce every transaction in this block to a Kafka topic
+        consumer will insert only transactions that are related to the contracts in the config file
+    """
+    LOG_FILTER = auto()
+    """LOG_FILTER data collection mode
+
+    Note:
+        producer will respect log_filter topics while producing transaction hashes to a Kafka topic
+        consumers will insert every received transaction to the database
+    """
 
 
 class Web3BaseModel(BaseModel):

@@ -4,4 +4,4 @@ fakeredis
 pydantic
 pytest
 pytest-asyncio
-web3==6.0.0b10
+web3==6.3.0

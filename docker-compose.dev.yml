@@ -2,25 +2,25 @@ version: "3.9"
 services:
   # Different configuration files for data producers and consumers
   data_producer_eth:
-    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/eth.json --mode producer"
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/eth.json --worker-type producer"
 
   data_producer_etc:
-    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/etc.json --mode producer"
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/etc.json --worker-type producer"
 
   data_producer_bsc:
-    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/bsc.json --mode producer"
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/bsc.json --worker-type producer"
 
   data_consumer_eth:
-    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/eth.json --mode consumer"
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/eth.json --worker-type consumer"
     deploy:
       replicas: 2
 
   data_consumer_etc:
-    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/etc.json --mode consumer"
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/etc.json --worker-type consumer"
     deploy:
       replicas: 2
 
   data_consumer_bsc:
-    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/bsc.json --mode consumer"
+    command: bash -c "bash wait-for-kafka.sh && python3 -m app.main --cfg etc/cfg/dev/bsc.json --worker-type consumer"
     deploy:
       replicas: 2

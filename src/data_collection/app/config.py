@@ -15,7 +15,7 @@ from pydantic import (
 )
 
 import app.web3.transaction_events.types as w3t
-from app.model.producer_type import ProducerType
+from app.model import DataCollectionMode
 
 
 class ContractConfig(BaseModel):
@@ -75,11 +75,11 @@ class ContractConfig(BaseModel):
 class DataCollectionConfig(BaseSettings):
     """Store data collection configuration settings.
 
-    Each data collection config will start producing transactions depending on its producer_type.
+    Each data collection config will start producing transactions depending on its mode.
     """
 
-    producer_type: ProducerType
-    """Type of this producer."""
+    mode: DataCollectionMode
+    """Mode of this data collection config. (previously called producer_type)"""
     start_block: Optional[int]
     """Starting block number. Takes precedence over the setting in the db."""
     end_block: Optional[int]
@@ -112,14 +112,15 @@ class DataCollectionConfig(BaseSettings):
         return values
 
     @root_validator
-    def producer_type_not_missing_topics(cls, values):
-        """Validate topics not missing when producer_type = LOG_FILTER"""
-        producer_type = values.get("producer_type")
-        if producer_type == ProducerType.LOG_FILTER:
+    def mode_not_missing_fields(cls, values):
+        """Validate fields not missing for each mode"""
+        mode = values.get("mode")
+        if mode == DataCollectionMode.LOG_FILTER:
             if values.get("topics") is None:
-                raise ValueError(
-                    f'"producer_type": "log_filter" requires "topics" field'
-                )
+                raise ValueError(f'"mode": "log_filter" requires "topics" field')
+        elif mode == DataCollectionMode.PARTIAL:
+            if values.get("contracts") is None:
+                raise ValueError(f'"mode": "partial" requires "contracts" field')
         return values
 
 
@@ -148,3 +149,15 @@ class Config(BaseSettings):
 
     number_of_consumer_tasks: int = Field(..., env="N_CONSUMER_INSTANCES")
     """The number of consumer (`DataConsumer`) tasks that will be started"""
+
+    web3_requests_timeout: int = Field(..., env="WEB3_REQUESTS_TIMEOUT")
+    """Timeout for web3 requests in seconds"""
+
+    web3_requests_retry_limit: int = Field(..., env="WEB3_REQUESTS_RETRY_LIMIT")
+    """The number of retries for web3 requests"""
+
+    web3_requests_retry_delay: int = Field(..., env="WEB3_REQUESTS_RETRY_DELAY")
+    """The delay between retries for web3 requests in seconds"""
+
+    kafka_event_retrieval_timeout: int = Field(..., env="KAFKA_EVENT_RETRIEVAL_TIMEOUT")
+    """Timeout for retrieving events from Kafka in seconds. After this time runs out, the consumers will shut down."""

@@ -12,8 +12,19 @@ from app.model.transaction import (
     TransactionReceiptData,
     TransactionLogsData,
 )
+from app.web3.transaction_events.types import *
 
 shared_tx_hash = "0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822"
+
+
+@pytest.fixture(
+    params=[
+        "0x0000000000000000000000000000000000000000",
+        "0x000000000000000000000000000000000000dead",
+    ]
+)
+def dead_address(request) -> str:
+    return request.param
 
 
 @pytest.fixture
@@ -151,11 +162,25 @@ def contract_config_pair_weth_usdt() -> ContractConfig:
 
 
 @pytest.fixture
+def contract_config_bayc() -> ContractConfig:
+    return ContractConfig(
+        **{
+            "address": "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
+            "symbol": "BAYC",
+            "category": "erc721",
+            "events": [
+                "TransferNonFungibleEvent",
+            ],
+        }
+    )
+
+
+@pytest.fixture
 def data_collection_config_factory():
     def _data_collection_cfg(contracts: List[ContractConfig]):
         return DataCollectionConfig(
             **{
-                "producer_type": "full",
+                "mode": "full",
                 "start_block": 1337,
                 "end_block": 1338,
                 "contracts": contracts,
@@ -178,10 +203,22 @@ def config_factory():
                 "kafka_topic": "reeee",
                 "data_collection": data_collection_cfg,
                 "number_of_consumer_tasks": 1337,
+                "web3_requests_timeout": 1337,
+                "web3_requests_retry_limit": 1337,
+                "web3_requests_retry_delay": 1337,
+                "kafka_event_retrieval_timeout": 1337,
             }
         )
 
     return _config_factory
+
+
+@pytest.fixture
+def default_config(
+    config_factory, data_collection_config_factory, contract_config_usdt
+):
+    """Return default config with only USDT contract"""
+    return config_factory([data_collection_config_factory([contract_config_usdt])])
 
 
 @pytest.fixture
@@ -197,3 +234,91 @@ def consumer_factory():
         return consumer
 
     return _consumer
+
+
+@pytest.fixture
+async def default_consumer(
+    consumer_factory,
+    config_factory,
+    data_collection_config_factory,
+    contract_config_usdt,
+    contract_abi,
+):
+    """Return default consumer with only USDT contract"""
+    return consumer_factory(
+        config_factory([data_collection_config_factory([contract_config_usdt])]),
+        contract_abi,
+    )
+
+
+# Events
+@pytest.fixture
+def transfer_fungible_event(contract_config_usdt):
+    return TransferFungibleEvent(
+        contract_address=contract_config_usdt.address,
+        src="0xF00D",
+        dst="0xCAFE",
+        value=1500,
+    )
+
+
+@pytest.fixture
+def mint_fungible_event(contract_config_usdt):
+    return MintFungibleEvent(
+        contract_address=contract_config_usdt.address,
+        account="0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+        value=1500,
+    )
+
+
+@pytest.fixture
+def burn_fungible_event(contract_config_usdt):
+    return BurnFungibleEvent(
+        contract_address=contract_config_usdt.address,
+        account="0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+        value=1500,
+    )
+
+
+@pytest.fixture
+def mint_pair_event(contract_config_pair_usdc_weth):
+    return MintPairEvent(
+        contract_address=contract_config_pair_usdc_weth.address,
+        sender="0xF00D",
+        amount0=1500,
+        amount1=2500,
+    )
+
+
+@pytest.fixture
+def burn_pair_event(contract_config_pair_usdc_weth):
+    return BurnPairEvent(
+        contract_address=contract_config_pair_usdc_weth.address,
+        src="0xF00D",
+        dst="0xCAFE",
+        amount0=1500,
+        amount1=2500,
+    )
+
+
+@pytest.fixture
+def swap_pair_event(contract_config_pair_usdc_weth):
+    return SwapPairEvent(
+        contract_address=contract_config_pair_usdc_weth.address,
+        src="0xF00D",
+        dst="0xCAFE",
+        in0=1200,
+        in1=1500,
+        out0=1000,
+        out1=900,
+    )
+
+
+@pytest.fixture
+def transfer_non_fungible_event(contract_config_bayc):
+    return TransferNonFungibleEvent(
+        contract_address=contract_config_bayc.address,
+        src="0xF00D",
+        dst="0xCAFE",
+        tokenId=1337,
+    )
