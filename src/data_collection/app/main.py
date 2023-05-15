@@ -31,9 +31,9 @@ async def start(args: argparse.Namespace, config: Config):
         consumer_tasks = []
 
         # Consumer
-        async def start_consumer():
+        async def start_consumer() -> int:
             async with DataConsumer(config, contract_abi) as data_consumer:
-                await data_consumer.start_consuming_data()
+                return await data_consumer.start_consuming_data()
 
         # Start N_CONSUMER_INSTANCES asyncio tasks
         for _ in range(config.number_of_consumer_tasks):

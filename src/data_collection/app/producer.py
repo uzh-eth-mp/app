@@ -109,6 +109,8 @@ class DataProducer(DataCollector):
         ) = await self._init_block_vars(data_collection_cfg=data_collection_cfg)
         # Start producing transactions
         try:
+            # Track the total amount of transactions produced
+            _total_transactions = 0
             # Timer to track the average time per block
             _initial_time_counter_stamp = time.perf_counter()
             while should_continue(i_block):
@@ -132,6 +134,7 @@ class DataProducer(DataCollector):
                         self.encode_kafka_event(tx_hash, data_collection_cfg.mode)
                         for tx_hash in block_data.transactions
                     ]
+                    _total_transactions += len(messages)
                     # Send all the transaction hashes to Kafka so consumers can process them
                     await self.kafka_manager.send_batch(msgs=messages)
                 else:
@@ -157,13 +160,12 @@ class DataProducer(DataCollector):
                 )
         except BlockNotFound:
             # OK, BlockNotFound exception is raised when the latest block is reached
-            pass
+            log.info("BlockNotFound exception raised, finished collecting data because latest block has been reached")
         finally:
             if i_processed_block is None:
                 log.info("Finished before collecting any block data!")
             else:
-                n_txs = await self.kafka_manager.redis_manager.get_n_transactions()
-                log.info(f"Finished at block #{i_processed_block} | n_txs {n_txs}")
+                log.info(f"Finished at block #{i_processed_block} | total produced transactions: {_total_transactions}")
 
     async def _start_producer_task(
         self, data_collection_cfg: DataCollectionConfig
