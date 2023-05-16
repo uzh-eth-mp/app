@@ -27,24 +27,24 @@ class TokenContractData(BaseModel):
     """Wrapper for web3 contract data that gets inserted into the db"""
 
     # contract address
-    address: str
-    symbol: Optional[str]
-    name: Optional[str]
-    decimals: Optional[int]
-    total_supply: Optional[float]
-    token_category: str
+    address: Optional[str] = None
+    symbol: Optional[str] = None
+    name: Optional[str] = None
+    decimals: Optional[int] = None
+    total_supply: Optional[float] = None
+    token_category: Optional[str] = None
 
 
 class PairContractData(BaseModel):
     """Wrapper for web3 pair contract data that gets inserted into the db"""
 
-    address: str
+    address: Optional[str] = None
     """The contract address (used as PK)"""
-    token0: str
+    token0: Optional[str] = None
     """Address of token0"""
-    token1: str
+    token1: Optional[str] = None
     """Address of token1"""
-    reserve0: int
-    reserve1: int
-    factory: str
+    reserve0: Optional[int] = None
+    reserve1: Optional[int] = None
+    factory: Optional[str] = None
     """Address of the factory that created this pair contract"""
