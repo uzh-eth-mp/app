@@ -1,11 +1,10 @@
 -- https://dba.stackexchange.com/a/42930
-
 CREATE OR REPLACE FUNCTION create_table_block(node_name varchar(3))
   RETURNS VOID
-  LANGUAGE plpgsql AS
-$func$
+  LANGUAGE plpgsql
+  AS $func$
 BEGIN
-   EXECUTE format('
+  EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
        block_number bigint PRIMARY KEY NOT NULL,
        block_hash varchar(256) NOT NULL,
@@ -16,22 +15,27 @@ BEGIN
        timestamp timestamp NOT NULL,
        miner varchar(256) NOT NULL,
        parent_hash varchar(256) NOT NULL,
-       block_reward numeric(78,18) NOT NULL
-      )', node_name || '_block') ;
+       block_reward numeric(78,18) NOT NULL,
+       updated_at TIMESTAMP
+      )', node_name || '_block');
 END
 $func$;
 
-SELECT create_table_block('eth');
-SELECT create_table_block('etc');
-SELECT create_table_block('bsc');
+SELECT
+  create_table_block('eth');
 
+SELECT
+  create_table_block('etc');
+
+SELECT
+  create_table_block('bsc');
 
 CREATE OR REPLACE FUNCTION create_table_transaction(node_name varchar(3))
   RETURNS VOID
-  LANGUAGE plpgsql AS
-$func$
+  LANGUAGE plpgsql
+  AS $func$
 BEGIN
-   EXECUTE format('
+  EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
        transaction_hash varchar(256) PRIMARY KEY NOT NULL,
        block_number bigint REFERENCES %I NOT NULL,
@@ -43,22 +47,27 @@ BEGIN
        gas_limit numeric(78,0) NOT NULL,
        gas_used numeric(78,0) NOT NULL,
        is_token_tx boolean NOT NULL,
-       input_data varchar(65536) NOT NULL
+       input_data varchar(65536) NOT NULL,
+       updated_at TIMESTAMP
       )', node_name || '_transaction', node_name || '_block');
 END
 $func$;
 
-SELECT create_table_transaction('eth');
-SELECT create_table_transaction('etc');
-SELECT create_table_transaction('bsc');
+SELECT
+  create_table_transaction('eth');
 
+SELECT
+  create_table_transaction('etc');
+
+SELECT
+  create_table_transaction('bsc');
 
 CREATE OR REPLACE FUNCTION create_table_internal_transaction(node_name varchar(3))
   RETURNS VOID
-  LANGUAGE plpgsql AS
-$func$
+  LANGUAGE plpgsql
+  AS $func$
 BEGIN
-   EXECUTE format('
+  EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
        unique_id UUID DEFAULT gen_random_uuid (),
        transaction_hash varchar(256) REFERENCES %I NOT NULL,
@@ -69,22 +78,27 @@ BEGIN
        gas_used bigint,
        input_data varchar(65536) NOT NULL,
        call_type varchar(256) NOT NULL,
+       updated_at TIMESTAMP,
        PRIMARY KEY (unique_id)
       )', node_name || '_internal_transaction', node_name || '_transaction');
 END
 $func$;
 
-SELECT create_table_internal_transaction('eth');
-SELECT create_table_internal_transaction('etc');
-SELECT create_table_internal_transaction('bsc');
+SELECT
+  create_table_internal_transaction('eth');
 
+SELECT
+  create_table_internal_transaction('etc');
+
+SELECT
+  create_table_internal_transaction('bsc');
 
 CREATE OR REPLACE FUNCTION create_table_transaction_logs(node_name varchar(3))
   RETURNS VOID
-  LANGUAGE plpgsql AS
-$func$
+  LANGUAGE plpgsql
+  AS $func$
 BEGIN
-   EXECUTE format('
+  EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
        unique_id UUID DEFAULT gen_random_uuid (),
        transaction_hash varchar(256) REFERENCES %I NOT NULL,
@@ -93,12 +107,60 @@ BEGIN
        data varchar(65536) NOT NULL,
        removed boolean NOT NULL,
        topics varchar(256) ARRAY,
+       updated_at TIMESTAMP,
        PRIMARY KEY (unique_id)
       )', node_name || '_transaction_logs' , node_name || '_transaction');
 END
 $func$;
 
+SELECT
+  create_table_transaction_logs('eth');
 
-SELECT create_table_transaction_logs('eth');
-SELECT create_table_transaction_logs('etc');
-SELECT create_table_transaction_logs('bsc');
+SELECT
+  create_table_transaction_logs('etc');
+
+SELECT
+  create_table_transaction_logs('bsc');
+
+-- Add updated_at trigger for all tables in this file
+-- ujebane Memonilovi, dakujeme za kus dobrej roboty
+CREATE OR REPLACE FUNCTION set_updated_at()
+  RETURNS TRIGGER
+  AS $$
+BEGIN
+  NEW.updated_at = now() at time zone 'utc';
+  RETURN NEW;
+END;
+$$
+LANGUAGE 'plpgsql';
+
+DO $$
+DECLARE
+  t text;
+BEGIN
+  FOR t IN
+  SELECT
+    table_name
+  FROM
+    information_schema.tables
+  WHERE
+    table_schema = 'public'
+    AND table_name LIKE ANY (ARRAY['%_transaction', '%_block', '%_transaction_logs', '%_internal_transaction'])
+      LOOP
+        EXECUTE format('
+      CREATE TRIGGER set_updated_at_on_insert
+      BEFORE INSERT on %I
+      FOR EACH ROW
+      EXECUTE PROCEDURE set_updated_at()
+    ', t);
+        EXECUTE format('
+      CREATE TRIGGER set_updated_at
+      BEFORE UPDATE on %I
+      FOR EACH ROW
+      EXECUTE PROCEDURE set_updated_at()
+    ', t);
+      END LOOP;
+END;
+$$
+LANGUAGE plpgsql;
+
