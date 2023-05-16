@@ -6,16 +6,16 @@ CREATE OR REPLACE FUNCTION create_table_block(node_name varchar(3))
 BEGIN
   EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       block_number bigint PRIMARY KEY NOT NULL,
-       block_hash varchar(256) NOT NULL,
-       nonce varchar(256) NOT NULL,
-       difficulty numeric(78,0) NOT NULL,
-       gas_limit bigint NOT NULL,
-       gas_used bigint NOT NULL,
-       timestamp timestamp NOT NULL,
-       miner varchar(256) NOT NULL,
-       parent_hash varchar(256) NOT NULL,
-       block_reward numeric(78,18) NOT NULL,
+       block_number bigint PRIMARY KEY,
+       block_hash varchar(),
+       nonce varchar(),
+       difficulty numeric(78,0),
+       gas_limit bigint,
+       gas_used bigint,
+       timestamp timestamp,
+       miner varchar(),
+       parent_hash varchar(),
+       block_reward numeric(78,18),
        updated_at TIMESTAMP
       )', node_name || '_block');
 END
@@ -37,17 +37,17 @@ CREATE OR REPLACE FUNCTION create_table_transaction(node_name varchar(3))
 BEGIN
   EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       transaction_hash varchar(256) PRIMARY KEY NOT NULL,
-       block_number bigint REFERENCES %I NOT NULL,
-       from_address varchar(256) NOT NULL,
-       to_address varchar(256),
+       transaction_hash varchar() PRIMARY KEY,
+       block_number bigint REFERENCES %I,
+       from_address varchar(),
+       to_address varchar(),
        value numeric(78,18),
-       transaction_fee numeric(78,18) NOT NULL,
-       gas_price numeric(78,18) NOT NULL,
-       gas_limit numeric(78,0) NOT NULL,
-       gas_used numeric(78,0) NOT NULL,
-       is_token_tx boolean NOT NULL,
-       input_data varchar(65536) NOT NULL,
+       transaction_fee numeric(78,18),
+       gas_price numeric(78,18),
+       gas_limit numeric(78,0),
+       gas_used numeric(78,0),
+       is_token_tx boolean,
+       input_data varchar(),
        updated_at TIMESTAMP
       )', node_name || '_transaction', node_name || '_block');
 END
@@ -70,14 +70,14 @@ BEGIN
   EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
        unique_id UUID DEFAULT gen_random_uuid (),
-       transaction_hash varchar(256) REFERENCES %I NOT NULL,
-       from_address varchar(256) NOT NULL ,
-       to_address varchar(256) NOT NULL,
+       transaction_hash varchar() REFERENCES %I,
+       from_address varchar() ,
+       to_address varchar(),
        value numeric(78,18),
-       gas_limit bigint NOT NULL,
+       gas_limit bigint,
        gas_used bigint,
-       input_data varchar(65536) NOT NULL,
-       call_type varchar(256) NOT NULL,
+       input_data varchar(),
+       call_type varchar(),
        updated_at TIMESTAMP,
        PRIMARY KEY (unique_id)
       )', node_name || '_internal_transaction', node_name || '_transaction');
@@ -101,12 +101,12 @@ BEGIN
   EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
        unique_id UUID DEFAULT gen_random_uuid (),
-       transaction_hash varchar(256) REFERENCES %I NOT NULL,
-       address varchar(256) NOT NULL,
+       transaction_hash varchar() REFERENCES %I,
+       address varchar(),
        log_index int,
-       data varchar(65536) NOT NULL,
-       removed boolean NOT NULL,
-       topics varchar(256) ARRAY,
+       data varchar(),
+       removed boolean,
+       topics varchar() ARRAY,
        updated_at TIMESTAMP,
        PRIMARY KEY (unique_id)
       )', node_name || '_transaction_logs' , node_name || '_transaction');
