@@ -7,17 +7,39 @@
     "data_collection": [
         {
             "mode": "partial",
-            "start_block": 15500000,
-            "end_block": 15500100,
+            "start_block": 15537394,
+            "end_block": 16537394,
             "contracts": [
                 {
-                    "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-                    "symbol": "USDT",
-                    "category": "erc20",
+                    "address": "0xED5AF388653567Af2F388E6224dC7C4b3241C544",
+                    "symbol": "Azuki",
+                    "category": "erc721",
                     "events": [
-                        "TransferFungibleEvent",
-                        "MintFungibleEvent",
-                        "BurnFungibleEvent"
+                        "TransferNonFungibleEvent"
+                    ]
+                },
+                {
+                    "address": "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
+                    "symbol": "BAYC",
+                    "category": "erc721",
+                    "events": [
+                        "TransferNonFungibleEvent"
+                    ]
+                },
+                {
+                    "address": "0xED5AF388653567Af2F388E6224dC7C4b3241C544",
+                    "symbol": "AZUKI",
+                    "category": "erc721",
+                    "events": [
+                        "TransferNonFungibleEvent"
+                    ]
+                },
+                {
+                    "address": "0x9b8b9c7C02be0bD0AA4D669bF6a1f6003424c6Dc",
+                    "symbol": "ASSOC",
+                    "category": "erc721",
+                    "events": [
+                        "TransferNonFungibleEvent"
                     ]
                 },
                 {
