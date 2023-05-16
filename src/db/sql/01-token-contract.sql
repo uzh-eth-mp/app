@@ -5,20 +5,20 @@
 -- ERC 1155 properties -> https://eips.ethereum.org/EIPS/eip-1155
 
 -- uint256 data type in postgreSQL as numeric(78,0) -> https://stackoverflow.com/questions/50072618/how-to-create-an-uint256-in-postgresql
--- but we agreed on varchar(256) for address.
+-- but we agreed on varchar() for address.
 
 -- beware of the python and postgreSQL datatype conventions.
 -- in python int32 = 32 bit
 -- in postgres int4 = 4 bytes = 32 bit
 
 
---address varchar(256)PRIMARY KEY NOT NULL,              #uint256
---symbol varchar(128) NOT NULL,
---name varchar(256) NOT NULL,
---decimals int NOT NULL,                                   #int8
---total_supply numeric(78,0) NOT NULL,                     #uint256
---block_timestamp timestamp NOT NULL,                      #without time zone
---block_number bigint NOT NULL,
+--address varchar()PRIMARY KEY,              #uint256
+--symbol varchar(128),
+--name varchar(),
+--decimals int,                                   #int8
+--total_supply numeric(78,0),                     #uint256
+--block_timestamp timestamp,                      #without time zone
+--block_number bigint,
 
 
 
@@ -31,9 +31,9 @@ $func$
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       address varchar(256) PRIMARY KEY NOT NULL,
-       transaction_hash varchar(256) NOT NULL,
-       is_pair_contract boolean NOT NULL
+       address varchar PRIMARY KEY,
+       transaction_hash varchar,
+       is_pair_contract boolean
       )', blockchain_name || '_contract');
 END
 $func$;
@@ -54,9 +54,9 @@ $func$
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       address varchar(256) PRIMARY KEY REFERENCES %I(address) NOT NULL,
-       symbol varchar(128),
-       name varchar(256),
+       address varchar PRIMARY KEY REFERENCES %I(address),
+       symbol varchar,
+       name varchar,
        decimals int,
        total_supply numeric(78,0),
        token_category token_category
@@ -77,11 +77,11 @@ $func$
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       address varchar(256) NOT NULL,
-       to_address varchar(256) NOT NULL,
-       from_address varchar(256) NOT NULL,
+       address varchar,
+       to_address varchar,
+       from_address varchar,
        token_id int,
-       transaction_hash varchar(256)
+       transaction_hash varchar
       )', blockchain_name || '_nft_transfer', blockchain_name || '_contract');
 END
 $func$;
@@ -99,9 +99,9 @@ $func$
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I(
-       address varchar(256) NOT NULL,
-       amount_changed numeric(78,0) NOT NULL,
-       transaction_hash varchar(256) NOT NULL,
+       address varchar,
+       amount_changed numeric(78,0),
+       transaction_hash varchar,
        PRIMARY KEY(address, transaction_hash)
    )', blockchain_name || '_contract_supply_change');
 END
@@ -120,12 +120,12 @@ $func$
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I(
-       address varchar(256) PRIMARY KEY REFERENCES %I(address) NOT NULL,
-       token0_address varchar(256) NOT NULL,
-       token1_address varchar(256) NOT NULL,
-       reserve0 numeric(78,0) NOT NULL,
-       reserve1 numeric(78,0) NOT NULL,
-       factory varchar(256) NOT NULL
+       address varchar PRIMARY KEY REFERENCES %I(address),
+       token0_address varchar,
+       token1_address varchar,
+       reserve0 numeric(78,0),
+       reserve1 numeric(78,0),
+       factory varchar
    )', blockchain_name || '_pair_contract', blockchain_name || '_contract');
 END
 $func$;
@@ -143,10 +143,10 @@ $func$
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I(
-       address varchar(256) NOT NULL,
-       amount0 numeric(78,0) NOT NULL,
-       amount1 numeric(78,0) NOT NULL,
-       transaction_hash varchar(256) NOT NULL,
+       address varchar,
+       amount0 numeric(78,0),
+       amount1 numeric(78,0),
+       transaction_hash varchar,
        PRIMARY KEY(address, transaction_hash)
    )', blockchain_name || '_pair_liquidity_change');
 END
