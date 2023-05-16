@@ -44,12 +44,12 @@ class InternalTransactionData(Web3BaseModel):
     """Describes an internal transaction given by `debug_traceTransaction`"""
 
     from_address: str = Field(..., alias="from")
-    to_address: str = Field(..., alias="to")
+    to_address: Optional[str] = Field(..., alias="to")
     value: float
     gas_used: Optional[float] = Field(None, alias="gasUsed")
     gas_limit: float = Field(..., alias="gas")
-    input_data: str = Field(..., alias="input")
-    call_type: str = Field(..., alias="callType")
+    input_data: Optional[str] = Field(..., alias="input")
+    call_type: Optional[str] = Field(..., alias="callType")
 
     @validator("value", "gas_used", "gas_limit", pre=True)
     def strings_to_float(cls, v):
