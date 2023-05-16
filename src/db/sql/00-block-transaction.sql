@@ -7,14 +7,14 @@ BEGIN
   EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
        block_number bigint PRIMARY KEY,
-       block_hash varchar(),
-       nonce varchar(),
+       block_hash varchar,
+       nonce varchar,
        difficulty numeric(78,0),
        gas_limit bigint,
        gas_used bigint,
        timestamp timestamp,
-       miner varchar(),
-       parent_hash varchar(),
+       miner varchar,
+       parent_hash varchar,
        block_reward numeric(78,18),
        updated_at TIMESTAMP
       )', node_name || '_block');
@@ -37,17 +37,17 @@ CREATE OR REPLACE FUNCTION create_table_transaction(node_name varchar(3))
 BEGIN
   EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       transaction_hash varchar() PRIMARY KEY,
+       transaction_hash varchar PRIMARY KEY,
        block_number bigint REFERENCES %I,
-       from_address varchar(),
-       to_address varchar(),
+       from_address varchar,
+       to_address varchar,
        value numeric(78,18),
        transaction_fee numeric(78,18),
        gas_price numeric(78,18),
        gas_limit numeric(78,0),
        gas_used numeric(78,0),
        is_token_tx boolean,
-       input_data varchar(),
+       input_data varchar,
        updated_at TIMESTAMP
       )', node_name || '_transaction', node_name || '_block');
 END
@@ -70,14 +70,14 @@ BEGIN
   EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
        unique_id UUID DEFAULT gen_random_uuid (),
-       transaction_hash varchar() REFERENCES %I,
-       from_address varchar() ,
-       to_address varchar(),
+       transaction_hash varchar REFERENCES %I,
+       from_address varchar,
+       to_address varchar,
        value numeric(78,18),
        gas_limit bigint,
        gas_used bigint,
-       input_data varchar(),
-       call_type varchar(),
+       input_data varchar,
+       call_type varchar,
        updated_at TIMESTAMP,
        PRIMARY KEY (unique_id)
       )', node_name || '_internal_transaction', node_name || '_transaction');
@@ -101,12 +101,12 @@ BEGIN
   EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
        unique_id UUID DEFAULT gen_random_uuid (),
-       transaction_hash varchar() REFERENCES %I,
-       address varchar(),
+       transaction_hash varchar REFERENCES %I,
+       address varchar,
        log_index int,
-       data varchar(),
+       data varchar,
        removed boolean,
-       topics varchar() ARRAY,
+       topics varchar ARRAY,
        updated_at TIMESTAMP,
        PRIMARY KEY (unique_id)
       )', node_name || '_transaction_logs' , node_name || '_transaction');
