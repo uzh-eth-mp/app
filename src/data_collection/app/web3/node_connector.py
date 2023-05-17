@@ -36,7 +36,7 @@ def async_exception_retry_middleware(
             except errors as e:
                 request_details_str = f"(method='{method}',params={params})"
                 if i < retries - 1:
-                    log.warning(
+                    log.debug(
                         f"Request {request_details_str} failed: {repr(e)}. Retrying after {delay}s ({i+1})"
                     )
                     await asyncio.sleep(delay)
