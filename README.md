@@ -1,39 +1,73 @@
-# Blockchain data collection and processing
+# EVM-compatible blockchain data collection
+
+[![Unit tests](https://github.com/uzh-eth-mp/app/actions/workflows/test-unit.yaml/badge.svg?branch=dev)](https://github.com/uzh-eth-mp/app/actions/workflows/test-unit.yaml?query=branch%3Adev)
+[![Integration tests](https://github.com/uzh-eth-mp/app/actions/workflows/test-database.yaml/badge.svg?branch=dev)](https://github.com/uzh-eth-mp/app/actions/workflows/test-database.yaml?query=branch%3Adev)
+[![Docs](https://img.shields.io/readthedocs/handsdown.svg?color=blue&style=flat)](https://handsdown.readthedocs.io/)
+[![Release](https://img.shields.io/github/v/release/uzh-eth-mp/app?style=flat)](https://github.com/uzh-eth-mp/app/releases/)
+
+
+A collection of Docker Containers for collecting EVM-compatible blockchain data.
+
+* [Overview](#overview)
+* [Directory Structure](#directory-structure)
+* [Requirements](#requirements)
+* [Usage](#usage)
+  * [Quickstart](#quickstart)
+  * [Deployment Environment](#deployment-environment)
+  * [Configuration](#configuration)
+  * [Scripts](#scripts)
+  * [Extensions](#extensions)
+  * [Querying data](#querying-data)
+* [FAQ](docs/faq.md)
+* [Contributing](docs/contributing.md)
 
 ## Overview
-The app consists of four main components:
-  * Data producer - scrape block data from the node and propagate transactions to a message queue
-  * Data consumer - save relevant transactions to the database
-  * Message queue - Kafka
-  * Database - PostgreSQL
 
-![App overview](etc/img/overview.png)
+![App overview](etc/img/overview.svg)
 
-Consumers are blockchain agnostic (EVM compatible), thus only require a configuration file to specify which blockchain should be mined for data and stored later.
+Main components (Docker containers):
+  * Producer - scrape block data from the node and propagate transactions to Kafka
+  * Consumers - save relevant transaction data to the database
+  * Kafka - event store for transaction hashes
+  * PostgreSQL - persistent data store
+  * Redis - cache for orchestration data between producer and consumers
 
-### Directory structure
+Producer and consumers are blockchain agnostic (EVM compatible), thus only require a configuration file to specify which blockchain should be mined for data.
+
+## Directory structure
 ```
-.
+./
+├── etc/                      # misc. files
+├── scripts/                  # bash scripts for convenience
+├── src/                      # code for containers
+│   ├── data_collection/      # producer + consumer
+│   ├── db/                   # postgresql
+│   ├── kafka/
+│   └── zookeeper/
 ├── README.md
 ├── docker-compose.dev.yml
 ├── docker-compose.prod.yml
 ├── docker-compose.tests.yml
-├── docker-compose.yml
-├── etc                         # misc. files and images
-│   └── img
-├── scripts                     # scripts for running the stack and tests
-└── src                         # code for containers / services
-    ├── data_collection         # producer + consumer code
-    ├── db                      # dataschema definitions
-    ├── kafka                   # kafka setup code
-    └── zookeeper               # kafka orchestration service
+└── docker-compose.yml
 ```
 
-## Running the stack
-The application stack is managed by [docker compose](https://docs.docker.com/compose/#compose-v2-and-the-new-docker-compose-command). Each compose configuration file targets a different environment (dev, prod, tests).
+## Requirements
+* [`docker compose`](https://docs.docker.com/compose/#compose-v2-and-the-new-docker-compose-command) (v2.14.0+)
+  * to use with abacus-3: [install the compose plugin manually](https://docs.docker.com/compose/install/linux/#install-the-plugin-manually).
 
-> App has been tested on `Docker Compose version v2.14.0`. In case of using it on abacus-3, you will need to [install the compose plugin manually.](https://docs.docker.com/compose/install/linux/#install-the-plugin-manually).
-
+## Usage
+### Quickstart
+### Deployment Environment
+### Configuration
+### Scripts
+### Extensions
+#### Add new Event
+Description of how to add an event goes here
+#### Add new Contract ABI
+Description of how to add a Contract ABI goes here
+#### Support another blockchain
+### Querying Data
+### Running the stack
 Compose files should be started with run scripts that can be found in the `scripts/` directory. For this you also need to have an `.env` file present. If you are cloning this directory, use `cp .env.default .env` and check all the env vars that you want to edit. Then:
 ```
 $ bash scripts/run-prod-eth.sh
@@ -137,31 +171,3 @@ $ bash scripts/tests/run-tests-db.sh
 ```
 
 > Note: When running the tests locally, it might sometimes be necessary to `docker volume prune` in order for the database to restart properly.
-
----
-## TLDR / FAQ
-* How do I **start** this *locally* on my pc?
-  1. create and confgure an `.env` file. You can copy the default one as a starter `cp .env.default .env`.
-  2. configure `src/data_collection/etc/cfg/dev/<blockchain>.json` (depending on your blockchain)
-  3. run `bash scripts/run-dev-<blockchain>.sh`
-* How do I **start** this on *Abacus-3*?
-  1. create and confgure an `.env` file. You can copy the default one as a starter `cp .env.default .env`.
-  2. configure `src/data_collection/etc/cfg/prod/<blockchain>.json` (depending on your blockchain)
-  3. run `bash scripts/run-prod-<blockchain>.sh`
-* How do I stop the process?
-  * Use `KeyboardInterrupt` (`Ctrl+C`). Or `kill` if used in the bg.
-  * After stopping, all the containers are stopped, but volume data is preserved.
-* Is it possible to start multiple of these at the same time?
-  * Yes, simply change the data directory (`DATA_DIR`) and the prefix of the containers (`PROJECT_NAME`) in the `.env` file.
-* Does the run script **stop** / **cleanup** all the containers when the configured data collection is finished?
-  * Yes. The consumers wait 5 minutes after the last received event before shutting themselves down. Producer closes immediately after the collection process has been finished. Other containers close when consumers and producers are down.
-* **How many topics and consumers** should I use?
-  * Depends on the machine you're running on, but generally the more consumers and topics, the faster the processing.
-* Why does the production environment add an **Erigon proxy service** instead of just using `host.docker.internal` within the consumers / producers?
-  * This reverse proxy is used as a workaround for the abacus-3 firewall. Currently the firewall rules only allow the default docker0 interface to send outbound requests to the host machine. This means that any container started with `docker run --add-host=host.docker.internal:host-gateway ...` will be able to reach the host. This works because the default docker network used for any `docker run` is the 'bridge' which has its default gateway set to the docker0 interface address. However, as soon as you attempt to do this inside of a docker compose (`extra_hosts: host.docker.internal:host-gateway`), it stops working. This is because the compose creates a separate docker network which has a random gateway address used for communication with the host. In theory, you could [set up a custom docker network with a static gateway address](https://stackoverflow.com/a/60245651/4249857) inside of the compose and add this address to the firewall rules, but that wasn't possible at the time of development.
-* Why am I seeing `Unable connect to "kafka:9092": [Errno 111] Connect call failed ('<container_ip>', 9092)` in the logs?
-  * The producers and consumers attempt to connect to the Kafka container as soon as they're started. However the Kafka container takes some time and is usually <15s but sometimes it takes a bit longer. These messages are generated by the internal kafka library that is used within the project and can be ignored.
-* Why am I seeing `Group Coordinator Request failed: [Error 15] CoordinatorNotAvailableError` in the logs?
-  * Another Kafka internal log that can be ignored, the coordinator is eventually selected and this error is irrelevant.
-* Why am I seeing `Heartbeat failed for group eth because it is rebalancing` in the logs?
-  * Another Kafka internal log that can be ignored. Happens when the number of consumers changes because kafka has to rebalance the partitions for a topic.
