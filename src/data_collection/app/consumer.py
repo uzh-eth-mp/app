@@ -25,6 +25,7 @@ from app.web3.transaction_events.types import (
     BurnNonFungibleEvent,
     TransferFungibleEvent,
     TransferNonFungibleEvent,
+    FlashLoan
 )
 
 log = init_logger(__name__)
