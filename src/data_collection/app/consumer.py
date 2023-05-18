@@ -186,7 +186,17 @@ class DataConsumer(DataCollector):
                 continue
             # Mark this log to be saved
             log_indices_to_save.add(event_log["logIndex"])
-
+            if isinstance(event, FlashLoan):
+                await self.db_manager.insert_flashloan(
+                    address = contract.address,
+                    receiver = event.receiver,
+                    reserve = event.reserve,
+                    amount = event.amount,
+                    fee = event.totalFee,
+                    protocol_fee = event.protocolFee,
+                    transaction_hash=tx_data.transaction_hash,
+                )
+                continue
             # log.debug(f"Caught event ({event.__class__.__name__}): {event}")
             if isinstance(event, BurnFungibleEvent):
                 amount_changed -= event.value

@@ -205,6 +205,36 @@ class DatabaseManager:
             token_id,
         )
 
+    async def insert_flashloan(
+        self,
+        transaction_hash:str,
+        address: str,
+        receiver: str,
+        reserve: str,
+        amount: int,
+        fee: int,
+        protocol_fee: int,
+    ):
+        """
+        Insert flashloan data <node>_flashloan table.
+        """
+
+        table = f"{self.node_name}_flashloan"
+
+        await self.db.execute(
+            f"""
+            INSERT INTO {table} (transaction_hash, address, receiver, reserve, amount, fee, protocol_fee)
+            VALUES ($1, $2, $3,$4, $5, $6, $7);
+            """,
+            transaction_hash,
+            address,
+            receiver,
+            reserve,
+            amount,
+            fee,
+            protocol_fee,
+        )
+
     async def insert_contract(
         self, address: str, transaction_hash: str, is_pair_contract: bool
     ):

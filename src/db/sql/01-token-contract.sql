@@ -155,3 +155,29 @@ $func$;
 SELECT create_table_pair_liquidity_change('eth');
 SELECT create_table_pair_liquidity_change('bsc');
 SELECT create_table_pair_liquidity_change('etc');
+
+(transaction_hash, address, receiver, reserve, amount, fee, protocol_fee)
+
+--FLASHLOANS
+CREATE OR REPLACE FUNCTION create_table_flashloans(blockchain_name varchar(30))
+  RETURNS VOID
+  LANGUAGE plpgsql AS
+$func$
+BEGIN
+   EXECUTE format('
+      CREATE TABLE IF NOT EXISTS %I(
+       transaction_hash varchar,
+       address varchar,
+       receiver varchar,
+       reserve varchar,
+       amount numeric(78,0),
+       fee numeric(78,0),
+       protocol_fee numeric(78,0),
+       PRIMARY KEY(address, transaction_hash)
+   )', blockchain_name || '_flashloans');
+END
+$func$;
+
+SELECT create_table_flashloans('eth');
+SELECT create_table_flashloans('bsc');
+SELECT create_table_flashloans('etc');
