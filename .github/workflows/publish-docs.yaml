@@ -16,10 +16,9 @@ jobs:
         uses: actions/setup-python@v4
       - run: pip install handsdown mkdocs mkdocs-material
       - name: Generate documentation
-        run: |
-          handsdown --external `git config --get remote.origin.url` --create-configs --theme=material -n "Blockchain data collection" --exclude src/data_collection/tests
-          cp README.md HANDSDOWN.md
-          python -m mkdocs build
+        run: handsdown --external `git config --get remote.origin.url` --create-configs --theme=material -n "Blockchain data collection" --exclude src/data_collection/tests
+      - run: cp README.md HANDSDOWN.md
+      - run: python -m mkdocs build
 
       - name: Publish current workdir (which contains generated content) to GitHub Pages
         uses: rayluo/github-pages-overwriter@v1.3
