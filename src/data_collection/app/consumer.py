@@ -1,7 +1,8 @@
 import logging
+from typing import Set
 
 from web3.contract import Contract
-from web3.types import HexBytes, TxReceipt
+from web3.types import TxReceipt
 
 from app import init_logger
 from app.config import Config
@@ -135,7 +136,10 @@ class DataConsumer(DataCollector):
         return contract
 
     async def _handle_transaction(
-        self, tx_data: TransactionData, tx_receipt_data: TransactionReceiptData
+        self,
+        tx_data: TransactionData,
+        tx_receipt_data: TransactionReceiptData,
+        log_indices_to_save: Set[int] = set([]),
     ):
         """Insert transaction data into the database"""
         # Get the rest of transaction data - compute transaction fee
@@ -150,6 +154,14 @@ class DataConsumer(DataCollector):
             is_token_tx=True,
             transaction_fee=tx_fee,
         )
+
+        # Insert transaction logs of interest
+        logs_to_save = [
+            log for log in tx_receipt_data.logs if log.log_index in log_indices_to_save
+        ]
+        async with self.db_manager.db.transaction():
+            for tx_log in logs_to_save:
+                await self.db_manager.insert_transaction_logs(**tx_log.dict())
 
         # check for AND insert internal transactions if needed
         internal_tx_data = await self.node_connector.get_internal_transactions(
@@ -168,28 +180,26 @@ class DataConsumer(DataCollector):
         category: ContractCategory,
         tx_data: TransactionData,
         tx_receipt: TxReceipt,
-        tx_receipt_data: TransactionReceiptData,
-        w3_block_hash: HexBytes,
-    ):
-        """Insert transaction events (supply changes) into the database"""
+    ) -> Set[int]:
+        """Insert transaction events (supply changes) into the database
+
+        Returns:
+            log_indices_to_save: a set of 'logIndex' for logs that should be saved
+        """
         allowed_events = self.contract_parser.get_contract_events(contract.address)
         # Keep a list of 'logIndex' for logs that should be saved
         log_indices_to_save = set()
-        # log.debug(f"Extracting transaction events from contract {contract.address}")
         # Supply Change = mints - burns
         amount_changed = 0
         pair_amount0_changed = 0
         pair_amount1_changed = 0
-        for event, event_log in get_transaction_events(
-            category, contract, tx_receipt, w3_block_hash
-        ):
+        for event in get_transaction_events(category, contract, tx_receipt):
             # Check if this event should be processed
             if not type(event).__name__ in allowed_events:
                 continue
             # Mark this log to be saved
-            log_indices_to_save.add(event_log["logIndex"])
+            log_indices_to_save.add(event.log_index)
 
-            # log.debug(f"Caught event ({event.__class__.__name__}): {event}")
             if isinstance(event, BurnFungibleEvent):
                 amount_changed -= event.value
             elif isinstance(event, MintFungibleEvent):
@@ -216,25 +226,17 @@ class DataConsumer(DataCollector):
                 pass
             elif isinstance(event, TransferNonFungibleEvent):
                 await self.db_manager.insert_nft_transfer(
-                    address=contract.address,
+                    address=event.address,
                     from_address=event.src,
                     to_address=event.dst,
                     token_id=event.tokenId,
                     transaction_hash=tx_data.transaction_hash,
                 )
 
-        # Insert the transaction logs into DB
-        logs_to_save = [
-            log for log in tx_receipt_data.logs if log.log_index in log_indices_to_save
-        ]
-        async with self.db_manager.db.transaction():
-            for tx_log in logs_to_save:
-                await self.db_manager.insert_transaction_logs(**tx_log.dict())
-
         # Insert specific events into DB
         if amount_changed != 0:
             await self.db_manager.insert_contract_supply_change(
-                address=contract.address,
+                address=event.address,
                 transaction_hash=tx_data.transaction_hash,
                 amount_changed=amount_changed,
             )
@@ -247,69 +249,106 @@ class DataConsumer(DataCollector):
                 transaction_hash=tx_data.transaction_hash,
             )
 
-    async def _consume_partial(
-        self, tx_data, tx_receipt_data, w3_tx_data, w3_tx_receipt
-    ):
+        # Return log indices that should be saved
+        return log_indices_to_save
+
+    async def _consume_partial(self, tx_data, tx_receipt_data, w3_tx_receipt):
         """Called for a partial consume mode of a transaction hash
 
         Save only the transactions that are related to the contracts in the config and only their respective events.
         """
-        # Select the address that this transaction interacts with or creates
-        contract_address = tx_data.to_address or tx_receipt_data.contract_address
-        contract_category = self.contract_parser.get_contract_category(contract_address)
+        contract_address, contract_category, log_indices_to_save = None, None, set()
+        # Get unique event addresses from the transaction receipt
+        event_addresses = set([log.address for log in tx_receipt_data.logs])
 
-        should_process_transaction = contract_category is not None
-        if not should_process_transaction:
-            for event in tx_receipt_data.logs:
-                if self.contract_parser.get_contract_category(event.address):
-                    should_process_transaction = True
-                    break
-
-        # log.debug(f"Received tx {tx_data.transaction_hash} in #{tx_data.block_number}")
-
-        # Check if we should process this transaction or skip it
-        if not should_process_transaction:
-            # Skip this transaction because it doesn't interact with
-            # a known contract
-            return
-        # log.debug(f"Handling tx {tx_data.transaction_hash} in #{tx_data.block_number}")
-        # Increment number of processed transactions
-        self._n_processed_txs += 1
-        # Check if transaction is creating a contract or calling it
-        contract = self.contract_parser.get_contract(
-            contract_address=contract_address, category=contract_category
-        )
-        # 1. Contract creation
-        if not tx_data.to_address:
-            await self._handle_contract_creation(
-                contract=contract, tx_data=tx_data, category=contract_category
+        if tx_data.to_address:
+            # Regular contract interaction
+            contract_address = tx_data.to_address
+            contract_category = self.contract_parser.get_contract_category(
+                contract_address
             )
 
-        # 2. Insert transaction + Internal transactions
-        await self._handle_transaction(tx_data=tx_data, tx_receipt_data=tx_receipt_data)
+            # Edge case for events whose address is in the config but to_address is not in the config
+            if not contract_category:
+                # For each unique event address in the transaction receipt, check if the event address is in the config
+                for address in event_addresses:
+                    contract_category = self.contract_parser.get_contract_category(
+                        address
+                    )
+                    if contract_category is not None:
+                        # If the address is in the config, try to insert the appropriate logs into DB
+                        contract_address = address
+                        contract = self.contract_parser.get_contract(
+                            contract_address=contract_address,
+                            category=contract_category,
+                        )
+                        # Handle transaction events
+                        log_indices = await self._handle_transaction_events(
+                            contract=contract,
+                            category=contract_category,
+                            tx_data=tx_data,
+                            tx_receipt=w3_tx_receipt,
+                        )
+                        # Union of all log indices to save
+                        log_indices_to_save = log_indices_to_save.union(log_indices)
+            else:
+                contract = self.contract_parser.get_contract(
+                    contract_address=contract_address, category=contract_category
+                )
+                # Handle transaction events
+                log_indices_to_save = await self._handle_transaction_events(
+                    contract=contract,
+                    category=contract_category,
+                    tx_data=tx_data,
+                    tx_receipt=w3_tx_receipt,
+                )
 
-        # 3. Transaction events
-        await self._handle_transaction_events(
-            contract=contract,
-            category=contract_category,
-            tx_data=tx_data,
-            tx_receipt=w3_tx_receipt,
-            tx_receipt_data=tx_receipt_data,
-            w3_block_hash=w3_tx_data["blockHash"],
-        )
+        elif tx_receipt_data.contract_address:
+            # Contract creation
+            contract_address = tx_receipt_data.contract_address
+            contract_category = self.contract_parser.get_contract_category(
+                contract_address
+            )
+
+            if contract_category:
+                # Only handle the contract creation if the contract is in the config
+                contract = self.contract_parser.get_contract(
+                    contract_address=contract_address, category=contract_category
+                )
+
+                await self._handle_contract_creation(
+                    contract=contract, tx_data=tx_data, category=contract_category
+                )
+
+                # Handle transaction events
+                log_indices_to_save = await self._handle_transaction_events(
+                    contract=contract,
+                    category=contract_category,
+                    tx_data=tx_data,
+                    tx_receipt=w3_tx_receipt,
+                )
+
+        if contract_category is not None:
+            # Increment number of processed transactions
+            self._n_processed_txs += 1
+            # Insert transaction + Internal transactions
+            await self._handle_transaction(
+                tx_data=tx_data,
+                tx_receipt_data=tx_receipt_data,
+                log_indices_to_save=log_indices_to_save,
+            )
 
     async def _consume_full(self, tx_data, tx_receipt_data):
         """Called for a full consume mode of a transaction hash
 
         Save every tx data to db without furhter processing
         """
-        # 1. Insert transaction + Internal transactions
-        await self._handle_transaction(tx_data=tx_data, tx_receipt_data=tx_receipt_data)
-
-        # 2. Insert transaction logs
-        async with self.db_manager.db.transaction():
-            for tx_log in tx_receipt_data.logs:
-                await self.db_manager.insert_transaction_logs(**tx_log.dict())
+        # Insert transaction + Logs + Internal transactions
+        await self._handle_transaction(
+            tx_data=tx_data,
+            tx_receipt_data=tx_receipt_data,
+            log_indices_to_save=set(map(lambda l: l.log_index, tx_receipt_data.logs)),
+        )
 
         # Increment number of processed transactions
         self._n_processed_txs += 1
@@ -321,9 +360,7 @@ class DataConsumer(DataCollector):
         # Increment number of consumed transactions
         self._n_consumed_txs += 1
         # Get transaction data
-        tx_data, w3_tx_data = await self.node_connector.get_transaction_data(
-            self._tx_hash
-        )
+        tx_data, _ = await self.node_connector.get_transaction_data(self._tx_hash)
         (
             tx_receipt_data,
             w3_tx_receipt,
@@ -333,9 +370,7 @@ class DataConsumer(DataCollector):
             case DataCollectionMode.FULL:
                 await self._consume_full(tx_data, tx_receipt_data)
             case DataCollectionMode.PARTIAL:
-                await self._consume_partial(
-                    tx_data, tx_receipt_data, w3_tx_data, w3_tx_receipt
-                )
+                await self._consume_partial(tx_data, tx_receipt_data, w3_tx_receipt)
             case DataCollectionMode.LOG_FILTER:
                 raise NotImplementedError("LOG_FILTER mode not implemented yet")
 

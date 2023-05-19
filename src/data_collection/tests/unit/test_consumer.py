@@ -152,19 +152,18 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
 
         # Act
-        await consumer._handle_transaction_events(
+        result = await consumer._handle_transaction_events(
             contract=contract_mock,
             category=Mock(),
             tx_data=transaction_data,
             tx_receipt=Mock(),
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash=Mock(),
         )
 
         # Assert
         consumer.db_manager.insert_transaction_logs.assert_not_awaited()
         consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
         consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
+        assert result == set([])
 
     @patch("app.consumer.get_transaction_events")
     @pytest.mark.parametrize(
@@ -202,10 +201,7 @@ class TestHandleTransactionEvents:
         get_contract_events_mock.return_value = []
         consumer.contract_parser.get_contract_events = get_contract_events_mock
         mock_get_transaction_events.return_value = [
-            (
-                request.getfixturevalue(event),
-                dict(logIndex=1337),
-            )
+            request.getfixturevalue(event),
         ]
         transaction_receipt_data.logs = [transaction_logs_data]
         contract_mock = Mock()
@@ -215,25 +211,25 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
 
         # Act
-        await consumer._handle_transaction_events(
+        result = await consumer._handle_transaction_events(
             contract=contract_mock,
             category=Mock(),
             tx_data=transaction_data,
             tx_receipt=Mock(),
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash=Mock(),
         )
 
         # Assert
         consumer.db_manager.insert_transaction_logs.assert_not_awaited()
         consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
         consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
+        assert result == set([])
 
     @patch("app.consumer.get_transaction_events")
     @pytest.mark.parametrize(
         "event,supply_change,liquidity_change",
         [
             ("transfer_fungible_event", None, None),
+            ("transfer_non_fungible_event", None, None),
             ("mint_fungible_event", 1500, None),
             ("burn_fungible_event", -1500, None),
             ("mint_pair_event", None, (1500, 2500)),
@@ -269,35 +265,28 @@ class TestHandleTransactionEvents:
         ]
         consumer.contract_parser.get_contract_events = get_contract_events_mock
         mock_get_transaction_events.return_value = [
-            (
-                request.getfixturevalue(event),
-                dict(logIndex=1337),
-            )
+            request.getfixturevalue(event),
         ]
         transaction_receipt_data.logs = [transaction_logs_data]
         contract_mock = Mock()
-        contract_mock.address = request.getfixturevalue(event).contract_address
+        contract_mock.address = request.getfixturevalue(event).address
         consumer.db_manager.insert_transaction_logs = AsyncMock()
         consumer.db_manager.insert_contract_supply_change = AsyncMock()
         consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
+        consumer.db_manager.insert_nft_transfer = AsyncMock()
 
         # Act
-        await consumer._handle_transaction_events(
+        result = await consumer._handle_transaction_events(
             contract=contract_mock,
             category=Mock(),
             tx_data=transaction_data,
             tx_receipt=Mock(),
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash=Mock(),
         )
 
         # Assert
-        consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
-            **transaction_logs_data.dict()
-        )
         if supply_change:
             consumer.db_manager.insert_contract_supply_change.assert_awaited_once_with(
-                address=request.getfixturevalue(event).contract_address,
+                address=request.getfixturevalue(event).address,
                 transaction_hash=transaction_data.transaction_hash,
                 amount_changed=supply_change,
             )
@@ -305,13 +294,14 @@ class TestHandleTransactionEvents:
             consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
         if liquidity_change:
             consumer.db_manager.insert_pair_liquidity_change.assert_awaited_once_with(
-                address=request.getfixturevalue(event).contract_address,
+                address=request.getfixturevalue(event).address,
                 amount0=liquidity_change[0],
                 amount1=liquidity_change[1],
                 transaction_hash=transaction_data.transaction_hash,
             )
         else:
             consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
+        assert result == set([1337])
 
     @patch("app.consumer.get_transaction_events")
     async def test_transfer_fungible_to_dead_address_event_inserted(
@@ -340,22 +330,17 @@ class TestHandleTransactionEvents:
         ]
         consumer.contract_parser.get_contract_events = get_contract_events_mock
         mock_get_transaction_events.return_value = [
-            (
-                BurnFungibleEvent(
-                    contract_address=contract_config_usdt.address,
-                    account="0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-                    value=2000,
-                ),
-                dict(logIndex=1337),
+            BurnFungibleEvent(
+                address=contract_config_usdt.address,
+                log_index=1337,
+                value=2000,
             ),
-            (
-                TransferFungibleEvent(
-                    contract_address=contract_config_usdt.address,
-                    src="0xF00D",
-                    dst=dead_address,
-                    value=2000,
-                ),
-                dict(logIndex=1337),
+            TransferFungibleEvent(
+                address=contract_config_usdt.address,
+                log_index=1337,
+                src="0xF00D",
+                dst=dead_address,
+                value=2000,
             ),
         ]
         transaction_receipt_data.logs = [transaction_logs_data]
@@ -366,25 +351,21 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
 
         # Act
-        await consumer._handle_transaction_events(
+        result = await consumer._handle_transaction_events(
             contract=contract_mock,
             category=Mock(),
             tx_data=transaction_data,
             tx_receipt=Mock(),
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash=Mock(),
         )
 
         # Assert
-        consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
-            **transaction_logs_data.dict()
-        )
         consumer.db_manager.insert_contract_supply_change.assert_awaited_once_with(
             address="0xdAC17F958D2ee523a2206206994597C13D831ec7",
             transaction_hash="0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822",
             amount_changed=-2000,
         )
         consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
+        assert result == set([1337])
 
     @patch("app.consumer.get_transaction_events")
     async def test_transfer_fungible_to_dead_address_event_not_inserted_if_not_in_config(
@@ -410,14 +391,12 @@ class TestHandleTransactionEvents:
         get_contract_events_mock.return_value = []
         consumer.contract_parser.get_contract_events = get_contract_events_mock
         mock_get_transaction_events.return_value = [
-            (
-                TransferFungibleEvent(
-                    contract_address=contract_config_usdt.address,
-                    src="0xF00D",
-                    dst=dead_address,
-                    value=1500,
-                ),
-                dict(logIndex=1337),
+            TransferFungibleEvent(
+                address=contract_config_usdt.address,
+                log_index=1337,
+                src="0xF00D",
+                dst=dead_address,
+                value=1500,
             ),
         ]
         transaction_receipt_data.logs = [transaction_logs_data]
@@ -428,19 +407,18 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
 
         # Act
-        await consumer._handle_transaction_events(
+        result = await consumer._handle_transaction_events(
             contract=contract_mock,
             category=Mock(),
             tx_data=transaction_data,
             tx_receipt=Mock(),
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash=Mock(),
         )
 
         # Assert
         consumer.db_manager.insert_transaction_logs.assert_not_awaited()
         consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
         consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
+        assert result == set([])
 
     @patch("app.consumer.get_transaction_events")
     async def test_transfer_fungible_from_dead_address_event_inserted(
@@ -469,22 +447,17 @@ class TestHandleTransactionEvents:
         ]
         consumer.contract_parser.get_contract_events = get_contract_events_mock
         mock_get_transaction_events.return_value = [
-            (
-                TransferFungibleEvent(
-                    contract_address=contract_config_usdt.address,
-                    src=dead_address,
-                    dst="0xCAFE",
-                    value=2500,
-                ),
-                dict(logIndex=1337),
+            TransferFungibleEvent(
+                address=contract_config_usdt.address,
+                log_index=1337,
+                src=dead_address,
+                dst="0xCAFE",
+                value=2500,
             ),
-            (
-                MintFungibleEvent(
-                    contract_address=contract_config_usdt.address,
-                    account="0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-                    value=1500,
-                ),
-                dict(logIndex=1337),
+            MintFungibleEvent(
+                address=contract_config_usdt.address,
+                log_index=1337,
+                value=1500,
             ),
         ]
         transaction_receipt_data.logs = [transaction_logs_data]
@@ -495,25 +468,21 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
 
         # Act
-        await consumer._handle_transaction_events(
+        result = await consumer._handle_transaction_events(
             contract=contract_mock,
             category=Mock(),
             tx_data=transaction_data,
             tx_receipt=Mock(),
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash=Mock(),
         )
 
         # Assert
-        consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
-            **transaction_logs_data.dict()
-        )
         consumer.db_manager.insert_contract_supply_change.assert_awaited_once_with(
             address="0xdAC17F958D2ee523a2206206994597C13D831ec7",
             transaction_hash="0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822",
             amount_changed=1500,
         )
         consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
+        assert result == set([1337])
 
     @patch("app.consumer.get_transaction_events")
     async def test_transfer_fungible_from_dead_address_event_not_inserted_if_not_in_config(
@@ -538,15 +507,13 @@ class TestHandleTransactionEvents:
         get_contract_events_mock.return_value = []
         consumer.contract_parser.get_contract_events = get_contract_events_mock
         mock_get_transaction_events.return_value = [
-            (
-                TransferFungibleEvent(
-                    contract_address=contract_config_usdt.address,
-                    src=dead_address,
-                    dst="0xCAFE",
-                    value=1500,
-                ),
-                dict(logIndex=1337),
-            ),
+            TransferFungibleEvent(
+                address=contract_config_usdt.address,
+                log_index=1337,
+                src=dead_address,
+                dst="0xCAFE",
+                value=1500,
+            )
         ]
         transaction_receipt_data.logs = [transaction_logs_data]
         contract_mock = Mock()
@@ -556,19 +523,18 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
 
         # Act
-        await consumer._handle_transaction_events(
+        result = await consumer._handle_transaction_events(
             contract=contract_mock,
             category=Mock(),
             tx_data=transaction_data,
             tx_receipt=Mock(),
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash=Mock(),
         )
 
         # Assert
         consumer.db_manager.insert_transaction_logs.assert_not_awaited()
         consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
         consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
+        assert result == set([])
 
     @patch("app.consumer.get_transaction_events")
     async def test_mint_pair_event_from_dead_address(
@@ -593,14 +559,12 @@ class TestHandleTransactionEvents:
         get_contract_events_mock.return_value = ["MintPairEvent"]
         consumer.contract_parser.get_contract_events = get_contract_events_mock
         mock_get_transaction_events.return_value = [
-            (
-                MintPairEvent(
-                    contract_address=contract_config_usdt.address,
-                    sender=dead_address,
-                    amount0=1500,
-                    amount1=2500,
-                ),
-                dict(logIndex=1337),
+            MintPairEvent(
+                address=contract_config_usdt.address,
+                log_index=1337,
+                sender=dead_address,
+                amount0=1500,
+                amount1=2500,
             )
         ]
         transaction_receipt_data.logs = [transaction_logs_data]
@@ -611,19 +575,14 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
 
         # Act
-        await consumer._handle_transaction_events(
+        result = await consumer._handle_transaction_events(
             contract=contract_mock,
             category=Mock(),
             tx_data=transaction_data,
             tx_receipt=Mock(),
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash=Mock(),
         )
 
         # Assert
-        consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
-            **transaction_logs_data.dict()
-        )
         consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
         consumer.db_manager.insert_pair_liquidity_change.assert_awaited_once_with(
             address="0xdAC17F958D2ee523a2206206994597C13D831ec7",
@@ -631,6 +590,7 @@ class TestHandleTransactionEvents:
             amount1=2500,
             transaction_hash="0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822",
         )
+        assert result == set([1337])
 
     @patch("app.consumer.get_transaction_events")
     async def test_burn_pair_event_from_dead_address_inserted(
@@ -656,15 +616,13 @@ class TestHandleTransactionEvents:
         get_contract_events_mock.return_value = ["BurnPairEvent"]
         consumer.contract_parser.get_contract_events = get_contract_events_mock
         mock_get_transaction_events.return_value = [
-            (
-                BurnPairEvent(
-                    contract_address=contract_config_usdt.address,
-                    src="0xCAFE",
-                    dst=dead_address,
-                    amount0=1500,
-                    amount1=2500,
-                ),
-                dict(logIndex=1337),
+            BurnPairEvent(
+                address=contract_config_usdt.address,
+                log_index=1337,
+                src="0xCAFE",
+                dst=dead_address,
+                amount0=1500,
+                amount1=2500,
             )
         ]
         transaction_receipt_data.logs = [transaction_logs_data]
@@ -675,19 +633,14 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
 
         # Act
-        await consumer._handle_transaction_events(
+        result = await consumer._handle_transaction_events(
             contract=contract_mock,
             category=Mock(),
             tx_data=transaction_data,
             tx_receipt=Mock(),
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash=Mock(),
         )
 
         # Assert
-        consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
-            **transaction_logs_data.dict()
-        )
         consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
         consumer.db_manager.insert_pair_liquidity_change.assert_awaited_once_with(
             address="0xdAC17F958D2ee523a2206206994597C13D831ec7",
@@ -695,6 +648,7 @@ class TestHandleTransactionEvents:
             amount1=-2500,
             transaction_hash="0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822",
         )
+        assert result == set([1337])
 
     @patch("app.consumer.get_transaction_events")
     async def test_transfer_non_fungible_inserts_nft_transfer(
@@ -720,10 +674,7 @@ class TestHandleTransactionEvents:
         get_contract_events_mock.return_value = ["TransferNonFungibleEvent"]
         consumer.contract_parser.get_contract_events = get_contract_events_mock
         mock_get_transaction_events.return_value = [
-            (
-                transfer_non_fungible_event,
-                dict(logIndex=1337),
-            ),
+            transfer_non_fungible_event,
         ]
         transaction_receipt_data.logs = [transaction_logs_data]
         contract_mock = Mock()
@@ -734,19 +685,14 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_nft_transfer = AsyncMock()
 
         # Act
-        await consumer._handle_transaction_events(
+        result = await consumer._handle_transaction_events(
             contract=contract_mock,
             category=Mock(),
             tx_data=transaction_data,
             tx_receipt=Mock(),
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash=Mock(),
         )
 
         # Assert
-        consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
-            **transaction_logs_data.dict()
-        )
         consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
         consumer.db_manager.insert_pair_liquidity_change.assert_not_awaited()
         consumer.db_manager.insert_nft_transfer.assert_awaited_once_with(
@@ -756,6 +702,7 @@ class TestHandleTransactionEvents:
             token_id=1337,
             transaction_hash=transaction_data.transaction_hash,
         )
+        assert result == set([1337])
 
     @patch("app.consumer.get_transaction_events")
     async def test_mint_burn_fungible_combination(
@@ -784,16 +731,18 @@ class TestHandleTransactionEvents:
             "BurnFungibleEvent",
         ]
         consumer.contract_parser.get_contract_events = get_contract_events_mock
-        mock_get_transaction_events.return_value = [
-            (burn_fungible_event, dict(logIndex=1337)),
-            (burn_fungible_event, dict(logIndex=1338)),
-            (mint_fungible_event, dict(logIndex=1339)),
-            (mint_fungible_event, dict(logIndex=1340)),
-            (mint_fungible_event, dict(logIndex=1341)),
+        mock_events = [
+            burn_fungible_event,
+            burn_fungible_event.copy(),
+            mint_fungible_event,
+            mint_fungible_event.copy(),
+            mint_fungible_event.copy(),
         ]
+        mock_get_transaction_events.return_value = mock_events
         logs = [transaction_logs_data] * 5
         for i, log in enumerate(logs):
             log.log_index = 1337 + i
+            mock_events[i].log_index = 1337 + i
         transaction_receipt_data.logs = logs
         contract_mock = Mock()
         contract_mock.address = contract_config_usdt.address
@@ -802,20 +751,15 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
 
         # Act
-        await consumer._handle_transaction_events(
+        result = await consumer._handle_transaction_events(
             contract=contract_mock,
             category=Mock(),
             tx_data=transaction_data,
             tx_receipt=Mock(),
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash=Mock(),
         )
 
         # Assert
-        consumer.db_manager.insert_transaction_logs.assert_awaited_with(
-            **logs[4].dict()
-        )
-        assert consumer.db_manager.insert_transaction_logs.await_count == 5
+        assert len(result) == 5
         consumer.db_manager.insert_contract_supply_change.assert_awaited_once_with(
             address="0xdAC17F958D2ee523a2206206994597C13D831ec7",
             transaction_hash="0xa76bef720a7093e99ce5532988623aaf62b490ecba52d1a94cb6e118ccb56822",
@@ -854,18 +798,20 @@ class TestHandleTransactionEvents:
             "SwapPairEvent",
         ]
         consumer.contract_parser.get_contract_events = get_contract_events_mock
-        mock_get_transaction_events.return_value = [
-            (burn_pair_event, dict(logIndex=1337)),
-            (mint_pair_event, dict(logIndex=1338)),
-            (burn_pair_event, dict(logIndex=1339)),
-            (mint_pair_event, dict(logIndex=1340)),
-            (swap_pair_event, dict(logIndex=1341)),
-            (swap_pair_event, dict(logIndex=1342)),
-            (mint_pair_event, dict(logIndex=1343)),
+        mock_events = [
+            burn_pair_event,
+            mint_pair_event,
+            burn_pair_event.copy(),
+            mint_pair_event.copy(),
+            swap_pair_event,
+            swap_pair_event.copy(),
+            mint_pair_event.copy(),
         ]
+        mock_get_transaction_events.return_value = mock_events
         logs = [transaction_logs_data] * 7
         for i, log in enumerate(logs):
             log.log_index = 1337 + i
+            mock_events[i].log_index = 1337 + i
         transaction_receipt_data.logs = logs
         contract_mock = Mock()
         contract_mock.address = contract_config_pair_usdc_weth.address
@@ -874,20 +820,15 @@ class TestHandleTransactionEvents:
         consumer.db_manager.insert_pair_liquidity_change = AsyncMock()
 
         # Act
-        await consumer._handle_transaction_events(
+        result = await consumer._handle_transaction_events(
             contract=contract_mock,
             category=Mock(),
             tx_data=transaction_data,
             tx_receipt=Mock(),
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash=Mock(),
         )
 
         # Assert
-        consumer.db_manager.insert_transaction_logs.assert_awaited_with(
-            **logs[6].dict()
-        )
-        assert consumer.db_manager.insert_transaction_logs.await_count == 7
+        assert len(result) == 7
         consumer.db_manager.insert_contract_supply_change.assert_not_awaited()
         consumer.db_manager.insert_pair_liquidity_change.assert_awaited_with(
             address=contract_config_pair_usdc_weth.address,
@@ -954,6 +895,9 @@ class TestOnKafkaEvent:
         """Test _consume_full flow"""
         default_consumer._handle_transaction = AsyncMock()
         default_consumer.db_manager.insert_transaction_logs = AsyncMock()
+        _handle_tx_events_mock = AsyncMock()
+        _handle_tx_events_mock.return_value = set([1337])
+        default_consumer._handle_transaction_events = _handle_tx_events_mock
         transaction_receipt_data.logs = [transaction_logs_data]
 
         await default_consumer._consume_full(
@@ -964,9 +908,7 @@ class TestOnKafkaEvent:
         default_consumer._handle_transaction.assert_awaited_once_with(
             tx_data=transaction_data,
             tx_receipt_data=transaction_receipt_data,
-        )
-        default_consumer.db_manager.insert_transaction_logs.assert_awaited_once_with(
-            **transaction_logs_data.dict()
+            log_indices_to_save=set([1337]),
         )
         assert default_consumer._n_processed_txs == 1
 
@@ -979,15 +921,11 @@ class TestOnKafkaEvent:
         default_consumer._handle_contract_creation = AsyncMock()
         default_consumer._handle_transaction = AsyncMock()
         default_consumer._handle_transaction_events = AsyncMock()
-        w3_tx_data = MagicMock()
-        w3_block_kv = {"blockHash": "0x0000"}
-        w3_tx_data.__get__item.side_effect = w3_block_kv.__getitem__
         default_consumer.contract_parser.get_contract_category.return_value = None
 
         await default_consumer._consume_partial(
             tx_data=transaction_data,
             tx_receipt_data=transaction_receipt_data,
-            w3_tx_data=w3_tx_data,
             w3_tx_receipt=Mock(),
         )
 
@@ -1008,20 +946,19 @@ class TestOnKafkaEvent:
         transaction_receipt_data.contract_address = contract_config_usdt.address
         default_consumer._handle_contract_creation = AsyncMock()
         default_consumer._handle_transaction = AsyncMock()
-        default_consumer._handle_transaction_events = AsyncMock()
+        _handle_tx_events_mock = AsyncMock()
+        _handle_tx_events_mock.return_value = set()
+        default_consumer._handle_transaction_events = _handle_tx_events_mock
         default_consumer.contract_parser.get_contract_category.return_value = (
             ContractCategory(contract_config_usdt.category)
         )
         contract_mock = Mock()
         default_consumer.contract_parser.get_contract.return_value = contract_mock
-        w3_tx_data = MagicMock()
-        w3_tx_data.__getitem__.side_effect = dict(blockHash="0x0000").__getitem__
         w3_tx_receipt = Mock()
 
         await default_consumer._consume_partial(
             tx_data=transaction_data,
             tx_receipt_data=transaction_receipt_data,
-            w3_tx_data=w3_tx_data,
             w3_tx_receipt=w3_tx_receipt,
         )
 
@@ -1030,14 +967,13 @@ class TestOnKafkaEvent:
         default_consumer._handle_transaction.assert_awaited_once_with(
             tx_data=transaction_data,
             tx_receipt_data=transaction_receipt_data,
+            log_indices_to_save=set(),
         )
         default_consumer._handle_transaction_events.assert_awaited_once_with(
             contract=contract_mock,
             category=ContractCategory.ERC20,
             tx_data=transaction_data,
             tx_receipt=w3_tx_receipt,
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash="0x0000",
         )
 
     async def test_consume_partial_contract_creation_flow(
@@ -1052,38 +988,36 @@ class TestOnKafkaEvent:
         transaction_receipt_data.contract_address = contract_config_usdt.address
         default_consumer._handle_contract_creation = AsyncMock()
         default_consumer._handle_transaction = AsyncMock()
-        default_consumer._handle_transaction_events = AsyncMock()
+        _handle_tx_events_mock = AsyncMock()
+        _handle_tx_events_mock.return_value = set()
+        default_consumer._handle_transaction_events = _handle_tx_events_mock
         default_consumer.contract_parser.get_contract_category.return_value = (
             ContractCategory(contract_config_usdt.category)
         )
         contract_mock = Mock()
         default_consumer.contract_parser.get_contract.return_value = contract_mock
-        w3_tx_data = MagicMock()
-        w3_tx_data.__getitem__.side_effect = dict(blockHash="0x0000").__getitem__
         w3_tx_receipt = Mock()
 
         await default_consumer._consume_partial(
             tx_data=transaction_data,
             tx_receipt_data=transaction_receipt_data,
-            w3_tx_data=w3_tx_data,
             w3_tx_receipt=w3_tx_receipt,
         )
 
-        assert default_consumer._n_processed_txs == 1
-        default_consumer._handle_contract_creation.assert_awaited_once_with(
-            contract=contract_mock,
-            tx_data=transaction_data,
-            category=ContractCategory.ERC20,
-        )
         default_consumer._handle_transaction.assert_awaited_once_with(
             tx_data=transaction_data,
             tx_receipt_data=transaction_receipt_data,
+            log_indices_to_save=set(),
         )
         default_consumer._handle_transaction_events.assert_awaited_once_with(
             contract=contract_mock,
             category=ContractCategory.ERC20,
             tx_data=transaction_data,
             tx_receipt=w3_tx_receipt,
-            tx_receipt_data=transaction_receipt_data,
-            w3_block_hash="0x0000",
+        )
+        assert default_consumer._n_processed_txs == 1
+        default_consumer._handle_contract_creation.assert_awaited_once_with(
+            contract=contract_mock,
+            tx_data=transaction_data,
+            category=ContractCategory.ERC20,
         )

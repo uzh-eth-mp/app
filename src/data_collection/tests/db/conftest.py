@@ -199,6 +199,7 @@ def contract_supply_change_data() -> dict[str, Any]:
 def nft_transfer_data() -> dict[str, Any]:
     return dict(
         transaction_hash=shared_tx_hash,
+        log_index=1337,
         address=shared_address,
         token_id=1,
         from_address="0xCAFE000000000000000000000000000000000000",

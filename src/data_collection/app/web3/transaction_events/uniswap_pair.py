@@ -1,4 +1,3 @@
-from hexbytes import HexBytes
 from web3.contract import Contract
 
 # Discarding errors on filtered events is expected
@@ -16,29 +15,26 @@ from app.web3.transaction_events.types import (
     SwapPairEvent,
 )
 
-log = init_logger(__name__)
-
 
 @_event_mapper(ContractCategory.UNI_SWAP_V2_PAIR)
-def _mint(
-    contract: Contract, receipt: TxReceipt, block_hash: HexBytes
-) -> EventsGenerator:
+def _mint(contract: Contract, receipt: TxReceipt) -> EventsGenerator:
     for eventLog in contract.events.Mint().process_receipt(receipt, errors=DISCARD):
         sender = eventLog["args"]["sender"]
         amount0 = eventLog["args"]["amount0"]
         amount1 = eventLog["args"]["amount1"]
+        address = eventLog["address"]
+        log_index = eventLog["logIndex"]
         yield MintPairEvent(
-            contract_address=contract.address,
+            address=address,
+            log_index=log_index,
             sender=sender,
             amount0=amount0,
             amount1=amount1,
-        ), eventLog
+        )
 
 
 @_event_mapper(ContractCategory.UNI_SWAP_V2_PAIR)
-def _burn(
-    contract: Contract, receipt: TxReceipt, block_hash: HexBytes
-) -> EventsGenerator:
+def _burn(contract: Contract, receipt: TxReceipt) -> EventsGenerator:
     # https://github.com/Uniswap/v2-core/blob/master/contracts/UniswapV2Pair.sol#L134
     # Burn of pairs in Uniswap -> taking back liquidity from the pool "to" their address or another one.
     for eventLog in contract.events.Burn().process_receipt(receipt, errors=DISCARD):
@@ -46,19 +42,20 @@ def _burn(
         amount0 = eventLog["args"]["amount0"]
         amount1 = eventLog["args"]["amount1"]
         to = eventLog["args"]["to"]
+        address = eventLog["address"]
+        log_index = eventLog["logIndex"]
         yield BurnPairEvent(
-            contract_address=contract.address,
+            address=address,
+            log_index=log_index,
             src=sender,
             dst=to,
             amount0=amount0,
             amount1=amount1,
-        ), eventLog
+        )
 
 
 @_event_mapper(ContractCategory.UNI_SWAP_V2_PAIR)
-def _swap(
-    contract: Contract, receipt: TxReceipt, block_hash: HexBytes
-) -> EventsGenerator:
+def _swap(contract: Contract, receipt: TxReceipt) -> EventsGenerator:
     # https://github.com/Uniswap/v2-core/blob/master/contracts/UniswapV2Pair.sol#L51
     for eventLog in contract.events.Swap().process_receipt(receipt, errors=DISCARD):
         sender = eventLog["args"]["sender"]
@@ -67,12 +64,15 @@ def _swap(
         amount_0_out = eventLog["args"]["amount0Out"]
         amount_1_out = eventLog["args"]["amount1Out"]
         to = eventLog["args"]["to"]
+        address = eventLog["address"]
+        log_index = eventLog["logIndex"]
         yield SwapPairEvent(
-            contract_address=contract.address,
+            address=address,
+            log_index=log_index,
             src=sender,
             dst=to,
             in0=amount_0_in,
             in1=amount_1_in,
             out0=amount_0_out,
             out1=amount_1_out,
-        ), eventLog
+        )

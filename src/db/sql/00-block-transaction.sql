@@ -100,7 +100,6 @@ CREATE OR REPLACE FUNCTION create_table_transaction_logs(node_name varchar(3))
 BEGIN
   EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       unique_id UUID DEFAULT gen_random_uuid (),
        transaction_hash varchar REFERENCES %I,
        address varchar,
        log_index int,
@@ -108,7 +107,7 @@ BEGIN
        removed boolean,
        topics varchar ARRAY,
        updated_at TIMESTAMP,
-       PRIMARY KEY (unique_id)
+       PRIMARY KEY (transaction_hash, log_index)
       )', node_name || '_transaction_logs' , node_name || '_transaction');
 END
 $func$;
