@@ -1,9 +1,7 @@
 name: docs
-
 on:
-  push:
-    branches:
-      - 'feature/docs'
+  release:
+    types: [published]
 
 jobs:
   publish:
