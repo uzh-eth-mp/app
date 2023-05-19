@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Setup python
         uses: actions/setup-python@v4
-        run: pip install handsdown mkdocs
+      - run: pip install handsdown mkdocs
       - name: Generate documentation
         working-directory: src/data_collection
         run: handsdown --external `git config --get remote.origin.url` --create-configs && python -m mkdocs build
