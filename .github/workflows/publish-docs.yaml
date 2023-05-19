@@ -11,13 +11,12 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v3
-
-      - name: Generate your content
+      - name: Setup python
         uses: actions/setup-python@v4
-        working-directory: src/data_collection
         run: pip install handsdown mkdocs
-      - run: handsdown --external `git config --get remote.origin.url` --create-configs
-      - run: python -m mkdocs build
+      - name: Generate documentation
+        working-directory: src/data_collection
+        run: handsdown --external `git config --get remote.origin.url` --create-configs && python -m mkdocs build
 
       - name: Publish current workdir (which contains generated content) to GitHub Pages
         uses: rayluo/github-pages-overwriter@v1.3
