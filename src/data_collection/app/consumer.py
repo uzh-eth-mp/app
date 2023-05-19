@@ -258,10 +258,17 @@ class DataConsumer(DataCollector):
         contract_address = tx_data.to_address or tx_receipt_data.contract_address
         contract_category = self.contract_parser.get_contract_category(contract_address)
 
+        should_process_transaction = contract_category is not None
+        if not should_process_transaction:
+            for event in tx_receipt_data.logs:
+                if self.contract_parser.get_contract_category(event.address):
+                    should_process_transaction = True
+                    break
+
         # log.debug(f"Received tx {tx_data.transaction_hash} in #{tx_data.block_number}")
 
         # Check if we should process this transaction or skip it
-        if contract_category is None:
+        if not should_process_transaction:
             # Skip this transaction because it doesn't interact with
             # a known contract
             return
