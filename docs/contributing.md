@@ -1,7 +1,16 @@
 # Contributing
 todo: release-please, conventional commits, tests
 
-## Tests
+1. `git clone` the repo and `cd` into it
+2. (optional but highly recommended, CI will fail anyway) `pre-commit install`, or [install pre-commit](https://pre-commit.com/#install) first
+3. fork the main branch and add your features or a fix
+4. follow [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) to get automatic changelogs and release functionality
+5. Open a PR and wait for CI checks and tests to pass.
+
+## CI
+
+
+
 
 Currently, only the `DatabaseManager` class is tested. These database manager tests require an active database connection so the configuration in `docker-compose.tests.yml` starts an in-memory postgresql database along with the testing container.
 

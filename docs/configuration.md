@@ -33,6 +33,7 @@ To create an `.env` file you can copy the provided [`.env.default`](../.env.defa
 
 ## cfg.json
 The configuration json files are used for selecting which contracts, events or block ranges should the web3 data be extracted from. There are two main data collection modes to choose from:
+
 1. `"partial"` = the default mode, only store the web3 data of contracts and events defined in config.json
 2. `"full"` = store all web3 data (all transactions) within some block range (including internal transactions and logs)
-3. `"log_filter"` = not implemented yet, because `get_all_entries` method on web3.filter doesn't work on erigon.
+3. `"log_filter"` = (not implemented yet) `get_all_entries` method on web3.filter doesn't work with erigon

@@ -1,7 +1,8 @@
 import argparse
 import json
-import requests
 import sys
+
+import requests
 
 
 # function to use requests.post to make an API call to the subgraph url

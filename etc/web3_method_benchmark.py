@@ -1,14 +1,13 @@
 import asyncio
 import statistics
 import time
-
 from datetime import datetime
 from typing import List
 
 from web3 import Web3
 from web3.eth import AsyncEth
+from web3.geth import AsyncGethAdmin, AsyncGethPersonal, AsyncGethTxPool, Geth
 from web3.net import AsyncNet
-from web3.geth import Geth, AsyncGethTxPool, AsyncGethAdmin, AsyncGethPersonal
 
 node_url = "http://localhost:8547"
 
