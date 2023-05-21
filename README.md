@@ -15,6 +15,7 @@ A collection of Docker Containers and their orchestration for collecting EVM-com
     * [Quickstart](#quickstart)
     * [Deployment Environment](#deployment-environment)
     * [Configuration](#configuration)
+* [Features](#features)
     * [Scripts](#scripts)
     * [Extensions](#extensions)
     * [Querying data](#querying-data)
@@ -42,32 +43,34 @@ The containers are orchestrated by docker compose yaml files. For convenience a 
     * to use with abacus-3: [install the compose plugin manually](https://docs.docker.com/compose/install/linux/#install-the-plugin-manually).
 
 ### Quickstart
-Compose files should be started with run scripts that can be found in the `scripts/` directory. For this you also need to have an `.env` file present. If you are cloning this directory, use `cp .env.default .env` and check all the env variables. Then:
+Compose files should be started with run scripts that can be found in the `scripts/` directory. For this you also need to have an `.env` file present. If you are cloning this directory, use `cp .env.default .env` and check all the env variables. Then to start the collection for Ethereum:
 
 ```
-$ bash scripts/run-prod-eth.sh
+$ bash scripts/run-dev-eth.sh
+# use CTRL+C once to exit (doing so executes docker compose down automatically)
 ```
-
 ### Deployment Environment
 There are two deployment environments available for the collection process.
 
-* Development = use for development of new features
-    * `$ bash scripts/run-dev.sh`
-* Production = intended for use on Abacus-3, for long running collection of data
-    * `$ bash scripts/run-prod.sh`
+* Development = use for development of new features, this script will run `docker compose down` on KeyboardInterrupt (CTRL+C).
+    * `$ bash scripts/run-dev-eth.sh`
+* Production = intended for use on Abacus-3, for long running collection of data, all containers stay alive after CTRL+C
+    * `$ bash scripts/run-prod-eth.sh`
 
 Each of these environments has their own configuration `.json` files. For instance, for *development* you would find the configuration files in [`src/data_collection/etc/cfg/dev`](src/data_collection/etc/cfg/dev/). Similarly, the *production* environment config is in [`src/data_collection/etc/cfg/prod`](src/data_collection/etc/cfg/prod/).
-There is a minor difference between a development and production environment besides the configuration files, details can be found in the [scripts directory](scripts/README.md).
+There are minor differences between a development and production environment besides the configuration files. Details can be found in the [scripts directory](scripts/README.md).
 
 ### Configuration
 Two main configuration sources (files):
 
-1. `.env` = static configuration variables (connection URLs, credentials, timeout settings, ...)
-2. `src/data_collection/etc/cfg/<environment>/<blockchain>.json` = data collection configuration (block range, addresses, events)
+1. `.env` = static configuration variables (data directory, connection URLs, credentials, timeout settings, ...)
+2. `src/data_collection/etc/cfg/<environment>/<blockchain>.json` = data collection configuration (block range, mode, addresses, events, ...)
 
 The exact description of the environment variables and data collection configuration can be found [here](docs/configuration.md).
+
+# Features
 ### Scripts
-The scripts directory contains useful bash scripts that mostly consist of docker compose commands. Their detailed description can be found [here](scripts/README.md).
+The [scripts/](scripts/) directory contains bash scripts that mostly consist of docker compose commands. Their detailed description can be found [here](scripts/README.md).
 ### Extensions
 If you'd like to extend the current data collection functionality, such as:
 
@@ -79,7 +82,7 @@ If you'd like to extend the current data collection functionality, such as:
 Please check out the [functionality extension guide](docs/extensions.md).
 
 ### Querying Data
-To query the collected data you will need a running PostgreSQL service:
+To query the collected data from the database you will need a running PostgreSQL service. To start one, use:
 ```
 $ bash scripts/run-db.sh
 ```
@@ -89,7 +92,6 @@ In order to then connect to the database, use:
 $ docker exec -it <project_name>-db-1 psql <postgresql_dsn>
 ```
 More details on how to connect can be found in the [src/db/](src/db/README.md) directory.
-
 
 ### Tools
 The [etc/](etc/) directory contains a few python scripts that can be used for various tasks:

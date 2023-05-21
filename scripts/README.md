@@ -13,14 +13,14 @@ The following directory contains various scripts for running and testing the sta
 ## Differences between Prod and Dev environments
 
 1. Script exit
-  * Production run script (`run-prod-eth.sh`) doesn't stop the containers on exit. For that you need to use `stop-prod-eth.sh`.
+  * Production run script (`run-prod-eth.sh`) doesn't stop the containers on exit. For that you need to use `stop-prod-eth.sh`. After that, the containers remained in the stopped status, to remove them, run `docker compose -p <project_name> down --remove-orphans`.
   * Dev run script (`run-dev-eth.sh`) stops (cleans up) all containers on `KeyboardInterrupt` or any other exit signal.
 2. Environment Variables
   * Production run script uses the environment variables defined in `.env` at the root of the repository.
   * Dev run script uses the same values but:
     * adds a 'dev' suffix to the `PROJECT_NAME`
     * adds a '/dev' path suffix to `DATA_DIR`
-    * removes `SENTRY_DSN` env var
+    * removes `SENTRY_DSN` env var, so that Sentry is never used for the development environment
 
 ## Supporting more EVM blockchains with existing scripts
 
