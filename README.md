@@ -85,7 +85,7 @@ $ bash scripts/run-db.sh
 
 In order to then connect to the database, use:
 ```
-$ docker exec -it bdc-db-1 psql <postgresql_dsn>
+$ docker exec -it <project_name>-db-1 psql <postgresql_dsn>
 ```
 More details on how to connect can be found in the [src/db/](src/db/README.md) directory.
 
