@@ -39,3 +39,10 @@ services:
       context: ./src/data_collection
       dockerfile: Dockerfile.tests
     command: ["pytest", "tests/unit"]
+  
+  # Integration tests
+  test_integration:
+    build:
+      context: ./src/data_collection
+      dockerfile: Dockerfile.tests
+    command: ["pytest", "tests/integration"]
