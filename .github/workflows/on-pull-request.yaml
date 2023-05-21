@@ -11,7 +11,7 @@ on:
 
 jobs:
   ci:
-    name: CI
+    name: Code Style and linting
     runs-on: ubuntu-latest
     steps:
       - name: Check out
@@ -26,3 +26,5 @@ jobs:
         run: |
           isort --profile black -p app -c .
           black --check --preview --target-version py311 .
+#      - name: Lint
+#        run: pylint --rcfile=src/data_collection/pylint.rc app
