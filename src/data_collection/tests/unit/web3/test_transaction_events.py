@@ -25,6 +25,7 @@ from app.web3.transaction_events.types import (
     MintPairEvent,
     BurnPairEvent,
     SwapPairEvent,
+    FlashLoan,
 )
 
 
@@ -1042,6 +1043,63 @@ class UniSwapV2Tests(unittest.TestCase):
                             "amount0Out": 4,
                             "amount1Out": 5,
                             "to": "0x0000000000000000000000000000000000000002",
+                        },
+                        logIndex=1337,
+                    ),
+                )
+            ],
+            events,
+        )
+
+    def test_aave_flashloan(self):
+        self.maxDiff = None
+        contract = MagicMock(spec=Contract)
+        contract.events = MagicMock(spec=ContractEvents)
+        FlashLoan_event = MagicMock(spec=ContractEvent)
+        FlashLoan_event.process_receipt = MagicMock(
+            return_value=[
+                EventData(
+                    event="FlashLoan",
+                    args={
+                        "_target": "0x0000000000000000000000000000000000000001",
+                        "_reserve": "0x0000000000000000000000000000000000000002",
+                        "_amount": 3,
+                        "_totalFee": 2,
+                        "_protocolFee": 1,
+                    },
+                    logIndex=1337,
+                )
+            ]
+        )
+        contract.events.FlashLoan = MagicMock(return_value=FlashLoan_event)
+        contract.address = "0x000000000000000000000000000000000000AAAA"
+        receipt = MagicMock(spec=TxReceipt)
+        block_hash = MagicMock(spec=HexBytes)
+
+        events = te.get_transaction_events(
+            ContractCategory.AAVE, contract, receipt, block_hash
+        )
+        events = list(events)
+
+        self.assertEqual(
+            [
+                (
+                    FlashLoan(
+                        contract_address="0x000000000000000000000000000000000000AAAA",
+                        receiver="0x0000000000000000000000000000000000000001",
+                        reserve="0x0000000000000000000000000000000000000002",
+                        amount=3,
+                        totalFee=2,
+                        protocolFee=1,
+                    ),
+                    EventData(
+                        event="FlashLoan",
+                        args={
+                            "_target": "0x0000000000000000000000000000000000000001",
+                            "_reserve": "0x0000000000000000000000000000000000000002",
+                            "_amount": 3,
+                            "_totalFee": 2,
+                            "_protocolFee": 1,
                         },
                         logIndex=1337,
                     ),

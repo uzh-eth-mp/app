@@ -19,6 +19,7 @@ def _flash_loan(
     for eventLog in contract.events.FlashLoan().process_receipt(receipt, errors=DISCARD):
         if eventLog["event"] == "FlashLoan":
             yield FlashLoan(
+                contract_address=contract.address,
                 receiver=eventLog["args"]["_target"],
                 reserve=eventLog["args"]["_reserve"],
                 amount=eventLog["args"]["_amount"],
