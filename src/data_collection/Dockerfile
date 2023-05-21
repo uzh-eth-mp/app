@@ -1,5 +1,8 @@
 FROM python:3.11
 
+VOLUME "/app/etc"
+
+# Environment variables
 ENV LOG_LEVEL=INFO
 ENV N_CONSUMER_INSTANCES=5
 ENV SENTRY_DSN=
@@ -16,10 +19,11 @@ COPY requirements.txt requirements.txt
 # Install requirements
 RUN pip install -r requirements.txt
 
+# Copy source code
 COPY app app
-COPY etc etc
 COPY scripts/wait-for-kafka.sh wait-for-kafka.sh
 
+# Wait for Kafka to boot
 RUN chmod +x wait-for-kafka.sh
 
 CMD [ "python3", "-m", "app.main", "--cfg", "etc/cfg/dev/eth.json", "--worker-type", "producer" ]
