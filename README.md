@@ -1,10 +1,11 @@
 # EVM-compatible blockchain data collection
 
-[![Unit tests](https://github.com/uzh-eth-mp/app/actions/workflows/test-unit.yaml/badge.svg?branch=dev)](https://github.com/uzh-eth-mp/app/actions/workflows/test-unit.yaml?query=branch%3Adev)
-[![Integration tests](https://github.com/uzh-eth-mp/app/actions/workflows/test-database.yaml/badge.svg?branch=dev)](https://github.com/uzh-eth-mp/app/actions/workflows/test-database.yaml?query=branch%3Adev)
-[![Docs](https://img.shields.io/readthedocs/handsdown.svg?color=blue&style=flat)](https://uzh-eth-mp.github.io/app/)
+[![Unit tests](https://github.com/uzh-eth-mp/app/actions/workflows/test-unit.yaml/badge.svg)](https://github.com/uzh-eth-mp/app/actions/workflows/test-unit.yaml)
+[![Integration tests](https://github.com/uzh-eth-mp/app/actions/workflows/test-database.yaml/badge.svg)](https://github.com/uzh-eth-mp/app/actions/workflows/test-database.yaml)
+[![Docs](https://github.com/uzh-eth-mp/app/actions/workflows/publish-docs.yaml/badge.svg)](https://uzh-eth-mp.github.io/app/)
 [![Release](https://img.shields.io/github/v/release/uzh-eth-mp/app?style=flat)](https://github.com/uzh-eth-mp/app/releases/)
-
+[![Code style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
 A collection of Docker Containers and their orchestration for collecting EVM-compatible blockchains' data.
 
@@ -119,4 +120,3 @@ A list of frequently asked questions and their answers can be found [here](docs/
 
 ## Contributing
 Contributions are welcome and appreciated. Please follow the convention and rules described [here](docs/contributing.md).
-
