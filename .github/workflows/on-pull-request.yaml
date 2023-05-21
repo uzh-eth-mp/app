@@ -1,12 +1,8 @@
 name: CI
 on:
   pull_request:
-    paths-ignore:
-      - 'version.txt'
-      - '**.md'
-      - '**.yml'
-      - '**.yaml'
-      - 'docs/**'
+    paths:
+      - '**.py'
 
 jobs:
   ci:
