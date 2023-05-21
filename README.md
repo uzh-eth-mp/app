@@ -43,6 +43,7 @@ The containers are orchestrated by docker compose yaml files. For convenience a 
 
 ### Quickstart
 Compose files should be started with run scripts that can be found in the `scripts/` directory. For this you also need to have an `.env` file present. If you are cloning this directory, use `cp .env.default .env` and check all the env variables. Then:
+
 ```
 $ bash scripts/run-prod-eth.sh
 ```
