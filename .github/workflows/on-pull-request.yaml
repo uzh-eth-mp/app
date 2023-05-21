@@ -4,6 +4,7 @@ on:
     paths-ignore:
       - 'version.txt'
       - 'CHANGELOG.md'
+      - 'README.md'
       - '**/*.md'
       - '**/*.yml'
       - '**/*.yaml'
