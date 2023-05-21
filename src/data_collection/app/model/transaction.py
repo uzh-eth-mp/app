@@ -1,10 +1,8 @@
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Field, validator
 
 from app.model import Web3BaseModel
-
-from pydantic import Field, validator
 
 
 class TransactionData(Web3BaseModel):

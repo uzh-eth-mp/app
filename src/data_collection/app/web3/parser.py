@@ -1,5 +1,4 @@
 import collections
-
 from typing import Any, Dict, List, Optional
 
 from eth_hash.auto import keccak

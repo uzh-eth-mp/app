@@ -1,20 +1,19 @@
 from hexbytes import HexBytes
 from web3.contract import Contract
-from web3.types import TxReceipt
 
 # Discarding errors on filtered events is expected
 # https://github.com/oceanprotocol/ocean.py/issues/348#issuecomment-875128102
 from web3.logs import DISCARD
-from app import init_logger
+from web3.types import TxReceipt
 
+from app import init_logger
 from app.model.contract import ContractCategory
 from app.web3.transaction_events.decorator import _event_mapper
-
 from app.web3.transaction_events.types import (
-    MintPairEvent,
     BurnPairEvent,
-    SwapPairEvent,
     EventsGenerator,
+    MintPairEvent,
+    SwapPairEvent,
 )
 
 log = init_logger(__name__)

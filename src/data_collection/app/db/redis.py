@@ -4,7 +4,6 @@ from redis import asyncio as aioredis
 
 from app import init_logger
 
-
 log = init_logger(__name__)
 
 

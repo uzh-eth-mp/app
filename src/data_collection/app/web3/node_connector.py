@@ -2,21 +2,21 @@ import asyncio
 from typing import Any, Callable, Collection, List, Tuple, Type
 
 from aiohttp.client_exceptions import ClientConnectorError
-from web3 import AsyncWeb3, AsyncHTTPProvider
+from web3 import AsyncHTTPProvider, AsyncWeb3
 from web3.types import (
-    TxData,
-    TxReceipt,
     AsyncMiddlewareCoroutine,
     RPCEndpoint,
     RPCResponse,
+    TxData,
+    TxReceipt,
 )
 
 from app import init_logger
 from app.model.block import BlockData
 from app.model.transaction import (
+    InternalTransactionData,
     TransactionData,
     TransactionReceiptData,
-    InternalTransactionData,
 )
 
 log = init_logger(__name__)

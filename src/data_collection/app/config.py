@@ -4,14 +4,14 @@ from pydantic import (
     AnyUrl,
     BaseModel,
     BaseSettings,
+    Field,
+    PostgresDsn,
+    RedisDsn,
     confrozenset,
     conlist,
     constr,
-    Field,
-    validator,
     root_validator,
-    PostgresDsn,
-    RedisDsn,
+    validator,
 )
 
 import app.web3.transaction_events.types as w3t

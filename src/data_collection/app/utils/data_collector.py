@@ -1,11 +1,12 @@
 from __future__ import annotations
+
 from typing import Tuple
 
 from app.config import Config
+from app.db.manager import DatabaseManager
 from app.kafka.manager import KafkaManager
 from app.model import DataCollectionMode
 from app.web3.node_connector import NodeConnector
-from app.db.manager import DatabaseManager
 
 
 class DataCollector:

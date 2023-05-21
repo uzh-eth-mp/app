@@ -4,7 +4,6 @@ from app.config import DataCollectionConfig
 from app.db.manager import DatabaseManager
 from app.web3.node_connector import NodeConnector
 
-
 ExplorationBounds = namedtuple("ExplorationBounds", ["start_block", "end_block"])
 
 

@@ -1,15 +1,16 @@
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 
 from app.model import DataCollectionMode
 from app.model.contract import ContractCategory
 from app.model.transaction import InternalTransactionData
 from app.web3.transaction_events.types import (
-    TransferFungibleEvent,
     BurnFungibleEvent,
+    BurnPairEvent,
     MintFungibleEvent,
     MintPairEvent,
-    BurnPairEvent,
+    TransferFungibleEvent,
 )
 
 

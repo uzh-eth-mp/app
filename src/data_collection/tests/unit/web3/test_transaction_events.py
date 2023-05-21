@@ -2,10 +2,6 @@ import unittest
 from unittest.mock import MagicMock
 
 from hexbytes import HexBytes
-from web3.types import TxReceipt, EventData
-
-from app.web3 import transaction_events as te
-from app.model.contract import ContractCategory
 from web3.contract import Contract
 from web3.contract.contract import (
     ContractEvent,
@@ -13,18 +9,21 @@ from web3.contract.contract import (
     ContractFunction,
     ContractFunctions,
 )
+from web3.types import EventData, TxReceipt
 
+from app.model.contract import ContractCategory
+from app.web3 import transaction_events as te
 from app.web3.transaction_events.types import (
+    BurnFungibleEvent,
+    BurnNonFungibleEvent,
+    BurnPairEvent,
     MintFungibleEvent,
     MintNonFungibleEvent,
-    BurnNonFungibleEvent,
-    TransferNonFungibleEvent,
-    BurnFungibleEvent,
-    TransferFungibleEvent,
-    PairCreatedEvent,
     MintPairEvent,
-    BurnPairEvent,
+    PairCreatedEvent,
     SwapPairEvent,
+    TransferFungibleEvent,
+    TransferNonFungibleEvent,
 )
 
 
