@@ -1,4 +1,4 @@
-from enum import auto, Enum, StrEnum
+from enum import Enum, StrEnum, auto
 from typing import List
 
 from hexbytes import HexBytes

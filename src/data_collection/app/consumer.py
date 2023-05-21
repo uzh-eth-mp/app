@@ -1,7 +1,7 @@
 import logging
 
 from web3.contract import Contract
-from web3.types import TxReceipt, HexBytes
+from web3.types import HexBytes, TxReceipt
 
 from app import init_logger
 from app.config import Config
@@ -15,27 +15,29 @@ from app.utils.data_collector import DataCollector
 from app.web3.parser import ContractParser
 from app.web3.transaction_events import get_transaction_events
 from app.web3.transaction_events.types import (
-    MintFungibleEvent,
     BurnFungibleEvent,
-    PairCreatedEvent,
-    MintPairEvent,
-    BurnPairEvent,
-    SwapPairEvent,
-    MintNonFungibleEvent,
     BurnNonFungibleEvent,
+    BurnPairEvent,
+    MintFungibleEvent,
+    MintNonFungibleEvent,
+    MintPairEvent,
+    PairCreatedEvent,
+    SwapPairEvent,
     TransferFungibleEvent,
     TransferNonFungibleEvent,
 )
 
 log = init_logger(__name__)
 
+
 def kafka_logs_filter(record) -> bool:
     """Filters out some kafka logs"""
     msg = record.getMessage()
-    should_filter = msg.startswith(
-        "Heartbeat failed for group"
-    ) or msg.startswith("Group Coordinator Request failed:")
+    should_filter = msg.startswith("Heartbeat failed for group") or msg.startswith(
+        "Group Coordinator Request failed:"
+    )
     return not should_filter
+
 
 class DataConsumer(DataCollector):
     """
@@ -324,7 +326,9 @@ class DataConsumer(DataCollector):
             case DataCollectionMode.FULL:
                 await self._consume_full(tx_data, tx_receipt_data)
             case DataCollectionMode.PARTIAL:
-                await self._consume_partial(tx_data, tx_receipt_data, w3_tx_data, w3_tx_receipt)
+                await self._consume_partial(
+                    tx_data, tx_receipt_data, w3_tx_data, w3_tx_receipt
+                )
             case DataCollectionMode.LOG_FILTER:
                 raise NotImplementedError("LOG_FILTER mode not implemented yet")
 

@@ -1,16 +1,16 @@
 from typing import List
+from unittest.mock import MagicMock, patch
 
 import pytest
 import pytest_asyncio
-from unittest.mock import patch, MagicMock
 
-from app.config import Config, DataCollectionConfig, ContractConfig
+from app.config import Config, ContractConfig, DataCollectionConfig
 from app.model.abi import ContractABI
 from app.model.transaction import (
     InternalTransactionData,
     TransactionData,
-    TransactionReceiptData,
     TransactionLogsData,
+    TransactionReceiptData,
 )
 from app.web3.transaction_events.types import *
 

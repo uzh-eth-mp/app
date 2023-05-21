@@ -1,16 +1,15 @@
 import asyncio
-from functools import wraps
 from asyncio import TimeoutError
+from functools import wraps
 from typing import Awaitable, Callable, List, Optional
 
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
-from aiokafka.errors import KafkaError, KafkaTimeoutError, KafkaConnectionError
+from aiokafka.errors import KafkaConnectionError, KafkaError, KafkaTimeoutError
 from aiokafka.structs import RecordMetadata
 
 from app import init_logger
 from app.db.redis import RedisManager
-from app.kafka.exceptions import KafkaManagerError, KafkaConsumerPartitionsEmptyError
-
+from app.kafka.exceptions import KafkaConsumerPartitionsEmptyError, KafkaManagerError
 
 log = init_logger(__name__)
 

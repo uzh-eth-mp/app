@@ -2,18 +2,17 @@ import argparse
 import asyncio
 import sys
 
-import uvloop
 import sentry_sdk
+import uvloop
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
 
 from app import init_logger
 from app.config import Config
-from app.producer import DataProducer
 from app.consumer import DataConsumer
-from app.utils.enum_action import EnumAction
 from app.model import DataCollectionWorkerType
 from app.model.abi import ContractABI
-
+from app.producer import DataProducer
+from app.utils.enum_action import EnumAction
 
 log = init_logger(__name__)
 

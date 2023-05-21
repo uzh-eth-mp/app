@@ -1,4 +1,5 @@
 import collections
+
 from app.model.contract import ContractCategory
 
 """
@@ -7,7 +8,7 @@ for ex:
 @_event_mapper(ERC20)
 def my_fun():
   pass
-will attach my_fun to the ERC20 mappers. 
+will attach my_fun to the ERC20 mappers.
 """
 __event_mappers = collections.defaultdict(list)
 

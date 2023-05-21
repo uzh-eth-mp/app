@@ -1,11 +1,10 @@
-import asyncpg
-
 from datetime import datetime
 from typing import Any, List, Optional, Union
 
+import asyncpg
+
 from app import init_logger
 from app.db.exceptions import UnknownBlockIdentifier
-
 
 log = init_logger(__name__)
 

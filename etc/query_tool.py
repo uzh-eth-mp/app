@@ -1,6 +1,6 @@
 """Script for executing pre defined SQL queries / statements."""
-import asyncio
 import argparse
+import asyncio
 
 import asyncpg
 

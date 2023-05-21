@@ -5,13 +5,12 @@ from web3.exceptions import BlockNotFound
 
 from app import init_logger
 from app.config import Config, DataCollectionConfig
-from app.model.block import BlockData
-from app.model import DataCollectionMode
 from app.kafka.manager import KafkaProducerManager
-from app.web3.block_explorer import BlockExplorer
+from app.model import DataCollectionMode
+from app.model.block import BlockData
 from app.utils import log_producer_progress
 from app.utils.data_collector import DataCollector
-
+from app.web3.block_explorer import BlockExplorer
 
 log = init_logger(__name__)
 
@@ -160,12 +159,16 @@ class DataProducer(DataCollector):
                 )
         except BlockNotFound:
             # OK, BlockNotFound exception is raised when the latest block is reached
-            log.info("BlockNotFound exception raised, finished collecting data because latest block has been reached")
+            log.info(
+                "BlockNotFound exception raised, finished collecting data because latest block has been reached"
+            )
         finally:
             if i_processed_block is None:
                 log.info("Finished before collecting any block data!")
             else:
-                log.info(f"Finished at block #{i_processed_block} | total produced transactions: {_total_transactions}")
+                log.info(
+                    f"Finished at block #{i_processed_block} | total produced transactions: {_total_transactions}"
+                )
 
     async def _start_producer_task(
         self, data_collection_cfg: DataCollectionConfig
@@ -186,11 +189,17 @@ class DataProducer(DataCollector):
 
         match data_collection_cfg.mode:
             case DataCollectionMode.FULL:
-                return asyncio.create_task(self._start_producer(data_collection_cfg, get_block_reward=True))
+                return asyncio.create_task(
+                    self._start_producer(data_collection_cfg, get_block_reward=True)
+                )
             case DataCollectionMode.PARTIAL:
-                return asyncio.create_task(self._start_producer(data_collection_cfg, get_block_reward=False))
+                return asyncio.create_task(
+                    self._start_producer(data_collection_cfg, get_block_reward=False)
+                )
             case DataCollectionMode.LOG_FILTER:
-                return asyncio.create_task(self._start_logfilter_producer(data_collection_cfg))
+                return asyncio.create_task(
+                    self._start_logfilter_producer(data_collection_cfg)
+                )
 
     async def start_producing_data(self) -> int:
         """
