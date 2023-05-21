@@ -205,18 +205,18 @@ class ERC20Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                    BurnFungibleEvent(
-                        address="0x000000000000000000000000000000000000AAAA",
-                        log_index=1337,
-                        value=42,
-                    ),
-                    TransferFungibleEvent(
-                        address="0x000000000000000000000000000000000000AAAA",
-                        log_index=1337,
-                        src="0x000000000000000000000000000000000000BABA",
-                        dst="0x0000000000000000000000000000000000000000",
-                        value=42,
-                    ),
+                BurnFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    value=42,
+                ),
+                TransferFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    src="0x000000000000000000000000000000000000BABA",
+                    dst="0x0000000000000000000000000000000000000000",
+                    value=42,
+                ),
             ],
             events,
         )
@@ -280,7 +280,14 @@ class ERC20Tests(unittest.TestCase):
         contract.events.Issue = MagicMock(return_value=issue_event)
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(
-            return_value=[EventData(event="Redeem", address="0x000000000000000000000000000000000000AAAA", args={"amount": 42}, logIndex=1337)]
+            return_value=[
+                EventData(
+                    event="Redeem",
+                    address="0x000000000000000000000000000000000000AAAA",
+                    args={"amount": 42},
+                    logIndex=1337,
+                )
+            ]
         )
         contract.events.Redeem = MagicMock(return_value=redeem_event)
         receipt = MagicMock(spec=TxReceipt)
@@ -290,11 +297,11 @@ class ERC20Tests(unittest.TestCase):
 
         self.assertEqual(
             [
-                    BurnFungibleEvent(
-                        address="0x000000000000000000000000000000000000AAAA",
-                        log_index=1337,
-                        value=42,
-                    ),
+                BurnFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    value=42,
+                ),
             ],
             events,
         )
