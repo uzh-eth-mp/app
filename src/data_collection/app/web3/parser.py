@@ -70,6 +70,8 @@ class ContractParser:
             abi = self.contract_abi.UniSwapV2Pair
         elif contract_category == ContractCategory.UNI_SWAP_V2_FACTORY:
             abi = self.contract_abi.UniSwapV2Factory
+        elif contract_category == ContractCategory.AAVE:
+            abi = self.contract_abi.AAVE
         return abi
 
     def is_known_contract_address(self, contract_address: str) -> bool:

@@ -11,6 +11,7 @@ class ContractCategory(Enum):
     ERC1155 = "erc1155"
     UNI_SWAP_V2_FACTORY = "UniSwapV2Factory"
     UNI_SWAP_V2_PAIR = "UniSwapV2Pair"
+    AAVE = "AAVE"
 
     @property
     def is_erc(self):

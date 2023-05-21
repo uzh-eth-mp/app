@@ -2,7 +2,7 @@ from hexbytes import HexBytes
 from web3.contract import Contract
 from web3.types import TxReceipt
 from app.model.contract import ContractCategory
-from . import erc20, erc721, uniswap_pair, uniswapv2_factory, decorator
+from . import erc20, erc721, uniswap_pair, uniswapv2_factory, decorator, aave
 from typing import (
     Type,
     Union,

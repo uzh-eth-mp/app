@@ -105,5 +105,15 @@ class TransferNonFungibleEvent(ContractEvent):
     dst: str
     tokenId: int
 
+class FlashLoan(ContractEvent):
+    """
+    This represents a flashloan.
+    """
+    receiver: str # The address of the contract receiving the funds.
+    reserve: str # the address of the principal reserve
+    amount: int # the amount requested for this flashloan
+    totalFee: int # The total fees of this flashloan.
+    protocolFee: int # The protocol fees of this flashloan.
+
 
 EventsGenerator = Generator[Tuple[ContractEvent, EventData], None, None]

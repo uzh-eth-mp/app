@@ -11,3 +11,4 @@ class ContractABI(BaseModel):
     erc1155: List[Dict[str, Any]]
     UniSwapV2Factory: List[Dict[str, Any]]
     UniSwapV2Pair: List[Dict[str, Any]]
+    AAVE:  List[Dict[str, Any]]
