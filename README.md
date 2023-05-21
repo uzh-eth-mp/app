@@ -10,7 +10,6 @@
 A collection of Docker Containers and their orchestration for collecting EVM-compatible blockchains' data.
 
 * [Overview](#overview)
-* [Directory Structure](#directory-structure)
 * [Usage](#usage)
     * [Requirements](#requirements)
     * [Quickstart](#quickstart)
@@ -34,23 +33,6 @@ Main components (Docker containers):
 * Kafka - event store for transaction hashes
 * PostgreSQL - persistent data store
 * Redis - cache for orchestration data between producer and consumers
-
-## Directory structure
-```
-./
-├── etc/                      # misc. files
-├── scripts/                  # bash scripts for orchestrating containers
-├── src/                      # code for containers
-│   ├── data_collection/      # producer + consumer
-│   ├── db/                   # postgresql
-│   ├── kafka/
-│   └── zookeeper/
-├── README.md
-├── docker-compose.dev.yml
-├── docker-compose.prod.yml
-├── docker-compose.tests.yml
-└── docker-compose.yml
-```
 
 ## Usage
 The containers are orchestrated by docker compose yaml files. For convenience a set of bash scripts has been provided for easily running the data collection process.
