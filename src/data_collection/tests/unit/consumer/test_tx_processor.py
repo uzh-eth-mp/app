@@ -2,7 +2,13 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
-from app.model import DataCollectionMode
+from app.consumer.tx_processor import (
+    FullTransactionProcessor,
+    LogFilterTransactionProcessor,
+    PartialTransactionProcessor,
+    TransactionProcessor,
+)
+from app.db.manager import DatabaseManager
 from app.model.contract import ContractCategory
 from app.model.transaction import InternalTransactionData
 from app.web3.transaction_events.types import (
@@ -14,64 +20,53 @@ from app.web3.transaction_events.types import (
 )
 
 
-class TestHandleContractCreation:
-    """Tests for _handle_contract_creation method in DataConsumer"""
+class TestTransactionProcessor:
+    """Tests for TransactionProcessor base class methods"""
 
-    # TODO: Add tests for _handle_contract_creation method in DataConsumer
-    pass
+    def test_handle_contract_creation(self):
+        """Test that handle_contract_creation method is called"""
+        # TODO: implement
+        pass
 
+    @pytest.fixture
+    def transaction_processor(self):
+        processor = TransactionProcessor(MagicMock(), Mock(), Mock())
+        processor.db_manager.insert_transaction = AsyncMock()
+        processor.db_manager.insert_transaction_logs = AsyncMock()
+        processor.db_manager.insert_internal_transaction = AsyncMock()
+        return processor
 
-class TestHandleTransaction:
-    """Tests for _handle_transaction method in DataConsumer"""
-
-    async def test_tx_inserted_without_internal_txs(
-        self,
-        consumer_factory,
-        config_factory,
-        data_collection_config_factory,
-        contract_config_usdt,
-        contract_abi,
-        transaction_data,
-        transaction_receipt_data,
+    async def test_handle_transaction_without_internal_txs(
+        self, transaction_data, transaction_receipt_data, transaction_processor
     ):
-        """Test that insert to db is called once for a transaction without internal transactions"""
-        consumer = consumer_factory(
-            config_factory([data_collection_config_factory([contract_config_usdt])]),
-            contract_abi,
-        )
-        consumer.db_manager.insert_transaction = AsyncMock()
-        consumer.node_connector.get_internal_transactions = AsyncMock()
-        consumer.db_manager.insert_internal_transactions = AsyncMock()
+        """Test that in _handle_transaction insert to db is called once for a transaction without internal transactions"""
+        get_internal_transactions_mock = AsyncMock()
+        get_internal_transactions_mock.return_value = []
+        transaction_processor.node_connector.get_internal_transactions = AsyncMock()
 
-        await consumer._handle_transaction(
-            tx_data=transaction_data, tx_receipt_data=transaction_receipt_data
+        await transaction_processor._handle_transaction(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            log_indices_to_save=set([]),
         )
 
-        consumer.db_manager.insert_transaction.assert_awaited_once_with(
+        transaction_processor.db_manager.insert_transaction.assert_awaited_once_with(
             **transaction_data.dict(),
             gas_used=transaction_receipt_data.gas_used,
             is_token_tx=True,
             transaction_fee=transaction_data.gas_price
             * transaction_receipt_data.gas_used,
         )
-        consumer.db_manager.insert_internal_transactions.assert_not_awaited()
+        transaction_processor.db_manager.insert_internal_transaction.assert_not_awaited()
+        transaction_processor.db_manager.insert_transaction_logs.assert_not_awaited()
 
-    async def test_tx_inserted_and_internal_txs_inserted(
+    async def test_handle_transaction_with_internal_txs(
         self,
-        consumer_factory,
-        config_factory,
-        data_collection_config_factory,
-        contract_config_usdt,
-        contract_abi,
+        transaction_processor,
         transaction_data,
         transaction_receipt_data,
     ):
         """Test that insert to db is called once for a transaction and all internal transactions"""
-        consumer = consumer_factory(
-            config_factory([data_collection_config_factory([contract_config_usdt])]),
-            contract_abi,
-        )
-        consumer.db_manager.insert_transaction = AsyncMock()
         internal_tx_data = InternalTransactionData(
             **{
                 "from": "0x0000000",
@@ -83,39 +78,77 @@ class TestHandleTransaction:
                 "callType": "call",
             }
         )
-        get_internal_txs_mock = AsyncMock()
-        get_internal_txs_mock.return_value = [internal_tx_data, internal_tx_data]
-        consumer.node_connector.get_internal_transactions = get_internal_txs_mock
-        consumer.db_manager.insert_internal_transaction = AsyncMock()
-
-        await consumer._handle_transaction(
-            tx_data=transaction_data, tx_receipt_data=transaction_receipt_data
+        get_internal_transactions_mock = AsyncMock()
+        get_internal_transactions_mock.return_value = [
+            internal_tx_data,
+            internal_tx_data,
+        ]
+        transaction_processor.node_connector.get_internal_transactions = (
+            get_internal_transactions_mock
         )
 
-        consumer.db_manager.insert_transaction.assert_awaited_once_with(
+        await transaction_processor._handle_transaction(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            log_indices_to_save=set([]),
+        )
+
+        transaction_processor.db_manager.insert_transaction.assert_awaited_once_with(
             **transaction_data.dict(),
             gas_used=transaction_receipt_data.gas_used,
             is_token_tx=True,
             transaction_fee=transaction_data.gas_price
             * transaction_receipt_data.gas_used,
         )
-        consumer.node_connector.get_internal_transactions.assert_awaited_once_with(
+        transaction_processor.node_connector.get_internal_transactions.assert_awaited_once_with(
             transaction_data.transaction_hash
         )
-        assert consumer.db_manager.insert_internal_transaction.await_count == 2
-        consumer.db_manager.insert_internal_transaction.assert_awaited_with(
+        assert (
+            transaction_processor.db_manager.insert_internal_transaction.await_count
+            == 2
+        )
+        transaction_processor.db_manager.insert_internal_transaction.assert_awaited_with(
             **internal_tx_data.dict(),
             transaction_hash=transaction_data.transaction_hash,
+        )
+        transaction_processor.db_manager.insert_transaction_logs.assert_not_awaited()
+
+    async def test_handle_transaction_with_logs(
+        self,
+        transaction_processor,
+        transaction_data,
+        transaction_receipt_data,
+        transaction_logs_data,
+    ):
+        """Test that insert to db is called once for a transaction and all logs"""
+        transaction_receipt_data.logs = [transaction_logs_data, transaction_logs_data]
+        transaction_receipt_data.logs[0].log_index = 230
+        transaction_receipt_data.logs[1].log_index = 231
+        transaction_processor.node_connector.get_internal_transactions = AsyncMock()
+
+        await transaction_processor._handle_transaction(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            log_indices_to_save=set([230, 231]),
+        )
+
+        transaction_processor.db_manager.insert_transaction.assert_awaited_once_with(
+            **transaction_data.dict(),
+            gas_used=transaction_receipt_data.gas_used,
+            is_token_tx=True,
+            transaction_fee=transaction_data.gas_price
+            * transaction_receipt_data.gas_used,
+        )
+        transaction_processor.db_manager.insert_internal_transaction.assert_not_awaited()
+        assert transaction_processor.db_manager.insert_transaction_logs.await_count == 2
+        transaction_processor.db_manager.insert_transaction_logs.assert_awaited_with(
+            **transaction_logs_data.dict(),
         )
 
     async def test_transaction_fee_correct(self):
         """Test that the transaction fee is calculated correctly in _handle_transaction"""
         # TODO: Implement
         pass
-
-
-class TestHandleTransactionEvents:
-    """Tests for _handle_transaction_events method in DataConsumer"""
 
     @patch("app.consumer.get_transaction_events")
     async def test_no_event_inserted(
@@ -838,79 +871,8 @@ class TestHandleTransactionEvents:
         )
 
 
-class TestOnKafkaEvent:
-    """Tests for methods related to direct kafka event handling in DataConsumer"""
-
-    @pytest.mark.parametrize(
-        "mode", [DataCollectionMode.FULL, DataCollectionMode.PARTIAL]
-    )
-    async def test_on_kafka_event(
-        self,
-        mode,
-        consumer_factory,
-        config_factory,
-        data_collection_config_factory,
-        contract_config_usdt,
-        contract_abi,
-    ):
-        """Test that a regular event (transaction) is handled for two modes: full and partial"""
-        # Arrange
-        data_collection_config = data_collection_config_factory([contract_config_usdt])
-        data_collection_config.mode = mode
-        consumer = consumer_factory(
-            config_factory([data_collection_config]),
-            contract_abi,
-        )
-        consumer.node_connector.get_transaction_data = AsyncMock()
-        consumer.node_connector.get_transaction_data.return_value = (None, None)
-        consumer.node_connector.get_transaction_receipt_data = AsyncMock()
-        consumer.node_connector.get_transaction_receipt_data.return_value = (None, None)
-        consumer._consume_full = AsyncMock()
-        consumer._consume_partial = AsyncMock()
-        kafka_event = Mock()
-        kafka_event.value = f"{mode.value}:0x1234".encode()
-
-        # Act
-        await consumer._on_kafka_event(event=kafka_event)
-
-        # Assert
-        consumer.node_connector.get_transaction_data.assert_awaited_once()
-        consumer.node_connector.get_transaction_receipt_data.assert_awaited_once()
-        if mode == DataCollectionMode.FULL:
-            consumer._consume_full.assert_awaited_once()
-            consumer._consume_partial.assert_not_awaited()
-        elif mode == DataCollectionMode.PARTIAL:
-            consumer._consume_full.assert_not_awaited()
-            consumer._consume_partial.assert_awaited_once()
-
-        assert consumer._n_consumed_txs == 1
-
-    async def test_consume_full_flow(
-        self,
-        default_consumer,
-        transaction_data,
-        transaction_receipt_data,
-        transaction_logs_data,
-    ):
-        """Test _consume_full flow"""
-        default_consumer._handle_transaction = AsyncMock()
-        default_consumer.db_manager.insert_transaction_logs = AsyncMock()
-        _handle_tx_events_mock = AsyncMock()
-        _handle_tx_events_mock.return_value = set([1337])
-        default_consumer._handle_transaction_events = _handle_tx_events_mock
-        transaction_receipt_data.logs = [transaction_logs_data]
-
-        await default_consumer._consume_full(
-            tx_data=transaction_data,
-            tx_receipt_data=transaction_receipt_data,
-        )
-
-        default_consumer._handle_transaction.assert_awaited_once_with(
-            tx_data=transaction_data,
-            tx_receipt_data=transaction_receipt_data,
-            log_indices_to_save=set([1337]),
-        )
-        assert default_consumer._n_processed_txs == 1
+class PartialTransactionProcessor:
+    """Tests for PartialTransactionProcessor methods"""
 
     async def test_consume_partial_unknown_contract_flow(
         self, default_consumer, transaction_data, transaction_receipt_data
@@ -1021,3 +983,40 @@ class TestOnKafkaEvent:
             tx_data=transaction_data,
             category=ContractCategory.ERC20,
         )
+
+
+class FullTransactionProcessor:
+    """Tests for FullTransactionProcessor methods"""
+
+    async def test_consume_full_flow(
+        self,
+        default_consumer,
+        transaction_data,
+        transaction_receipt_data,
+        transaction_logs_data,
+    ):
+        """Test _consume_full flow"""
+        default_consumer._handle_transaction = AsyncMock()
+        default_consumer.db_manager.insert_transaction_logs = AsyncMock()
+        _handle_tx_events_mock = AsyncMock()
+        _handle_tx_events_mock.return_value = set([1337])
+        default_consumer._handle_transaction_events = _handle_tx_events_mock
+        transaction_receipt_data.logs = [transaction_logs_data]
+
+        await default_consumer._consume_full(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+        )
+
+        default_consumer._handle_transaction.assert_awaited_once_with(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            log_indices_to_save=set([1337]),
+        )
+        assert default_consumer._n_processed_txs == 1
+
+
+class LogFilterTransactionProcessor:
+    """Tests for LogFilterTransactionProcessor methods"""
+
+    pass
