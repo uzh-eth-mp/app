@@ -1,7 +1,7 @@
 #!/bin/bash
 
 RETRIES=0
-MAX_RETRIES=40
+MAX_RETRIES=50
 
 echo "Waiting for Kafka container to start...";
 
@@ -13,7 +13,7 @@ do
   # Respect maximum amount of retries
   (( RETRIES++ ))
   if [ $RETRIES -eq $MAX_RETRIES ]; then
-    echo "Maximum retries ($RETRIES) reached."
+    echo "Maximum retries ($RETRIES) reached. Kafka container failed to start in time."
     exit 1;
   fi
 done
