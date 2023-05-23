@@ -164,7 +164,7 @@ class TransactionProcessor:
                 transaction_hash=tx_data.transaction_hash,
                 amount_changed=amount_changed,
             )
-        # log.debug(f"pair_amount0_changed= {pair_amount0_changed} pair_amount1_changed= {pair_amount1_changed}")
+
         if pair_amount0_changed != 0 or pair_amount1_changed != 0:
             await self.db_manager.insert_pair_liquidity_change(
                 address=contract.address,
