@@ -272,7 +272,6 @@ class TestTransactionProcessor:
     ):
         """Test every event is inserted if event found and is present in config"""
         # Arrange
-
         get_contract_events_mock = Mock()
         get_contract_events_mock.return_value = [
             request.getfixturevalue(event).__class__.__name__
@@ -799,6 +798,58 @@ class TestTransactionProcessor:
             amount1=3700,
             transaction_hash=transaction_data.transaction_hash,
         )
+
+    @patch("app.consumer.tx_processor.get_transaction_events")
+    async def test_handle_transaction_events_skipped_if_event_addr_not_matching(
+        self,
+        mock_get_transaction_events,
+        transaction_processor,
+        transaction_data,
+        contract_config_usdt,
+        transfer_fungible_event,
+        mint_fungible_event,
+        burn_fungible_event,
+    ):
+        """Test that _handle_transaction_events is skipped if event address does not
+        match contract address.
+        """
+        # Arrange
+        get_contract_events_mock = Mock()
+        get_contract_events_mock.return_value = [
+            "TransferFungibleEvent",
+            "MintFungibleEvent",
+            "BurnFungibleEvent",
+        ]
+        transaction_processor.contract_parser.get_contract_events = (
+            get_contract_events_mock
+        )
+        transfer_fungible_event.address = "0x1234"
+        mint_fungible_event.address = "0x1234"
+        burn_fungible_event.address = "0x1234"
+        mock_get_transaction_events.return_value = [
+            transfer_fungible_event,
+            burn_fungible_event,
+            mint_fungible_event,
+        ]
+        contract_mock = Mock()
+        contract_mock.address = contract_config_usdt.address
+        transaction_processor.db_manager.insert_contract_supply_change = AsyncMock()
+        transaction_processor.db_manager.insert_pair_liquidity_change = AsyncMock()
+        transaction_processor.db_manager.insert_nft_transfer = AsyncMock()
+
+        # Act
+        result = await transaction_processor._handle_transaction_events(
+            contract=contract_mock,
+            category=Mock(),
+            tx_data=transaction_data,
+            tx_receipt=Mock(),
+        )
+
+        # Assert
+        transaction_processor.db_manager.insert_contract_supply_change.assert_not_awaited()
+        transaction_processor.db_manager.insert_pair_liquidity_change.assert_not_awaited()
+        transaction_processor.db_manager.insert_nft_transfer.assert_not_awaited()
+        assert result == set([])
 
 
 class PartialTransactionProcessor:
