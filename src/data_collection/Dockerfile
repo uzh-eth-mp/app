@@ -1,5 +1,7 @@
 FROM python:3.11
 
+VOLUME "/app/etc"
+
 ENV LOG_LEVEL=INFO
 ENV N_CONSUMER_INSTANCES=5
 ENV SENTRY_DSN=
@@ -17,7 +19,6 @@ COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 COPY app app
-COPY etc etc
 COPY scripts/wait-for-kafka.sh wait-for-kafka.sh
 
 RUN chmod +x wait-for-kafka.sh

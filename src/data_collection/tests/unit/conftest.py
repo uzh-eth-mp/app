@@ -255,7 +255,8 @@ async def default_consumer(
 @pytest.fixture
 def transfer_fungible_event(contract_config_usdt):
     return TransferFungibleEvent(
-        contract_address=contract_config_usdt.address,
+        address=contract_config_usdt.address,
+        log_index=1337,
         src="0xF00D",
         dst="0xCAFE",
         value=1500,
@@ -265,7 +266,8 @@ def transfer_fungible_event(contract_config_usdt):
 @pytest.fixture
 def mint_fungible_event(contract_config_usdt):
     return MintFungibleEvent(
-        contract_address=contract_config_usdt.address,
+        address=contract_config_usdt.address,
+        log_index=1337,
         account="0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
         value=1500,
     )
@@ -274,7 +276,8 @@ def mint_fungible_event(contract_config_usdt):
 @pytest.fixture
 def burn_fungible_event(contract_config_usdt):
     return BurnFungibleEvent(
-        contract_address=contract_config_usdt.address,
+        address=contract_config_usdt.address,
+        log_index=1337,
         account="0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
         value=1500,
     )
@@ -283,7 +286,8 @@ def burn_fungible_event(contract_config_usdt):
 @pytest.fixture
 def mint_pair_event(contract_config_pair_usdc_weth):
     return MintPairEvent(
-        contract_address=contract_config_pair_usdc_weth.address,
+        address=contract_config_pair_usdc_weth.address,
+        log_index=1337,
         sender="0xF00D",
         amount0=1500,
         amount1=2500,
@@ -293,7 +297,8 @@ def mint_pair_event(contract_config_pair_usdc_weth):
 @pytest.fixture
 def burn_pair_event(contract_config_pair_usdc_weth):
     return BurnPairEvent(
-        contract_address=contract_config_pair_usdc_weth.address,
+        address=contract_config_pair_usdc_weth.address,
+        log_index=1337,
         src="0xF00D",
         dst="0xCAFE",
         amount0=1500,
@@ -304,7 +309,8 @@ def burn_pair_event(contract_config_pair_usdc_weth):
 @pytest.fixture
 def swap_pair_event(contract_config_pair_usdc_weth):
     return SwapPairEvent(
-        contract_address=contract_config_pair_usdc_weth.address,
+        address=contract_config_pair_usdc_weth.address,
+        log_index=1337,
         src="0xF00D",
         dst="0xCAFE",
         in0=1200,
@@ -317,7 +323,8 @@ def swap_pair_event(contract_config_pair_usdc_weth):
 @pytest.fixture
 def transfer_non_fungible_event(contract_config_bayc):
     return TransferNonFungibleEvent(
-        contract_address=contract_config_bayc.address,
+        address=contract_config_bayc.address,
+        log_index=1337,
         src="0xF00D",
         dst="0xCAFE",
         tokenId=1337,

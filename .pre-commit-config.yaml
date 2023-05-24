@@ -1,5 +1,5 @@
 default_language_version:
-    python: python3.11
+    python: python3.9
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
@@ -18,7 +18,3 @@ repos:
     hooks:
       - id: black
         args: [ "--target-version", "py311"]
-  # - repo: https://github.com/pycqa/pylint
-  #   rev: v2.17.4
-  #   hooks:
-  #     - id: pylint

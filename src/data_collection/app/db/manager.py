@@ -168,7 +168,7 @@ class DatabaseManager:
             f"""
             INSERT INTO {table} (transaction_hash, address, log_index, data, removed, topics)
             VALUES ($1, $2, $3,$4, $5, $6)
-            ON CONFLICT (unique_id) DO NOTHING;
+            ON CONFLICT (transaction_hash, log_index) DO NOTHING;
             """,
             transaction_hash,
             address,
@@ -181,6 +181,7 @@ class DatabaseManager:
     async def insert_nft_transfer(
         self,
         transaction_hash: str,
+        log_index: int,
         address: str,
         from_address: str,
         to_address: str,
@@ -194,10 +195,12 @@ class DatabaseManager:
 
         await self.db.execute(
             f"""
-            INSERT INTO {table} (transaction_hash, address, from_address, to_address, token_id)
-            VALUES ($1, $2, $3,$4, $5);
+            INSERT INTO {table} (transaction_hash, log_index, address, from_address, to_address, token_id)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (transaction_hash, log_index) DO NOTHING;
             """,
             transaction_hash,
+            log_index,
             address,
             from_address,
             to_address,

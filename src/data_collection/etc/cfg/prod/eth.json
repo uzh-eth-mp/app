@@ -7,8 +7,8 @@
     "data_collection": [
         {
             "mode": "partial",
-            "start_block": 15537394,
-            "end_block": 16537394,
+            "start_block": 16890447,
+            "end_block": 17090847,
             "contracts": [
                 {
                     "address": "0xED5AF388653567Af2F388E6224dC7C4b3241C544",
@@ -40,6 +40,16 @@
                     "category": "erc721",
                     "events": [
                         "TransferNonFungibleEvent"
+                    ]
+                },
+                {
+                    "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+                    "symbol": "USDT",
+                    "category": "erc20",
+                    "events": [
+                        "TransferFungibleEvent",
+                        "MintFungibleEvent",
+                        "BurnFungibleEvent"
                     ]
                 },
                 {
@@ -80,16 +90,6 @@
                         "TransferFungibleEvent",
                         "MintFungibleEvent",
                         "BurnFungibleEvent"
-                    ]
-                },
-                {
-                    "address": "0x36d02DcD463Dfd71E4a07d8Aa946742Da94e8D3a",
-                    "symbol": "SFTD",
-                    "category": "erc721",
-                    "events": [
-                        "TransferNonFungibleEvent",
-                        "MintNonFungibleEvent",
-                        "BurnNonFungibleEvent"
                     ]
                 },
                 {

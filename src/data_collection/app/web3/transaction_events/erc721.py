@@ -1,4 +1,3 @@
-from hexbytes import HexBytes
 from web3.contract import Contract
 
 # Discarding errors on filtered events is expected
@@ -17,9 +16,7 @@ from app.web3.transaction_events.types import (
 
 
 @_event_mapper(ContractCategory.ERC721)
-def _transaction(
-    contract: Contract, receipt: TxReceipt, block_hash: HexBytes
-) -> EventsGenerator:
+def _transfer(contract: Contract, receipt: TxReceipt) -> EventsGenerator:
     burn_addresses = {
         "0x0000000000000000000000000000000000000000",
         "0x000000000000000000000000000000000000dead",
@@ -30,24 +27,27 @@ def _transaction(
             src = eventLog["args"]["from"]
             dst = eventLog["args"]["to"]
             token_id = eventLog["args"]["tokenId"]
+            address = eventLog["address"]
+            log_index = eventLog["logIndex"]
             if dst in burn_addresses and src in burn_addresses:
                 pass
             if dst in burn_addresses:
                 yield BurnNonFungibleEvent(
-                    contract_address=contract.address,
-                    account=src,
+                    address=address,
+                    log_index=log_index,
                     tokenId=token_id,
-                ), eventLog
+                )
             elif src in burn_addresses:
                 yield MintNonFungibleEvent(
-                    contract_address=contract.address,
-                    account=dst,
+                    address=address,
+                    log_index=log_index,
                     tokenId=token_id,
-                ), eventLog
+                )
 
             yield TransferNonFungibleEvent(
-                contract_address=contract.address,
+                address=address,
+                log_index=log_index,
                 src=src,
                 dst=dst,
                 tokenId=token_id,
-            ), eventLog
+            )

@@ -1,4 +1,3 @@
-from hexbytes import HexBytes
 from web3.contract import Contract
 
 # Discarding errors on filtered events is expected
@@ -17,9 +16,7 @@ from app.web3.transaction_events.types import (
 
 
 @_event_mapper(ContractCategory.ERC20)
-def _transaction(
-    contract: Contract, receipt: TxReceipt, block_hash: HexBytes
-) -> EventsGenerator:
+def _transfer(contract: Contract, receipt: TxReceipt) -> EventsGenerator:
     # ABI for ERC20 https://gist.github.com/veox/8800debbf56e24718f9f483e1e40c35c
 
     burn_addresses = {
@@ -38,52 +35,55 @@ def _transaction(
             src = eventLog["args"]["from"]
             dst = eventLog["args"]["to"]
             val = eventLog["args"]["value"]
+            address = eventLog["address"]
+            log_index = eventLog["logIndex"]
             if dst in burn_addresses and src in burn_addresses:
                 pass
             # https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol#L298
             if dst in burn_addresses:
                 yield BurnFungibleEvent(
-                    contract_address=contract.address, account=src, value=val
-                ), eventLog
+                    address=address, log_index=log_index, account=src, value=val
+                )
             # https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol#L269
             elif src in burn_addresses:
                 yield MintFungibleEvent(
-                    contract_address=contract.address, account=dst, value=val
-                ), eventLog
+                    address=address, log_index=log_index, account=dst, value=val
+                )
 
             yield TransferFungibleEvent(
-                contract_address=contract.address,
+                address=address,
+                log_index=log_index,
                 src=src,
                 dst=dst,
                 value=val,
-            ), eventLog
+            )
 
 
 @_event_mapper(ContractCategory.ERC20)
-def _issue(
-    contract: Contract, receipt: TxReceipt, block_hash: HexBytes
-) -> EventsGenerator:
+def _issue(contract: Contract, receipt: TxReceipt) -> EventsGenerator:
     # USDT -> https://etherscan.io/address/0xdac17f958d2ee523a2206206994597c13d831ec7#code#L444
     # Issue = USDT owner creates tokens.
     for eventLog in contract.events.Issue().process_receipt(receipt, errors=DISCARD):
         val = eventLog["args"]["amount"]
+        address = eventLog["address"]
+        log_index = eventLog["logIndex"]
         yield MintFungibleEvent(
-            contract_address=contract.address,
-            account=contract.functions.getOwner().call(block_identifier=block_hash),
+            address=address,
+            log_index=log_index,
             value=val,
-        ), eventLog
+        )
 
 
 @_event_mapper(ContractCategory.ERC20)
-def _redeem(
-    contract: Contract, receipt: TxReceipt, block_hash: HexBytes
-) -> EventsGenerator:
+def _redeem(contract: Contract, receipt: TxReceipt) -> EventsGenerator:
     # Redeem = USDT owner makes tokens dissapear - no null address. if they transfer to null address, still burn.
     # getOwner -> https://etherscan.io/address/0xdac17f958d2ee523a2206206994597c13d831ec7#code#L275
     for eventLog in contract.events.Redeem().process_receipt(receipt, errors=DISCARD):
         val = eventLog["args"]["amount"]
+        address = eventLog["address"]
+        log_index = eventLog["logIndex"]
         yield BurnFungibleEvent(
-            contract_address=contract.address,
-            account=contract.functions.getOwner().call(block_identifier=block_hash),
+            address=address,
+            log_index=log_index,
             value=val,
-        ), eventLog
+        )

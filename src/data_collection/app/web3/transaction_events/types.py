@@ -10,7 +10,8 @@ class ContractEvent(BaseModel):
     interaction with a smart contract).
     """
 
-    contract_address: Optional[str]
+    address: Optional[str]
+    log_index: int
 
 
 class MintFungibleEvent(ContractEvent):
@@ -18,7 +19,6 @@ class MintFungibleEvent(ContractEvent):
     This represents mint event.
     """
 
-    account: str
     value: int
 
 
@@ -27,7 +27,6 @@ class BurnFungibleEvent(ContractEvent):
     This represents burn event.
     """
 
-    account: str
     value: int
 
 
@@ -79,7 +78,6 @@ class MintNonFungibleEvent(ContractEvent):
     This represents mint event.
     """
 
-    account: str
     tokenId: str
 
 
@@ -92,7 +90,6 @@ class BurnNonFungibleEvent(ContractEvent):
 
     """
 
-    account: str
     tokenId: int
 
 
@@ -106,4 +103,4 @@ class TransferNonFungibleEvent(ContractEvent):
     tokenId: int
 
 
-EventsGenerator = Generator[Tuple[ContractEvent, EventData], None, None]
+EventsGenerator = Generator[ContractEvent, None, None]

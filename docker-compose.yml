@@ -107,6 +107,8 @@ services:
   data_producer_eth:
     build:
       context: ./src/data_collection
+    volumes:
+      - ./src/data_collection/etc:/app/etc
     profiles: ["eth", "all"]
     depends_on:
       - kafka
@@ -118,6 +120,8 @@ services:
   data_producer_etc:
     build:
       context: ./src/data_collection
+    volumes:
+      - ./src/data_collection/etc:/app/etc
     profiles: ["etc", "all"]
     depends_on:
       - kafka
@@ -129,6 +133,8 @@ services:
   data_producer_bsc:
     build:
       context: ./src/data_collection
+    volumes:
+      - ./src/data_collection/etc:/app/etc
     profiles: ["bsc", "all"]
     depends_on:
       - kafka
@@ -141,6 +147,8 @@ services:
   data_consumer_eth:
     build:
       context: ./src/data_collection
+    volumes:
+      - ./src/data_collection/etc:/app/etc
     profiles: ["eth", "all"]
     depends_on:
       - data_producer_eth
@@ -153,6 +161,8 @@ services:
   data_consumer_etc:
     build:
       context: ./src/data_collection
+    volumes:
+      - ./src/data_collection/etc:/app/etc
     profiles: ["etc", "all"]
     depends_on:
       - data_producer_etc
@@ -165,6 +175,8 @@ services:
   data_consumer_bsc:
     build:
       context: ./src/data_collection
+    volumes:
+      - ./src/data_collection/etc:/app/etc
     profiles: ["bsc", "all"]
     depends_on:
       - data_producer_bsc

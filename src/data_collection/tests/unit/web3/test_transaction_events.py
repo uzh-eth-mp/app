@@ -31,11 +31,8 @@ class CommonTest(unittest.TestCase):
     def test_unknown_category_no_events(self):
         contract = MagicMock(spec=Contract)
         receipt = MagicMock(spec=TxReceipt)
-        block_hash = MagicMock(spec=HexBytes)
 
-        events = te.get_transaction_events(
-            ContractCategory.UNKNOWN, contract, receipt, block_hash
-        )
+        events = te.get_transaction_events(ContractCategory.UNKNOWN, contract, receipt)
         events = list(events)
 
         contract.events.assert_not_called()
@@ -51,6 +48,7 @@ class ERC20Tests(unittest.TestCase):
             return_value=[
                 EventData(
                     event="Transfer",
+                    address="0x000000000000000000000000000000000000AAAA",
                     args={
                         "from": "0x0000000000000000000000000000000000000000",
                         "to": "0x000000000000000000000000000000000000BABA",
@@ -67,49 +65,24 @@ class ERC20Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
-        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        block_hash = MagicMock(spec=HexBytes)
 
-        events = te.get_transaction_events(
-            ContractCategory.ERC20, contract, receipt, block_hash
-        )
+        events = te.get_transaction_events(ContractCategory.ERC20, contract, receipt)
         events = list(events)
 
         self.assertEqual(
             [
-                (
-                    MintFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        account="0x000000000000000000000000000000000000BABA",
-                        value=42,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "from": "0x0000000000000000000000000000000000000000",
-                            "to": "0x000000000000000000000000000000000000BABA",
-                            "value": 42,
-                        },
-                        logIndex=1337,
-                    ),
+                MintFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    value=42,
                 ),
-                (
-                    TransferFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        src="0x0000000000000000000000000000000000000000",
-                        dst="0x000000000000000000000000000000000000BABA",
-                        value=42,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "from": "0x0000000000000000000000000000000000000000",
-                            "to": "0x000000000000000000000000000000000000BABA",
-                            "value": 42,
-                        },
-                        logIndex=1337,
-                    ),
+                TransferFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    src="0x0000000000000000000000000000000000000000",
+                    dst="0x000000000000000000000000000000000000BABA",
+                    value=42,
                 ),
             ],
             events,
@@ -123,6 +96,7 @@ class ERC20Tests(unittest.TestCase):
             return_value=[
                 EventData(
                     event="Transfer",
+                    address="0x000000000000000000000000000000000000AAAA",
                     args={
                         "from": "0x000000000000000000000000000000000000dead",
                         "to": "0x000000000000000000000000000000000000BABA",
@@ -139,49 +113,24 @@ class ERC20Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
-        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        block_hash = MagicMock(spec=HexBytes)
 
-        events = te.get_transaction_events(
-            ContractCategory.ERC20, contract, receipt, block_hash
-        )
+        events = te.get_transaction_events(ContractCategory.ERC20, contract, receipt)
         events = list(events)
 
         self.assertEqual(
             [
-                (
-                    MintFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        account="0x000000000000000000000000000000000000BABA",
-                        value=42,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "from": "0x000000000000000000000000000000000000dead",
-                            "to": "0x000000000000000000000000000000000000BABA",
-                            "value": 42,
-                        },
-                        logIndex=1337,
-                    ),
+                MintFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    value=42,
                 ),
-                (
-                    TransferFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        src="0x000000000000000000000000000000000000dead",
-                        dst="0x000000000000000000000000000000000000BABA",
-                        value=42,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "from": "0x000000000000000000000000000000000000dead",
-                            "to": "0x000000000000000000000000000000000000BABA",
-                            "value": 42,
-                        },
-                        logIndex=1337,
-                    ),
+                TransferFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    src="0x000000000000000000000000000000000000dead",
+                    dst="0x000000000000000000000000000000000000BABA",
+                    value=42,
                 ),
             ],
             events,
@@ -195,36 +144,30 @@ class ERC20Tests(unittest.TestCase):
         contract.events.Transfer = MagicMock(return_value=transfer_event)
         issue_event = MagicMock(spec=ContractEvent)
         issue_event.process_receipt = MagicMock(
-            return_value=[EventData(event="Issue", args={"amount": 42}, logIndex=1337)]
+            return_value=[
+                EventData(
+                    event="Issue",
+                    address="0x000000000000000000000000000000000000AAAA",
+                    args={"amount": 42},
+                    logIndex=1337,
+                )
+            ]
         )
         contract.events.Issue = MagicMock(return_value=issue_event)
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
-        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        block_hash = MagicMock(spec=HexBytes)
-        contract.functions = MagicMock(spec=ContractFunctions)
-        getOwner_function = MagicMock(spec=ContractFunction)
-        getOwner_function.call = MagicMock(
-            return_value="0x000000000000000000000000000000000000BABA"
-        )
-        contract.functions.getOwner = MagicMock(return_value=getOwner_function)
 
-        events = te.get_transaction_events(
-            ContractCategory.ERC20, contract, receipt, block_hash
-        )
+        events = te.get_transaction_events(ContractCategory.ERC20, contract, receipt)
         events = list(events)
 
         self.assertEqual(
             [
-                (
-                    MintFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        account="0x000000000000000000000000000000000000BABA",
-                        value=42,
-                    ),
-                    EventData(event="Issue", args={"amount": 42}, logIndex=1337),
+                MintFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    value=42,
                 )
             ],
             events,
@@ -238,6 +181,7 @@ class ERC20Tests(unittest.TestCase):
             return_value=[
                 EventData(
                     event="Transfer",
+                    address="0x000000000000000000000000000000000000AAAA",
                     args={
                         "from": "0x000000000000000000000000000000000000BABA",
                         "to": "0x0000000000000000000000000000000000000000",
@@ -254,49 +198,24 @@ class ERC20Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
-        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        block_hash = MagicMock(spec=HexBytes)
 
-        events = te.get_transaction_events(
-            ContractCategory.ERC20, contract, receipt, block_hash
-        )
+        events = te.get_transaction_events(ContractCategory.ERC20, contract, receipt)
         events = list(events)
 
         self.assertEqual(
             [
-                (
-                    BurnFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        account="0x000000000000000000000000000000000000BABA",
-                        value=42,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "value": 42,
-                            "from": "0x000000000000000000000000000000000000BABA",
-                            "to": "0x0000000000000000000000000000000000000000",
-                        },
-                        logIndex=1337,
-                    ),
+                BurnFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    value=42,
                 ),
-                (
-                    TransferFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        src="0x000000000000000000000000000000000000BABA",
-                        dst="0x0000000000000000000000000000000000000000",
-                        value=42,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "value": 42,
-                            "from": "0x000000000000000000000000000000000000BABA",
-                            "to": "0x0000000000000000000000000000000000000000",
-                        },
-                        logIndex=1337,
-                    ),
+                TransferFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    src="0x000000000000000000000000000000000000BABA",
+                    dst="0x0000000000000000000000000000000000000000",
+                    value=42,
                 ),
             ],
             events,
@@ -310,6 +229,7 @@ class ERC20Tests(unittest.TestCase):
             return_value=[
                 EventData(
                     event="Transfer",
+                    address="0x000000000000000000000000000000000000AAAA",
                     args={
                         "from": "0x000000000000000000000000000000000000BABA",
                         "to": "0x000000000000000000000000000000000000dead",
@@ -326,49 +246,24 @@ class ERC20Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
-        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        block_hash = MagicMock(spec=HexBytes)
 
-        events = te.get_transaction_events(
-            ContractCategory.ERC20, contract, receipt, block_hash
-        )
+        events = te.get_transaction_events(ContractCategory.ERC20, contract, receipt)
         events = list(events)
 
         self.assertEqual(
             [
-                (
-                    BurnFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        account="0x000000000000000000000000000000000000BABA",
-                        value=42,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "from": "0x000000000000000000000000000000000000BABA",
-                            "to": "0x000000000000000000000000000000000000dead",
-                            "value": 42,
-                        },
-                        logIndex=1337,
-                    ),
+                BurnFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    value=42,
                 ),
-                (
-                    TransferFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        src="0x000000000000000000000000000000000000BABA",
-                        dst="0x000000000000000000000000000000000000dead",
-                        value=42,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "from": "0x000000000000000000000000000000000000BABA",
-                            "to": "0x000000000000000000000000000000000000dead",
-                            "value": 42,
-                        },
-                        logIndex=1337,
-                    ),
+                TransferFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    src="0x000000000000000000000000000000000000BABA",
+                    dst="0x000000000000000000000000000000000000dead",
+                    value=42,
                 ),
             ],
             events,
@@ -385,34 +280,28 @@ class ERC20Tests(unittest.TestCase):
         contract.events.Issue = MagicMock(return_value=issue_event)
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(
-            return_value=[EventData(event="Redeem", args={"amount": 42}, logIndex=1337)]
+            return_value=[
+                EventData(
+                    event="Redeem",
+                    address="0x000000000000000000000000000000000000AAAA",
+                    args={"amount": 42},
+                    logIndex=1337,
+                )
+            ]
         )
         contract.events.Redeem = MagicMock(return_value=redeem_event)
-        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        block_hash = MagicMock(spec=HexBytes)
-        contract.functions = MagicMock(spec=ContractFunctions)
-        getOwner_function = MagicMock(spec=ContractFunction)
-        getOwner_function.call = MagicMock(
-            return_value="0x000000000000000000000000000000000000BABA"
-        )
-        contract.functions.getOwner = MagicMock(return_value=getOwner_function)
 
-        events = te.get_transaction_events(
-            ContractCategory.ERC20, contract, receipt, block_hash
-        )
+        events = te.get_transaction_events(ContractCategory.ERC20, contract, receipt)
         events = list(events)
 
         self.assertEqual(
             [
-                (
-                    BurnFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        account="0x000000000000000000000000000000000000BABA",
-                        value=42,
-                    ),
-                    EventData(event="Redeem", args={"amount": 42}, logIndex=1337),
-                )
+                BurnFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    value=42,
+                ),
             ],
             events,
         )
@@ -425,6 +314,7 @@ class ERC20Tests(unittest.TestCase):
             return_value=[
                 EventData(
                     event="Transfer",
+                    address="0x000000000000000000000000000000000000AAAA",
                     args={
                         "from": "0x000000000000000000000000000000000000ABAB",
                         "to": "0x000000000000000000000000000000000000BABA",
@@ -441,34 +331,20 @@ class ERC20Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
-        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        block_hash = MagicMock(spec=HexBytes)
 
-        events = te.get_transaction_events(
-            ContractCategory.ERC20, contract, receipt, block_hash
-        )
+        events = te.get_transaction_events(ContractCategory.ERC20, contract, receipt)
         events = list(events)
 
         self.assertEqual(
             [
-                (
-                    TransferFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        src="0x000000000000000000000000000000000000ABAB",
-                        dst="0x000000000000000000000000000000000000BABA",
-                        value=42,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "from": "0x000000000000000000000000000000000000ABAB",
-                            "to": "0x000000000000000000000000000000000000BABA",
-                            "value": 42,
-                        },
-                        logIndex=1337,
-                    ),
-                )
+                TransferFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    src="0x000000000000000000000000000000000000ABAB",
+                    dst="0x000000000000000000000000000000000000BABA",
+                    value=42,
+                ),
             ],
             events,
         )
@@ -483,6 +359,7 @@ class ERC721Tests(unittest.TestCase):
             return_value=[
                 EventData(
                     event="Transfer",
+                    address="0x000000000000000000000000000000000000AAAA",
                     args={
                         "from": "0x0000000000000000000000000000000000000000",
                         "to": "0x000000000000000000000000000000000000BABA",
@@ -493,49 +370,24 @@ class ERC721Tests(unittest.TestCase):
             ]
         )
         contract.events.Transfer = MagicMock(return_value=transfer_event)
-        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        block_hash = MagicMock(spec=HexBytes)
 
-        events = te.get_transaction_events(
-            ContractCategory.ERC721, contract, receipt, block_hash
-        )
+        events = te.get_transaction_events(ContractCategory.ERC721, contract, receipt)
         events = list(events)
 
         self.assertEqual(
             [
-                (
-                    MintNonFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        account="0x000000000000000000000000000000000000BABA",
-                        tokenId=4,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "from": "0x0000000000000000000000000000000000000000",
-                            "to": "0x000000000000000000000000000000000000BABA",
-                            "tokenId": 4,
-                        },
-                        logIndex=1337,
-                    ),
+                MintNonFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    tokenId=4,
                 ),
-                (
-                    TransferNonFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        src="0x0000000000000000000000000000000000000000",
-                        dst="0x000000000000000000000000000000000000BABA",
-                        tokenId=4,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "from": "0x0000000000000000000000000000000000000000",
-                            "to": "0x000000000000000000000000000000000000BABA",
-                            "tokenId": 4,
-                        },
-                        logIndex=1337,
-                    ),
+                TransferNonFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    src="0x0000000000000000000000000000000000000000",
+                    dst="0x000000000000000000000000000000000000BABA",
+                    tokenId=4,
                 ),
             ],
             events,
@@ -549,6 +401,7 @@ class ERC721Tests(unittest.TestCase):
             return_value=[
                 EventData(
                     event="Transfer",
+                    address="0x000000000000000000000000000000000000AAAA",
                     args={
                         "from": "0x000000000000000000000000000000000000dead",
                         "to": "0x000000000000000000000000000000000000BABA",
@@ -565,49 +418,24 @@ class ERC721Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
-        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        block_hash = MagicMock(spec=HexBytes)
 
-        events = te.get_transaction_events(
-            ContractCategory.ERC721, contract, receipt, block_hash
-        )
+        events = te.get_transaction_events(ContractCategory.ERC721, contract, receipt)
         events = list(events)
 
         self.assertEqual(
             [
-                (
-                    MintNonFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        account="0x000000000000000000000000000000000000BABA",
-                        tokenId=4,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "from": "0x000000000000000000000000000000000000dead",
-                            "to": "0x000000000000000000000000000000000000BABA",
-                            "tokenId": 4,
-                        },
-                        logIndex=1337,
-                    ),
+                MintNonFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    tokenId=4,
                 ),
-                (
-                    TransferNonFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        src="0x000000000000000000000000000000000000dead",
-                        dst="0x000000000000000000000000000000000000BABA",
-                        tokenId=4,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "from": "0x000000000000000000000000000000000000dead",
-                            "to": "0x000000000000000000000000000000000000BABA",
-                            "tokenId": 4,
-                        },
-                        logIndex=1337,
-                    ),
+                TransferNonFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    src="0x000000000000000000000000000000000000dead",
+                    dst="0x000000000000000000000000000000000000BABA",
+                    tokenId=4,
                 ),
             ],
             events,
@@ -621,6 +449,7 @@ class ERC721Tests(unittest.TestCase):
             return_value=[
                 EventData(
                     event="Transfer",
+                    address="0x000000000000000000000000000000000000AAAA",
                     args={
                         "from": "0x000000000000000000000000000000000000BABA",
                         "to": "0x0000000000000000000000000000000000000000",
@@ -637,49 +466,24 @@ class ERC721Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
-        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        block_hash = MagicMock(spec=HexBytes)
 
-        events = te.get_transaction_events(
-            ContractCategory.ERC721, contract, receipt, block_hash
-        )
+        events = te.get_transaction_events(ContractCategory.ERC721, contract, receipt)
         events = list(events)
 
         self.assertEqual(
             [
-                (
-                    BurnNonFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        account="0x000000000000000000000000000000000000BABA",
-                        tokenId=4,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "from": "0x000000000000000000000000000000000000BABA",
-                            "to": "0x0000000000000000000000000000000000000000",
-                            "tokenId": 4,
-                        },
-                        logIndex=1337,
-                    ),
+                BurnNonFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    tokenId=4,
                 ),
-                (
-                    TransferNonFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        src="0x000000000000000000000000000000000000BABA",
-                        dst="0x0000000000000000000000000000000000000000",
-                        tokenId=4,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "from": "0x000000000000000000000000000000000000BABA",
-                            "to": "0x0000000000000000000000000000000000000000",
-                            "tokenId": 4,
-                        },
-                        logIndex=1337,
-                    ),
+                TransferNonFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    src="0x000000000000000000000000000000000000BABA",
+                    dst="0x0000000000000000000000000000000000000000",
+                    tokenId=4,
                 ),
             ],
             events,
@@ -693,6 +497,7 @@ class ERC721Tests(unittest.TestCase):
             return_value=[
                 EventData(
                     event="Transfer",
+                    address="0x000000000000000000000000000000000000AAAA",
                     args={
                         "from": "0x000000000000000000000000000000000000BABA",
                         "to": "0x000000000000000000000000000000000000dead",
@@ -709,49 +514,24 @@ class ERC721Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
-        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        block_hash = MagicMock(spec=HexBytes)
 
-        events = te.get_transaction_events(
-            ContractCategory.ERC721, contract, receipt, block_hash
-        )
+        events = te.get_transaction_events(ContractCategory.ERC721, contract, receipt)
         events = list(events)
 
         self.assertEqual(
             [
-                (
-                    BurnNonFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        account="0x000000000000000000000000000000000000BABA",
-                        tokenId=4,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "from": "0x000000000000000000000000000000000000BABA",
-                            "to": "0x000000000000000000000000000000000000dead",
-                            "tokenId": 4,
-                        },
-                        logIndex=1337,
-                    ),
+                BurnNonFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    tokenId=4,
                 ),
-                (
-                    TransferNonFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        src="0x000000000000000000000000000000000000BABA",
-                        dst="0x000000000000000000000000000000000000dead",
-                        tokenId=4,
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "from": "0x000000000000000000000000000000000000BABA",
-                            "to": "0x000000000000000000000000000000000000dead",
-                            "tokenId": 4,
-                        },
-                        logIndex=1337,
-                    ),
+                TransferNonFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    src="0x000000000000000000000000000000000000BABA",
+                    dst="0x000000000000000000000000000000000000dead",
+                    tokenId=4,
                 ),
             ],
             events,
@@ -765,6 +545,7 @@ class ERC721Tests(unittest.TestCase):
             return_value=[
                 EventData(
                     event="Transfer",
+                    address="0x000000000000000000000000000000000000AAAA",
                     args={
                         "from": "0x000000000000000000000000000000000000BABA",
                         "to": "0x000000000000000000000000000000000000ABAB",
@@ -781,33 +562,19 @@ class ERC721Tests(unittest.TestCase):
         redeem_event = MagicMock(spec=ContractEvent)
         redeem_event.process_receipt = MagicMock(return_value=[])
         contract.events.Redeem = MagicMock(return_value=redeem_event)
-        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        block_hash = MagicMock(spec=HexBytes)
 
-        events = te.get_transaction_events(
-            ContractCategory.ERC721, contract, receipt, block_hash
-        )
+        events = te.get_transaction_events(ContractCategory.ERC721, contract, receipt)
         events = list(events)
 
         self.assertEqual(
             [
-                (
-                    TransferNonFungibleEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        src="0x000000000000000000000000000000000000BABA",
-                        dst="0x000000000000000000000000000000000000ABAB",
-                        tokenId="5",
-                    ),
-                    EventData(
-                        event="Transfer",
-                        args={
-                            "from": "0x000000000000000000000000000000000000BABA",
-                            "to": "0x000000000000000000000000000000000000ABAB",
-                            "tokenId": "5",
-                        },
-                        logIndex=1337,
-                    ),
+                TransferNonFungibleEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    src="0x000000000000000000000000000000000000BABA",
+                    dst="0x000000000000000000000000000000000000ABAB",
+                    tokenId="5",
                 )
             ],
             events,
@@ -823,6 +590,7 @@ class UniSwapV2Tests(unittest.TestCase):
             return_value=[
                 EventData(
                     event="PairCreated",
+                    address="0x000000000000000000000000000000000000AAAA",
                     args={
                         "token0": "0x0000000000000000000000000000000000000001",
                         "token1": "0x0000000000000000000000000000000000000002",
@@ -834,36 +602,20 @@ class UniSwapV2Tests(unittest.TestCase):
         )
         contract.events.PairCreated = MagicMock(return_value=pairCreated_event)
         receipt = MagicMock(spec=TxReceipt)
-        receipt.__getitem__ = (
-            lambda _, x: "0x000000000000000000000000000000000000AAAA"
-            if x == "contractAddress"
-            else None
-        )
-        block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
-            ContractCategory.UNI_SWAP_V2_FACTORY, contract, receipt, block_hash
+            ContractCategory.UNI_SWAP_V2_FACTORY, contract, receipt
         )
         events = list(events)
 
         self.assertEqual(
             [
-                (
-                    PairCreatedEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        pair_address="0x0000000000000000000000000000000000000003",
-                        token0="0x0000000000000000000000000000000000000001",
-                        token1="0x0000000000000000000000000000000000000002",
-                    ),
-                    EventData(
-                        event="PairCreated",
-                        args={
-                            "token0": "0x0000000000000000000000000000000000000001",
-                            "token1": "0x0000000000000000000000000000000000000002",
-                            "pair": "0x0000000000000000000000000000000000000003",
-                        },
-                        logIndex=1337,
-                    ),
+                PairCreatedEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    pair_address="0x0000000000000000000000000000000000000003",
+                    token0="0x0000000000000000000000000000000000000001",
+                    token1="0x0000000000000000000000000000000000000002",
+                    log_index=1337,
                 )
             ],
             events,
@@ -877,6 +629,7 @@ class UniSwapV2Tests(unittest.TestCase):
             return_value=[
                 EventData(
                     event="Mint",
+                    address="0x000000000000000000000000000000000000AAAA",
                     args={
                         "sender": "0x0000000000000000000000000000000000000001",
                         "amount0": 2,
@@ -893,33 +646,21 @@ class UniSwapV2Tests(unittest.TestCase):
         Swap_event = MagicMock(spec=ContractEvent)
         Swap_event.process_receipt = MagicMock(return_value=[])
         contract.events.Swap = MagicMock(return_value=Swap_event)
-        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
-            ContractCategory.UNI_SWAP_V2_PAIR, contract, receipt, block_hash
+            ContractCategory.UNI_SWAP_V2_PAIR, contract, receipt
         )
         events = list(events)
 
         self.assertEqual(
             [
-                (
-                    MintPairEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        sender="0x0000000000000000000000000000000000000001",
-                        amount0=2,
-                        amount1=3,
-                    ),
-                    EventData(
-                        event="Mint",
-                        args={
-                            "sender": "0x0000000000000000000000000000000000000001",
-                            "amount0": 2,
-                            "amount1": 3,
-                        },
-                        logIndex=1337,
-                    ),
+                MintPairEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    sender="0x0000000000000000000000000000000000000001",
+                    amount0=2,
+                    amount1=3,
                 )
             ],
             events,
@@ -933,6 +674,7 @@ class UniSwapV2Tests(unittest.TestCase):
             return_value=[
                 EventData(
                     event="Burn",
+                    address="0x000000000000000000000000000000000000AAAA",
                     args={
                         "sender": "0x0000000000000000000000000000000000000001",
                         "amount0": 2,
@@ -950,36 +692,23 @@ class UniSwapV2Tests(unittest.TestCase):
         Swap_event = MagicMock(spec=ContractEvent)
         Swap_event.process_receipt = MagicMock(return_value=[])
         contract.events.Swap = MagicMock(return_value=Swap_event)
-        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
-            ContractCategory.UNI_SWAP_V2_PAIR, contract, receipt, block_hash
+            ContractCategory.UNI_SWAP_V2_PAIR, contract, receipt
         )
         events = list(events)
 
         self.assertEqual(
             [
-                (
-                    BurnPairEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        src="0x0000000000000000000000000000000000000001",
-                        dst="0x0000000000000000000000000000000000000002",
-                        amount0=2,
-                        amount1=3,
-                    ),
-                    EventData(
-                        event="Burn",
-                        args={
-                            "sender": "0x0000000000000000000000000000000000000001",
-                            "amount0": 2,
-                            "amount1": 3,
-                            "to": "0x0000000000000000000000000000000000000002",
-                        },
-                        logIndex=1337,
-                    ),
-                )
+                BurnPairEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    src="0x0000000000000000000000000000000000000001",
+                    dst="0x0000000000000000000000000000000000000002",
+                    amount0=2,
+                    amount1=3,
+                ),
             ],
             events,
         )
@@ -998,6 +727,7 @@ class UniSwapV2Tests(unittest.TestCase):
             return_value=[
                 EventData(
                     event="Swap",
+                    address="0x000000000000000000000000000000000000AAAA",
                     args={
                         "sender": "0x0000000000000000000000000000000000000001",
                         "amount0In": 2,
@@ -1011,40 +741,25 @@ class UniSwapV2Tests(unittest.TestCase):
             ]
         )
         contract.events.Swap = MagicMock(return_value=Swap_event)
-        contract.address = "0x000000000000000000000000000000000000AAAA"
         receipt = MagicMock(spec=TxReceipt)
-        block_hash = MagicMock(spec=HexBytes)
 
         events = te.get_transaction_events(
-            ContractCategory.UNI_SWAP_V2_PAIR, contract, receipt, block_hash
+            ContractCategory.UNI_SWAP_V2_PAIR, contract, receipt
         )
         events = list(events)
 
         self.assertEqual(
             [
-                (
-                    SwapPairEvent(
-                        contract_address="0x000000000000000000000000000000000000AAAA",
-                        src="0x0000000000000000000000000000000000000001",
-                        dst="0x0000000000000000000000000000000000000002",
-                        in0=2,
-                        in1=3,
-                        out0=4,
-                        out1=5,
-                    ),
-                    EventData(
-                        event="Swap",
-                        args={
-                            "sender": "0x0000000000000000000000000000000000000001",
-                            "amount0In": 2,
-                            "amount1In": 3,
-                            "amount0Out": 4,
-                            "amount1Out": 5,
-                            "to": "0x0000000000000000000000000000000000000002",
-                        },
-                        logIndex=1337,
-                    ),
-                )
+                SwapPairEvent(
+                    address="0x000000000000000000000000000000000000AAAA",
+                    log_index=1337,
+                    src="0x0000000000000000000000000000000000000001",
+                    dst="0x0000000000000000000000000000000000000002",
+                    in0=2,
+                    in1=3,
+                    out0=4,
+                    out1=5,
+                ),
             ],
             events,
         )
