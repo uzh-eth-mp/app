@@ -29,6 +29,16 @@ docker ps --format '{{.Names}}' \
     | while read c ; do {(docker network connect ${PROJECT_NAME}_default $c) &}; done
 echo "Done; following container logs..."
 
+# Show a warning message that keyboardinterrupt didn't execute a docker compose down
+function warning {
+    exit_status=$?
+    echo "Note: the 'prod' containers are still running. View the logs with `./scripts/view-logs-prod-eth.sh` or stop them with `./scripts/stop-prod-eth.sh`."
+    exit $exit_status
+}
+# Switch traps, from cleanup to a warning
+trap - EXIT
+trap warning EXIT
+
 # attach the logs only to the data producers and consumers
 docker compose \
     -p $PROJECT_NAME \

@@ -110,6 +110,9 @@ services:
     volumes:
       - ./src/data_collection/etc:/app/etc
     profiles: ["eth", "all"]
+    network_mode: "bridge"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - kafka
       - redis
@@ -123,6 +126,9 @@ services:
     volumes:
       - ./src/data_collection/etc:/app/etc
     profiles: ["etc", "all"]
+    network_mode: "bridge"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - kafka
       - redis
@@ -136,6 +142,9 @@ services:
     volumes:
       - ./src/data_collection/etc:/app/etc
     profiles: ["bsc", "all"]
+    network_mode: "bridge"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - kafka
       - redis
@@ -150,6 +159,9 @@ services:
     volumes:
       - ./src/data_collection/etc:/app/etc
     profiles: ["eth", "all"]
+    network_mode: "bridge"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - data_producer_eth
       - kafka
@@ -164,6 +176,9 @@ services:
     volumes:
       - ./src/data_collection/etc:/app/etc
     profiles: ["etc", "all"]
+    network_mode: "bridge"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - data_producer_etc
       - kafka
@@ -178,6 +193,9 @@ services:
     volumes:
       - ./src/data_collection/etc:/app/etc
     profiles: ["bsc", "all"]
+    network_mode: "bridge"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - data_producer_bsc
       - kafka
