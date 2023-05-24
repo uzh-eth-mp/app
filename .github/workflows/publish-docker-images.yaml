@@ -3,9 +3,6 @@ on:
   release:
     types: [published]
 
-env:
-  REGISTRY: ghcr.io
-
 jobs:
   build-and-push-image:
     name: Build and push Docker images to GitHub Container Registry
@@ -15,13 +12,13 @@ jobs:
       matrix:
         include:
           - dockerfile: ./src/data_collection/Dockerfile
-            image: ${{ env.REGISTRY }}/uzh-eth-mp/data_collector
+            image: ghcr.io/uzh-eth-mp/data_collector
           - dockerfile: ./src/db/Dockerfile
-            image: ${{ env.REGISTRY }}/uzh-eth-mp/db
+            image: ghcr.io/uzh-eth-mp/db
           - dockerfile: ./src/kafka/Dockerfile
-            image: ${{ env.REGISTRY }}/uzh-eth-mp/kafka
+            image: ghcr.io/uzh-eth-mp/kafka
           - dockerfile: ./src/zookeeper/Dockerfile
-            image: ${{ env.REGISTRY }}/uzh-eth-mp/zookeeper
+            image: ghcr.io/uzh-eth-mp/zookeeper
     permissions:
       contents: read
       packages: write
@@ -33,7 +30,7 @@ jobs:
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
