@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/uzh-eth-mp/app/compare/v1.0.2...v1.0.3) (2023-05-24)
+
+
+### Continuous Integration
+
+* fix publish docker image env ([eab585d](https://github.com/uzh-eth-mp/app/commit/eab585d19a8ac82605563a72787b23c7442d82af))
+
 ## [1.0.2](https://github.com/uzh-eth-mp/app/compare/v1.0.1...v1.0.2) (2023-05-24)
 
 
