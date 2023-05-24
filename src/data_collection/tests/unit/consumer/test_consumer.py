@@ -64,7 +64,9 @@ class TestDataConsumer:
             transaction_receipt_data,
             w3_tx_receipt_mock,
         )
-        consumer.tx_processors[mode].process_transaction = AsyncMock()
+        process_tx_mock = AsyncMock()
+        process_tx_mock.return_value = True
+        consumer.tx_processors[mode].process_transaction = process_tx_mock
         kafka_event = Mock()
         kafka_event.value = f"{mode.value}:0x1234".encode()
 
@@ -87,3 +89,51 @@ class TestDataConsumer:
         #     consumer._consume_partial.assert_awaited_once()
 
         assert consumer._n_consumed_txs == 1
+        assert consumer._n_processed_txs == 1
+
+    async def test_on_kafka_event_n_processed_txs(
+        self,
+        transaction_data,
+        transaction_receipt_data,
+        consumer_factory,
+        config_factory,
+        data_collection_config_factory,
+        contract_config_usdt,
+        contract_abi,
+    ):
+        """Test on_kafka_event doesn't increment n_processed_txs if transaction is not processed"""
+        # Arrange
+        mode = DataCollectionMode.PARTIAL
+        data_collection_config = data_collection_config_factory([contract_config_usdt])
+        data_collection_config.mode = mode
+        consumer = consumer_factory(
+            config_factory([data_collection_config]),
+            contract_abi,
+        )
+        consumer.node_connector.get_transaction_data = AsyncMock()
+        consumer.node_connector.get_transaction_data.return_value = (
+            transaction_data,
+            Mock(),
+        )
+        consumer.node_connector.get_transaction_receipt_data = AsyncMock()
+        w3_tx_receipt_mock = Mock()
+        consumer.node_connector.get_transaction_receipt_data.return_value = (
+            transaction_receipt_data,
+            w3_tx_receipt_mock,
+        )
+        process_tx_mock = AsyncMock()
+        process_tx_mock.return_value = False
+        consumer.tx_processors[mode].process_transaction = process_tx_mock
+        kafka_event = Mock()
+        kafka_event.value = f"partial:0x1234".encode()
+
+        # Act
+        await consumer._on_kafka_event(event=kafka_event)
+
+        # Assert
+        consumer.tx_processors[mode].process_transaction.assert_awaited_once_with(
+            transaction_data,
+            transaction_receipt_data,
+            w3_tx_receipt_mock,
+        )
+        assert consumer._n_processed_txs == 0

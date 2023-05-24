@@ -235,7 +235,20 @@ class TransactionProcessor:
 
 
 class PartialTransactionProcessor(TransactionProcessor):
-    """Process transactions with mode partial"""
+    """Process transactions with mode partial
+
+    Save only the transactions that are related to the
+    contracts in the config and only their respective events.
+
+    Note:
+        This processor (`process_transaction`) covers 3 distinct cases of when we want to save a transaction:
+        1. Regular contract interaction (to_address=address in config)
+        2. Contract creation (receipt.contract_address=address in config)
+        3. Transaction event (any eventLog.address=address in config)
+
+        If one of the above cases is true, we save the transaction and its events
+        (if event.address is in config).
+    """
 
     async def _process_regular_contract_interaction(
         self,
@@ -243,6 +256,7 @@ class PartialTransactionProcessor(TransactionProcessor):
         tx_receipt_data: TransactionReceiptData,
         w3_tx_receipt: TxReceipt,
     ) -> Tuple[bool, Set[int]]:
+        """Process regular contract interaction case (1.) and transaction event case (3.)"""
         should_save_tx, log_indices_to_save = False, set()
         # 1. Regular contract interaction
         # Get unique event addresses from the transaction receipt
@@ -297,6 +311,7 @@ class PartialTransactionProcessor(TransactionProcessor):
         tx_receipt_data: TransactionReceiptData,
         w3_tx_receipt: TxReceipt,
     ) -> Tuple[bool, Set[int]]:
+        """Process contract creation case (2.)"""
         # 2. Contract creation
         contract_address = tx_receipt_data.contract_address
         contract_category = self.contract_parser.get_contract_category(contract_address)
@@ -328,31 +343,10 @@ class PartialTransactionProcessor(TransactionProcessor):
         tx_receipt_data: TransactionReceiptData,
         w3_tx_receipt: TxReceipt,
     ) -> bool:
-        """Called for a partial consume mode of transaction data
-
-        Save only the transactions that are related to the
-        contracts in the config and only their respective events.
-
-        Args:
-            tx_data (TransactionData): Transaction data
-            tx_receipt_data (TransactionReceiptData): Transaction receipt data
-            w3_tx_receipt (TxReceipt): transaction receipt data in web3 format
-
-        Returns:
-            bool: True if the transaction was processed, False otherwise
-
-        Note:
-            This method covers 3 distinct cases of when we want to save a transaction:
-            1. Regular contract interaction (to_address=address in config)
-            2. Contract creation (receipt.contract_address=address in config)
-            3. Transaction event (any eventLog.address=address in config)
-
-            If one of the above cases is true, we save the transaction and its events
-            (if defined in Config).
-        """
         should_save_tx, log_indices_to_save = False, set()
 
         if tx_data.to_address:
+            # Case 1. Regular contract interaction or Case 3. Transaction event
             (
                 should_save_tx,
                 log_indices_to_save,
@@ -360,6 +354,7 @@ class PartialTransactionProcessor(TransactionProcessor):
                 tx_data, tx_receipt_data, w3_tx_receipt
             )
         elif tx_receipt_data.contract_address:
+            # Case 2. Contract creation
             (
                 should_save_tx,
                 log_indices_to_save,
@@ -374,17 +369,12 @@ class PartialTransactionProcessor(TransactionProcessor):
                 tx_receipt_data=tx_receipt_data,
                 log_indices_to_save=log_indices_to_save,
             )
-            return True
-        return False
+
+        return should_save_tx
 
 
 class FullTransactionProcessor(TransactionProcessor):
     """Process transactions with mode full
-
-    Args:
-        tx_data (TransactionData): Transaction data
-        tx_receipt_data (TransactionReceiptData): Transaction receipt data
-        w3_tx_receipt (TxReceipt): transaction receipt data in web3 format
 
     Note:
         Directly save every tx data to db without any further processing.
@@ -396,18 +386,6 @@ class FullTransactionProcessor(TransactionProcessor):
         tx_receipt_data: TransactionReceiptData,
         w3_tx_receipt: TxReceipt,
     ) -> bool:
-        """Called for a full consume mode of transaction data
-
-        Save every tx data to db without furhter processing
-
-        Args:
-            tx_data (TransactionData): Transaction data
-            tx_receipt_data (TransactionReceiptData): Transaction receipt data
-            w3_tx_receipt (TxReceipt): transaction receipt data in web3 format
-
-        Returns:
-            bool: True if the transaction was processed, False otherwise
-        """
         # Insert transaction + Logs + Internal transactions
         await self._handle_transaction(
             tx_data=tx_data,

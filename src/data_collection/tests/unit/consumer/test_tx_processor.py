@@ -852,152 +852,360 @@ class TestTransactionProcessor:
         assert result == set([])
 
 
-class PartialTransactionProcessor:
+class TestPartialTransactionProcessor:
     """Tests for PartialTransactionProcessor methods"""
 
-    async def test_consume_partial_unknown_contract_flow(
-        self, default_consumer, transaction_data, transaction_receipt_data
+    async def test_process_transaction_case1_and_case3(
+        self, partial_transaction_processor, transaction_data, transaction_receipt_data
     ):
-        """Test _consume_partial flow if an unknown contract is encountered"""
-        transaction_data.to_address = "0x1234"
-        transaction_receipt_data.contract_address = "0x1234"
-        default_consumer._handle_contract_creation = AsyncMock()
-        default_consumer._handle_transaction = AsyncMock()
-        default_consumer._handle_transaction_events = AsyncMock()
-        default_consumer.contract_parser.get_contract_category.return_value = None
+        """Test case 1. (Regular contract interaction) and case 3. (Transaction event)
+        in process_transaction gets saved into db
+        """
+        # Arrange
+        interaction_mock = AsyncMock()
+        interaction_mock.return_value = (True, set())
+        partial_transaction_processor._process_regular_contract_interaction = (
+            interaction_mock
+        )
+        partial_transaction_processor._process_contract_creation = AsyncMock()
+        w3_tx_receipt_mock = Mock()
+        partial_transaction_processor._handle_transaction = AsyncMock()
 
-        await default_consumer._consume_partial(
+        # Act
+        saved = await partial_transaction_processor.process_transaction(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            w3_tx_receipt=w3_tx_receipt_mock,
+        )
+
+        # Assert
+        partial_transaction_processor._process_regular_contract_interaction.assert_awaited_once_with(
+            transaction_data, transaction_receipt_data, w3_tx_receipt_mock
+        )
+        partial_transaction_processor._process_contract_creation.assert_not_awaited()
+        partial_transaction_processor._handle_transaction.assert_awaited_once_with(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            log_indices_to_save=set(),
+        )
+        assert saved is True
+
+    async def test_process_transaction_case2(
+        self,
+        partial_transaction_processor,
+        transaction_data,
+        transaction_receipt_data,
+        transaction_logs_data,
+    ):
+        """Test case 2. (Contract creation) in process_transaction gets saved into db"""
+        # Arrange
+        transaction_data.to_address = None
+        transaction_receipt_data.contract_address = "0x1234"
+        transaction_receipt_data.logs = [transaction_logs_data]
+        contract_creation_mock = AsyncMock()
+        contract_creation_mock.return_value = (True, set([1337]))
+        partial_transaction_processor._process_contract_creation = (
+            contract_creation_mock
+        )
+        partial_transaction_processor._process_regular_contract_interaction = (
+            AsyncMock()
+        )
+        w3_tx_receipt_mock = Mock()
+        partial_transaction_processor._handle_transaction = AsyncMock()
+
+        # Act
+        saved = await partial_transaction_processor.process_transaction(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            w3_tx_receipt=w3_tx_receipt_mock,
+        )
+
+        # Assert
+        partial_transaction_processor._process_regular_contract_interaction.assert_not_awaited()
+        partial_transaction_processor._process_contract_creation.assert_awaited_once_with(
+            transaction_data, transaction_receipt_data, w3_tx_receipt_mock
+        )
+        partial_transaction_processor._handle_transaction.assert_awaited_once_with(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            log_indices_to_save=set([1337]),
+        )
+        assert saved is True
+
+    async def test_process_transaction_doesnt_save_tx(
+        self,
+        partial_transaction_processor,
+        transaction_data,
+        transaction_receipt_data,
+    ):
+        """Test that process_transaction doesn't save transaction if should_save_tx is False"""
+        partial_transaction_processor._handle_transaction = AsyncMock()
+        transaction_data.to_address = None
+        transaction_receipt_data.contract_address = None
+
+        saved = await partial_transaction_processor.process_transaction(
             tx_data=transaction_data,
             tx_receipt_data=transaction_receipt_data,
             w3_tx_receipt=Mock(),
         )
 
-        assert default_consumer._n_processed_txs == 0
-        default_consumer._handle_contract_creation.assert_not_awaited()
-        default_consumer._handle_transaction.assert_not_awaited()
-        default_consumer._handle_transaction_events.assert_not_awaited()
+        partial_transaction_processor._handle_transaction.assert_not_awaited()
+        assert saved is False
 
-    async def test_consume_partial_known_contract_flow(
+    async def test_process_regular_contract_interaction_unknown_contract_flow(
+        self, partial_transaction_processor, transaction_data, transaction_receipt_data
+    ):
+        """Test _process_regular_contract_interaction flow if an unknown contract is encountered"""
+        transaction_data.to_address = "0x1234"
+        transaction_receipt_data.contract_address = "0x1234"
+        partial_transaction_processor._handle_transaction = AsyncMock()
+        partial_transaction_processor._handle_transaction_events = AsyncMock()
+        partial_transaction_processor.contract_parser.get_contract_category.return_value = (
+            None
+        )
+
+        await partial_transaction_processor._process_regular_contract_interaction(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            w3_tx_receipt=Mock(),
+        )
+
+        partial_transaction_processor._handle_transaction.assert_not_awaited()
+        partial_transaction_processor._handle_transaction_events.assert_not_awaited()
+
+    async def test_process_regular_contract_interaction_known_contract_flow(
         self,
-        default_consumer,
+        partial_transaction_processor,
         transaction_data,
         transaction_receipt_data,
+        transaction_logs_data,
         contract_config_usdt,
     ):
-        """Test _consume_partial flow if a known contract is encountered"""
+        """Test _process_regular_contract_interaction flow if a known contract is encountered"""
+        # Arrange
         transaction_data.to_address = contract_config_usdt.address
         transaction_receipt_data.contract_address = contract_config_usdt.address
-        default_consumer._handle_contract_creation = AsyncMock()
-        default_consumer._handle_transaction = AsyncMock()
+        partial_transaction_processor._handle_contract_creation = AsyncMock()
+        partial_transaction_processor._handle_transaction = AsyncMock()
+        transaction_receipt_data.logs = [transaction_logs_data]
         _handle_tx_events_mock = AsyncMock()
-        _handle_tx_events_mock.return_value = set()
-        default_consumer._handle_transaction_events = _handle_tx_events_mock
-        default_consumer.contract_parser.get_contract_category.return_value = (
-            ContractCategory(contract_config_usdt.category)
+        _handle_tx_events_mock.return_value = set(
+            [transaction_receipt_data.logs[0].log_index]
+        )
+        partial_transaction_processor._handle_transaction_events = (
+            _handle_tx_events_mock
+        )
+        partial_transaction_processor.contract_parser.get_contract_category.return_value = ContractCategory(
+            contract_config_usdt.category
         )
         contract_mock = Mock()
-        default_consumer.contract_parser.get_contract.return_value = contract_mock
+        partial_transaction_processor.contract_parser.get_contract.return_value = (
+            contract_mock
+        )
         w3_tx_receipt = Mock()
 
-        await default_consumer._consume_partial(
+        # Act
+        (
+            should_save_tx,
+            log_indices,
+        ) = await partial_transaction_processor._process_regular_contract_interaction(
             tx_data=transaction_data,
             tx_receipt_data=transaction_receipt_data,
             w3_tx_receipt=w3_tx_receipt,
         )
 
-        assert default_consumer._n_processed_txs == 1
-        default_consumer._handle_contract_creation.assert_not_awaited()
-        default_consumer._handle_transaction.assert_awaited_once_with(
-            tx_data=transaction_data,
-            tx_receipt_data=transaction_receipt_data,
-            log_indices_to_save=set(),
-        )
-        default_consumer._handle_transaction_events.assert_awaited_once_with(
+        # Assert
+        assert should_save_tx is True
+        assert log_indices == set([1337])
+        partial_transaction_processor._handle_transaction_events.assert_awaited_once_with(
             contract=contract_mock,
             category=ContractCategory.ERC20,
             tx_data=transaction_data,
             tx_receipt=w3_tx_receipt,
         )
 
-    async def test_consume_partial_contract_creation_flow(
+    async def test_process_regular_contract_interaction_events_only_flow(
         self,
-        default_consumer,
-        transaction_data,
-        transaction_receipt_data,
-        contract_config_usdt,
-    ):
-        """Test _consume_partial flow if a contract is being created within this transaction"""
-        transaction_data.to_address = None
-        transaction_receipt_data.contract_address = contract_config_usdt.address
-        default_consumer._handle_contract_creation = AsyncMock()
-        default_consumer._handle_transaction = AsyncMock()
-        _handle_tx_events_mock = AsyncMock()
-        _handle_tx_events_mock.return_value = set()
-        default_consumer._handle_transaction_events = _handle_tx_events_mock
-        default_consumer.contract_parser.get_contract_category.return_value = (
-            ContractCategory(contract_config_usdt.category)
-        )
-        contract_mock = Mock()
-        default_consumer.contract_parser.get_contract.return_value = contract_mock
-        w3_tx_receipt = Mock()
-
-        await default_consumer._consume_partial(
-            tx_data=transaction_data,
-            tx_receipt_data=transaction_receipt_data,
-            w3_tx_receipt=w3_tx_receipt,
-        )
-
-        default_consumer._handle_transaction.assert_awaited_once_with(
-            tx_data=transaction_data,
-            tx_receipt_data=transaction_receipt_data,
-            log_indices_to_save=set(),
-        )
-        default_consumer._handle_transaction_events.assert_awaited_once_with(
-            contract=contract_mock,
-            category=ContractCategory.ERC20,
-            tx_data=transaction_data,
-            tx_receipt=w3_tx_receipt,
-        )
-        assert default_consumer._n_processed_txs == 1
-        default_consumer._handle_contract_creation.assert_awaited_once_with(
-            contract=contract_mock,
-            tx_data=transaction_data,
-            category=ContractCategory.ERC20,
-        )
-
-
-class FullTransactionProcessor:
-    """Tests for FullTransactionProcessor methods"""
-
-    async def test_consume_full_flow(
-        self,
-        default_consumer,
+        partial_transaction_processor,
         transaction_data,
         transaction_receipt_data,
         transaction_logs_data,
     ):
-        """Test _consume_full flow"""
-        default_consumer._handle_transaction = AsyncMock()
-        default_consumer.db_manager.insert_transaction_logs = AsyncMock()
-        _handle_tx_events_mock = AsyncMock()
-        _handle_tx_events_mock.return_value = set([1337])
-        default_consumer._handle_transaction_events = _handle_tx_events_mock
-        transaction_receipt_data.logs = [transaction_logs_data]
-
-        await default_consumer._consume_full(
-            tx_data=transaction_data,
-            tx_receipt_data=transaction_receipt_data,
+        """Test _process_regular_contract_interaction flow if only events with
+        addresses from config are encountered
+        """
+        transaction_data.to_address = "0x12347365"
+        transaction_receipt_data.contract_address = None
+        logs1 = transaction_logs_data.copy()
+        logs1.address = "0x1234"
+        logs1.log_index = 1337
+        logs2 = transaction_logs_data.copy()
+        logs2.address = "0x1234F00D"
+        logs2.log_index = 1338
+        logs3 = transaction_logs_data.copy()
+        logs3.log_index = 1339
+        transaction_receipt_data.logs = [logs1, logs2, logs3]
+        partial_transaction_processor._handle_transaction = AsyncMock()
+        partial_transaction_processor._handle_transaction_events = AsyncMock()
+        partial_transaction_processor._handle_transaction_events.return_value = set(
+            [1337]
         )
 
-        default_consumer._handle_transaction.assert_awaited_once_with(
+        def get_contract_category(address):
+            if address == "0x1234":
+                return ContractCategory.ERC20
+            return None
+
+        partial_transaction_processor.contract_parser.get_contract_category = MagicMock(
+            side_effect=get_contract_category
+        )
+
+        # Act
+        (
+            should_save,
+            log_indices,
+        ) = await partial_transaction_processor._process_regular_contract_interaction(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            w3_tx_receipt=Mock(),
+        )
+
+        # Assert
+        partial_transaction_processor._handle_transaction.assert_not_awaited()
+        assert (
+            partial_transaction_processor.contract_parser.get_contract_category.call_count
+            == 4
+        )
+        partial_transaction_processor._handle_transaction_events.await_count == 1
+        assert should_save is True
+        assert log_indices == set([1337])
+
+    async def test_process_contract_creation_flow_for_known_contract(
+        self,
+        partial_transaction_processor,
+        transaction_data,
+        transaction_receipt_data,
+        contract_config_usdt,
+    ):
+        """Test _process_contract_creation flow if a contract is being created within
+        this transaction for a known contract
+        """
+        transaction_data.to_address = None
+        transaction_receipt_data.contract_address = contract_config_usdt.address
+        partial_transaction_processor._handle_contract_creation = AsyncMock()
+        partial_transaction_processor._handle_transaction = AsyncMock()
+        _handle_tx_events_mock = AsyncMock()
+        _handle_tx_events_mock.return_value = set([1337])
+        partial_transaction_processor._handle_transaction_events = (
+            _handle_tx_events_mock
+        )
+        partial_transaction_processor.contract_parser.get_contract_category.return_value = ContractCategory(
+            contract_config_usdt.category
+        )
+        contract_mock = Mock()
+        partial_transaction_processor.contract_parser.get_contract.return_value = (
+            contract_mock
+        )
+        w3_tx_receipt = Mock()
+
+        (
+            should_save_tx,
+            log_indices_to_save,
+        ) = await partial_transaction_processor._process_contract_creation(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            w3_tx_receipt=w3_tx_receipt,
+        )
+
+        # Assert
+        assert should_save_tx is True
+        assert log_indices_to_save == set([1337])
+        partial_transaction_processor._handle_transaction_events.assert_awaited_once_with(
+            contract=contract_mock,
+            category=ContractCategory.ERC20,
+            tx_data=transaction_data,
+            tx_receipt=w3_tx_receipt,
+        )
+        partial_transaction_processor._handle_contract_creation.assert_awaited_once_with(
+            contract=contract_mock,
+            tx_data=transaction_data,
+            category=ContractCategory.ERC20,
+        )
+
+    async def test_process_contract_creation_flow_for_unknown_contract(
+        self,
+        partial_transaction_processor,
+        transaction_data,
+        transaction_receipt_data,
+        contract_config_usdt,
+    ):
+        """Test _process_contract_creation flow if a contract is being created within
+        this transaction for an unknown contract
+        """
+        transaction_data.to_address = None
+        transaction_receipt_data.contract_address = "0x1337"
+        partial_transaction_processor._handle_contract_creation = AsyncMock()
+        partial_transaction_processor._handle_transaction = AsyncMock()
+        _handle_tx_events_mock = AsyncMock()
+        _handle_tx_events_mock.return_value = set()
+        partial_transaction_processor._handle_transaction_events = (
+            _handle_tx_events_mock
+        )
+        partial_transaction_processor.contract_parser.get_contract_category.return_value = (
+            None
+        )
+        w3_tx_receipt = Mock()
+
+        (
+            should_save_tx,
+            log_indices_to_save,
+        ) = await partial_transaction_processor._process_contract_creation(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            w3_tx_receipt=w3_tx_receipt,
+        )
+
+        # Assert
+        assert should_save_tx is False
+        assert log_indices_to_save == set()
+        partial_transaction_processor._handle_transaction_events.assert_not_awaited()
+        partial_transaction_processor._handle_contract_creation.assert_not_awaited()
+
+
+class TestFullTransactionProcessor:
+    """Tests for FullTransactionProcessor methods"""
+
+    async def test_process_transaction_flow(
+        self,
+        full_transaction_processor,
+        transaction_data,
+        transaction_receipt_data,
+        transaction_logs_data,
+    ):
+        """Test process_transaction flow"""
+        full_transaction_processor._handle_transaction = AsyncMock()
+        full_transaction_processor.db_manager.insert_transaction_logs = AsyncMock()
+        _handle_tx_events_mock = AsyncMock()
+        _handle_tx_events_mock.return_value = set([1337])
+        full_transaction_processor._handle_transaction_events = _handle_tx_events_mock
+        transaction_receipt_data.logs = [transaction_logs_data]
+
+        saved = await full_transaction_processor.process_transaction(
+            tx_data=transaction_data,
+            tx_receipt_data=transaction_receipt_data,
+            w3_tx_receipt=Mock(),
+        )
+
+        # Assert
+        full_transaction_processor._handle_transaction.assert_awaited_once_with(
             tx_data=transaction_data,
             tx_receipt_data=transaction_receipt_data,
             log_indices_to_save=set([1337]),
         )
-        assert default_consumer._n_processed_txs == 1
+        assert saved is True
 
 
-class LogFilterTransactionProcessor:
+class TestogFilterTransactionProcessor:
     """Tests for LogFilterTransactionProcessor methods"""
 
     pass

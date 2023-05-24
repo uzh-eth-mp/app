@@ -70,8 +70,10 @@ class DataConsumer(DataCollector):
         # Transaction hash of the currently processed transaction
         self._tx_hash = None
 
-        # Keep a number of consumed transactions (from Kafka)
+        # Number of consumed transactions (from Kafka)
         self._n_consumed_txs = 0
+        # Number of processed transactions (saved to PostgreSQL or otherwise processed)
+        self._n_processed_txs = 0
 
         # Apply kafka log filter to filter out some kafka logs
         kafka_logger = logging.getLogger("aiokafka.consumer.group_coordinator")
@@ -92,7 +94,9 @@ class DataConsumer(DataCollector):
 
         # Get the correct transaction processor for the given mode
         tx_processor = self.tx_processors[mode]
-        await tx_processor.process_transaction(tx_data, tx_receipt_data, w3_tx_receipt)
+        self._n_processed_txs += await tx_processor.process_transaction(
+            tx_data, tx_receipt_data, w3_tx_receipt
+        )
 
     async def start_consuming_data(self) -> int:
         """
@@ -122,10 +126,9 @@ class DataConsumer(DataCollector):
             )
             exit_code = 1
         finally:
-            n_processed_txs = 0
             log.info(
                 "number of consumed transactions: {} | number of processed transactions: {}".format(
-                    self._n_consumed_txs, n_processed_txs
+                    self._n_consumed_txs, self._n_processed_txs
                 )
             )
             return exit_code
