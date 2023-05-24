@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/uzh-eth-mp/app/compare/v1.0.3...v1.0.3) (2023-05-24)
+
+
+### Continuous Integration
+
+* update publish docker dockerfile path ([436e824](https://github.com/uzh-eth-mp/app/commit/436e824b10da7c6bafeb6b12b72f12c9056e6e28))
+
 ## [1.0.3](https://github.com/uzh-eth-mp/app/compare/v1.0.2...v1.0.3) (2023-05-24)
 
 
