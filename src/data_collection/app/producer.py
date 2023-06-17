@@ -121,8 +121,8 @@ class DataProducer(DataCollector):
                 # Insert new block
                 block_reward = 0
                 if get_block_reward:
-                    # FIXME: call trace_block to get static block reward
-                    pass
+                    block_reward = await self.node_connector.get_block_reward(i_block)
+                    
 
                 await self._insert_block(
                     block_data=block_data, block_reward=block_reward
