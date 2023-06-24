@@ -7,15 +7,16 @@ BEGIN
   EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
        block_number bigint PRIMARY KEY,
-       block_hash varchar,
-       nonce varchar,
+       block_hash bytea,
+       nonce bytea,
        difficulty numeric(78,0),
        gas_limit bigint,
        gas_used bigint,
        timestamp timestamp,
-       miner varchar,
-       parent_hash varchar,
+       miner bytea,
+       parent_hash bytea,
        block_reward numeric(78,18),
+       uncles bytea ARRAY,
        updated_at TIMESTAMP
       )', node_name || '_block');
 END
@@ -37,17 +38,17 @@ CREATE OR REPLACE FUNCTION create_table_transaction(node_name varchar(3))
 BEGIN
   EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       transaction_hash varchar PRIMARY KEY,
+       transaction_hash bytea PRIMARY KEY,
        block_number bigint,
-       from_address varchar,
-       to_address varchar,
+       from_address bytea,
+       to_address bytea,
        value numeric(78,18),
        transaction_fee numeric(78,18),
        gas_price numeric(78,18),
        gas_limit numeric(78,0),
        gas_used numeric(78,0),
        is_token_tx boolean,
-       input_data varchar,
+       input_data bytea,
        updated_at TIMESTAMP
       )', node_name || '_transaction');
 END
@@ -69,14 +70,14 @@ CREATE OR REPLACE FUNCTION create_table_internal_transaction(node_name varchar(3
 BEGIN
   EXECUTE format('
     CREATE TABLE IF NOT EXISTS %I (
-      transaction_hash varchar,
-      from_address varchar,
-      to_address varchar,
+      transaction_hash bytea,
+      from_address bytea,
+      to_address bytea,
       value numeric(78,18),
       gas_limit bigint,
       gas_used bigint,
-      input_data varchar,
-      call_type varchar,
+      input_data bytea,
+      call_type bytea,
       updated_at TIMESTAMP
     )', node_name || '_internal_transaction');
   EXECUTE format('
@@ -101,12 +102,12 @@ CREATE OR REPLACE FUNCTION create_table_transaction_logs(node_name varchar(3))
 BEGIN
   EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       transaction_hash varchar,
-       address varchar,
+       transaction_hash bytea,
+       address bytea,
        log_index int,
-       data varchar,
+       data bytea,
        removed boolean,
-       topics varchar ARRAY,
+       topics bytea ARRAY,
        updated_at TIMESTAMP,
        PRIMARY KEY (transaction_hash, log_index)
       )', node_name || '_transaction_logs');

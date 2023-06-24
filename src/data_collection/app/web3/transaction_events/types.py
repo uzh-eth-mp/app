@@ -10,7 +10,7 @@ class ContractEvent(BaseModel):
     interaction with a smart contract).
     """
 
-    address: Optional[str]
+    address: Optional[bytes]
     log_index: int
 
 
@@ -35,8 +35,8 @@ class TransferFungibleEvent(ContractEvent):
     This represents transfer event between two addreses.
     """
 
-    src: str
-    dst: str
+    src: bytes
+    dst: bytes
     value: int
 
 
@@ -45,28 +45,28 @@ class PairCreatedEvent(ContractEvent):
     This represents the creation a contract for trading the token pair.
     """
 
-    pair_address: str
-    token0: str
-    token1: str
+    pair_address: bytes
+    token0: bytes
+    token1: bytes
 
 
 # https://ethereum.org/en/developers/tutorials/uniswap-v2-annotated-code/#pair-events
 class MintPairEvent(ContractEvent):
-    sender: str
+    sender: bytes
     amount0: int
     amount1: int
 
 
 class BurnPairEvent(ContractEvent):
-    src: str
-    dst: str
+    src: bytes
+    dst: bytes
     amount0: int
     amount1: int
 
 
 class SwapPairEvent(ContractEvent):
-    src: str
-    dst: str
+    src: bytes
+    dst: bytes
     in0: int
     in1: int
     out0: int
@@ -78,7 +78,7 @@ class MintNonFungibleEvent(ContractEvent):
     This represents mint event.
     """
 
-    tokenId: str
+    tokenId: bytes
 
 
 class BurnNonFungibleEvent(ContractEvent):
@@ -98,8 +98,8 @@ class TransferNonFungibleEvent(ContractEvent):
     This represents transfer event of NFTs between two addresses.
     """
 
-    src: str
-    dst: str
+    src: bytes
+    dst: bytes
     tokenId: int
 
 

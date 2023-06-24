@@ -42,15 +42,16 @@ class DatabaseManager:
     async def insert_block(
         self,
         block_number: int,
-        block_hash: str,
-        nonce: str,
+        block_hash: bytes,
+        nonce: bytes,
         difficulty: int,
         gas_limit: int,
         gas_used: int,
         timestamp: datetime,
-        miner: str,
-        parent_hash: str,
+        miner: bytes,
+        parent_hash: bytes,
         block_reward: float,
+        uncles: list[bytes],
     ):
         """
         Insert block data into <node>_block table.
@@ -60,8 +61,8 @@ class DatabaseManager:
 
         await self.db.execute(
             f"""
-            INSERT INTO {table} (block_number, block_hash, nonce, difficulty, gas_limit, gas_used, timestamp, miner, parent_hash, block_reward)
-            VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9, $10)
+            INSERT INTO {table} (block_number, block_hash, nonce, difficulty, gas_limit, gas_used, timestamp, miner, parent_hash, block_reward,uncles)
+            VALUES ($1, $2, $3,$4, $5, $6,$7,$8, $9, $10, $11)
             ON CONFLICT (block_number) DO NOTHING;
             """,
             block_number,
@@ -74,21 +75,22 @@ class DatabaseManager:
             miner,
             parent_hash,
             block_reward,
+            uncles,
         )
 
     async def insert_transaction(
         self,
-        transaction_hash: str,
+        transaction_hash: bytes,
         block_number: int,
-        from_address: str,
-        to_address: str,
+        from_address: bytes,
+        to_address: bytes,
         value: float,
         transaction_fee: float,
         gas_price: float,
         gas_limit: int,
         gas_used: int,
         is_token_tx: bool,
-        input_data: str,
+        input_data: bytes,
     ):
         """
         Insert transaction data into <node>_transaction table.
@@ -119,14 +121,14 @@ class DatabaseManager:
     # for example the gas stuff might not be needed
     async def insert_internal_transaction(
         self,
-        transaction_hash: str,
-        from_address: str,
-        to_address: str,
+        transaction_hash: bytes,
+        from_address: bytes,
+        to_address: bytes,
         value: float,
         gas_limit: float,
         gas_used: int,
-        input_data: str,
-        call_type: str,
+        input_data: bytes,
+        call_type: bytes,
     ):
         """
         Insert internal transaction data into <node>_internal_transaction table.
@@ -150,12 +152,12 @@ class DatabaseManager:
 
     async def insert_transaction_logs(
         self,
-        transaction_hash: str,
-        address: str,
+        transaction_hash: bytes,
+        address: bytes,
         log_index: int,
-        data: str,
+        data: bytes,
         removed: bool,
-        topics: list[str],
+        topics: list[bytes],
     ):
         """
         Insert transaction logs data into <node>_transaction_logs table.
@@ -179,11 +181,11 @@ class DatabaseManager:
 
     async def insert_nft_transfer(
         self,
-        transaction_hash: str,
+        transaction_hash: bytes,
         log_index: int,
-        address: str,
-        from_address: str,
-        to_address: str,
+        address: bytes,
+        from_address: bytes,
+        to_address: bytes,
         token_id: int,
     ):
         """
@@ -207,7 +209,7 @@ class DatabaseManager:
         )
 
     async def insert_contract(
-        self, address: str, transaction_hash: str, is_pair_contract: bool
+        self, address: bytes, transaction_hash: bytes, is_pair_contract: bool
     ):
         """
         Insert contract data into <node>_contract table.
@@ -227,12 +229,12 @@ class DatabaseManager:
 
     async def insert_token_contract(
         self,
-        address: str,
-        symbol: str,
-        name: str,
+        address: bytes,
+        symbol: bytes,
+        name: bytes,
         decimals: int,
         total_supply: int,
-        token_category: str,
+        token_category: bytes,
     ):
         """
         Insert token contract data into <node>_token_contract table.
@@ -254,7 +256,7 @@ class DatabaseManager:
         )
 
     async def insert_contract_supply_change(
-        self, address: str, amount_changed: int, transaction_hash: str
+        self, address: bytes, amount_changed: int, transaction_hash: bytes
     ):
         """
         Insert token contract supply change data into <node>_token_contract_supply_change table.
@@ -274,12 +276,12 @@ class DatabaseManager:
 
     async def insert_pair_contract(
         self,
-        address: str,
-        token0_address: str,
-        token1_address: str,
+        address: bytes,
+        token0_address: bytes,
+        token1_address: bytes,
         reserve0: int,
         reserve1: int,
-        factory: str,
+        factory: bytes,
     ):
         """
         Insert pair contract data into <node>_pair_contract table.
@@ -301,7 +303,7 @@ class DatabaseManager:
         )
 
     async def insert_pair_liquidity_change(
-        self, address: str, amount0: int, amount1: int, transaction_hash: str
+        self, address: bytes, amount0: int, amount1: int, transaction_hash: bytes
     ):
         """
         Insert pair liquidity change data into <node>_token_contract_supply_change table.

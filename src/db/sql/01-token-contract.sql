@@ -23,8 +23,8 @@ CREATE OR REPLACE FUNCTION create_table_contract(blockchain_name varchar(30))
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       address varchar PRIMARY KEY,
-       transaction_hash varchar,
+       address bytea PRIMARY KEY,
+       transaction_hash bytea,
        is_pair_contract boolean
       )', blockchain_name || '_contract');
 END
@@ -47,12 +47,12 @@ CREATE OR REPLACE FUNCTION create_table_token_contract(blockchain_name varchar(3
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       address varchar PRIMARY KEY REFERENCES %I(address),
-       symbol varchar,
-       name varchar,
+       address bytea PRIMARY KEY REFERENCES %I(address),
+       symbol bytea,
+       name bytea,
        decimals int,
        total_supply numeric(78,0),
-       token_category varchar
+       token_category bytea
       )', blockchain_name || '_token_contract', blockchain_name || '_contract');
 END
 $func$;
@@ -74,11 +74,11 @@ CREATE OR REPLACE FUNCTION create_table_nft_transfer(blockchain_name varchar(30)
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I (
-       transaction_hash varchar,
+       transaction_hash bytea,
        log_index int,
-       address varchar,
-       to_address varchar,
-       from_address varchar,
+       address bytea,
+       to_address bytea,
+       from_address bytea,
        token_id numeric(78,0),
        PRIMARY KEY(transaction_hash, log_index)
       )', blockchain_name || '_nft_transfer', blockchain_name || '_contract');
@@ -102,9 +102,9 @@ CREATE OR REPLACE FUNCTION create_table_contract_supply_change(blockchain_name v
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I(
-       address varchar,
+       address bytea,
        amount_changed numeric(78,0),
-       transaction_hash varchar,
+       transaction_hash bytea,
        PRIMARY KEY(address, transaction_hash)
    )', blockchain_name || '_contract_supply_change');
 END
@@ -127,12 +127,12 @@ CREATE OR REPLACE FUNCTION create_table_pair_contract(blockchain_name varchar(30
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I(
-       address varchar PRIMARY KEY REFERENCES %I(address),
-       token0_address varchar,
-       token1_address varchar,
+       address bytea PRIMARY KEY REFERENCES %I(address),
+       token0_address bytea,
+       token1_address bytea,
        reserve0 numeric(78,0),
        reserve1 numeric(78,0),
-       factory varchar
+       factory bytea
    )', blockchain_name || '_pair_contract', blockchain_name || '_contract');
 END
 $func$;
@@ -154,10 +154,10 @@ CREATE OR REPLACE FUNCTION create_table_pair_liquidity_change(blockchain_name va
 BEGIN
    EXECUTE format('
       CREATE TABLE IF NOT EXISTS %I(
-       address varchar,
+       address bytea,
        amount0 numeric(78,0),
        amount1 numeric(78,0),
-       transaction_hash varchar,
+       transaction_hash bytea,
        PRIMARY KEY(address, transaction_hash)
    )', blockchain_name || '_pair_liquidity_change');
 END

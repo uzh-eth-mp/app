@@ -29,7 +29,7 @@ class ContractParser:
         self._contracts_cache: Dict[str, Contract] = dict()
 
     def get_contract_category(
-        self, contract_address: str
+        self, contract_address: bytes
     ) -> Optional[ContractCategory]:
         """Get the contract category by contract address
 
@@ -42,7 +42,7 @@ class ContractParser:
             return contract_config.category
         return None
 
-    def get_contract_events(self, contract_address: str) -> Optional[List[str]]:
+    def get_contract_events(self, contract_address: bytes) -> Optional[List[bytes]]:
         """Get the contract events by contract address
 
         Returns:
@@ -56,7 +56,7 @@ class ContractParser:
 
     def _get_contract_abi(
         self, contract_category: ContractCategory
-    ) -> Optional[List[Dict[str, Any]]]:
+    ) -> Optional[List[Dict[bytes, Any]]]:
         """Return contract ABI depending on the contract category"""
         abi = None
         if contract_category == ContractCategory.ERC20:
@@ -71,7 +71,7 @@ class ContractParser:
             abi = self.contract_abi.UniSwapV2Factory
         return abi
 
-    def is_known_contract_address(self, contract_address: str) -> bool:
+    def is_known_contract_address(self, contract_address: bytes) -> bool:
         """
         Returns:
             `True` if a contract address is in the list of contracts (in the config),
@@ -83,7 +83,7 @@ class ContractParser:
         return self.get_contract_category(contract_address) is not None
 
     def get_contract(
-        self, contract_address: str, category: ContractCategory
+        self, contract_address: bytes, category: ContractCategory
     ) -> Contract:
         """
         Returns:

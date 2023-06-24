@@ -5,6 +5,11 @@ from hexbytes import HexBytes
 from pydantic import BaseModel, root_validator
 
 
+
+def convert_string_to_bytes(cls,v): 
+    return bytes(v)
+    
+
 class DataCollectionWorkerType(Enum):
     """The type of the worker: producing or consuming data"""
 
