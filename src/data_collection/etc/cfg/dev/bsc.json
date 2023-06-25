@@ -7,8 +7,8 @@
     "data_collection": [
         {
             "mode": "partial",
-            "start_block": 600000,
-            "end_block": 600005,
+            "start_block": 10000,
+            "end_block": 10005,
             "contracts": [
                 {
                     "address": "0xED5AF388653567Af2F388E6224dC7C4b3241C544",

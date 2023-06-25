@@ -60,7 +60,7 @@ class ContractParser:
         """Return contract ABI depending on the contract category"""
         abi = None
         if contract_category == ContractCategory.BEP20:
-            api = self.contract_api.bep20
+            api = self.contract_abi.bep20
         elif contract_category == ContractCategory.ERC20:
             abi = self.contract_abi.erc20
         elif contract_category == ContractCategory.ERC721:
@@ -111,13 +111,17 @@ class ContractParser:
     async def get_token_contract_data(
         self, contract: Contract, category: ContractCategory
     ) -> Optional[TokenContractData]:
-        """Obtain required data for a token contract (ERC20, ERC721, ERC1155) from web3
+        """Obtain required data for a token contract (ERC20, ERC721, ERC1155, BEP20) from web3
         and return a TokenContractData instance
 
         Returns:
             a ContractData instance or `None`
         """
-        if category == ContractCategory.ERC20 or category == ContractCategory.ERC721:
+        if (
+            category == ContractCategory.ERC20
+            or category == ContractCategory.ERC721
+            or category == ContractCategory.BEP20
+        ):
             symbol = await contract.functions.symbol().call()
             name = await contract.functions.name().call()
             decimals = await contract.functions.decimals().call()

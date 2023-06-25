@@ -1,5 +1,5 @@
 {
-    "node_url": "http://host.docker.internal:8545",
+    "node_url": "localhost:8545",
     "db_dsn": "postgres://user:postgres@db_pool:6432/db",
     "redis_url": "redis://redis",
     "kafka_url": "kafka:9092",
