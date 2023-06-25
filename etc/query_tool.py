@@ -128,7 +128,6 @@ async def cmd_plot_others(conn, args):
         color = contract_colors[contract_categories[i]]
         ax.bar(symbol, n_logs_per_symbol[i], color=color, label=contract_categories[i])
 
-    # ax.bar(symbols, n_logs_per_symbol, color=contract_categories, width=0.7)
     ax.set_ylabel("# of logs")
     ax.set_xlabel("Symbol")
     ax.set_title("Number of logs per contract")
