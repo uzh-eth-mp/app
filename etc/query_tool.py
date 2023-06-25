@@ -1,8 +1,30 @@
 """Script for executing pre defined SQL queries / statements."""
 import argparse
 import asyncio
+from datetime import datetime
 
 import asyncpg
+
+
+async def cmd_plot_overview(conn, args):
+    """ """
+    print(datetime.now())
+
+    # Get the number of transactions
+    n_txs_record = await conn.fetchrow(
+        "SELECT count(*) FROM (SELECT transaction_hash FROM eth_transaction) AS tx"
+    )
+    n_txs = n_txs_record["count"]
+    print(f"Number of transactions: {n_txs}")
+
+    # Get the number of blocks
+    n_blocks_record = await conn.fetchrow(
+        "SELECT count(*) FROM (SELECT block_number FROM eth_block) AS blk"
+    )
+    n_blocks = n_blocks_record["count"]
+    print(f"Number of blocks: {n_blocks}")
+
+    print(datetime.now())
 
 
 async def cmd_event(conn, args):
@@ -101,6 +123,12 @@ async def main():
     parser_supply.add_argument(
         "-e", "--end-block", help="Ending block, not included.", type=int, default=None
     )
+
+    # 'plot_overview' command
+    parser_plot = subparsers.add_parser(
+        name="plot_overview", description="Plot some graphs from data in the database"
+    )
+    parser_plot.set_defaults(func=cmd_plot_overview)
 
     # Get the CLI arguments
     args = parser.parse_args()
