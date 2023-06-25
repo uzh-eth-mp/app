@@ -55,7 +55,7 @@ async def cmd_plot_overview(conn, args):
 
     # Save as figure 1
     fig, ax = plt.subplots()
-    bar_names = ("Blocks", "Ext. Transactions", "Logs", "Internal Transactions")
+    bar_names = ("Blocks", "External Transactions", "Logs", "Internal Transactions")
     counts = [n_blocks, n_txs, n_logs, n_internal_txs]
 
     # ax.bar(bar_names, counts)
