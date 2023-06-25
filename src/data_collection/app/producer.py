@@ -269,7 +269,5 @@ class DataProducer(DataCollector):
         del block_data_dict["transactions"]
         await self.db_manager.insert_block(
             **block_data_dict,
-            # TODO: need to calculate the block reward
-            # https://ethereum.stackexchange.com/questions/5958/how-to-query-the-amount-of-mining-reward-from-a-certain-block
             block_reward=block_reward,
         )
