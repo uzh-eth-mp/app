@@ -1,19 +1,19 @@
 {
-    "node_url": "http://host.docker.internal:8547",
+    "node_url": "http://host.docker.internal:8545",
     "db_dsn": "postgres://user:postgres@db_pool:6432/db",
     "redis_url": "redis://redis",
     "kafka_url": "kafka:9092",
-    "kafka_topic": "eth",
+    "kafka_topic": "bsc",
     "data_collection": [
         {
             "mode": "partial",
-            "start_block": 17090265,
-            "end_block": 17090265,
+            "start_block": 600000,
+            "end_block": 600005,
             "contracts": [
                 {
                     "address": "0xED5AF388653567Af2F388E6224dC7C4b3241C544",
                     "symbol": "Azuki",
-                    "category": "bep721",
+                    "category": "erc721",
                     "events": [
                         "TransferNonFungibleEvent"
                     ]
@@ -21,7 +21,7 @@
                 {
                     "address": "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
                     "symbol": "BAYC",
-                    "category": "bep721",
+                    "category": "erc721",
                     "events": [
                         "TransferNonFungibleEvent"
                     ]
@@ -29,7 +29,7 @@
                 {
                     "address": "0xED5AF388653567Af2F388E6224dC7C4b3241C544",
                     "symbol": "AZUKI",
-                    "category": "bep721",
+                    "category": "erc721",
                     "events": [
                         "TransferNonFungibleEvent"
                     ]
@@ -37,7 +37,7 @@
                 {
                     "address": "0x9b8b9c7C02be0bD0AA4D669bF6a1f6003424c6Dc",
                     "symbol": "ASSOC",
-                    "category": "bep721",
+                    "category": "erc721",
                     "events": [
                         "TransferNonFungibleEvent"
                     ]

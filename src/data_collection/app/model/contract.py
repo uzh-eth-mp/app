@@ -7,6 +7,7 @@ from app.model import  convert_string_to_bytes
 
 class ContractCategory(Enum):
     UNKNOWN = "unknown"
+    BEP20 = "bep20"
     ERC20 = "erc20"
     ERC721 = "erc721"
     ERC1155 = "erc1155"
@@ -16,7 +17,7 @@ class ContractCategory(Enum):
     @property
     def is_erc(self):
         """Return True if contract category is one of the ERC categories"""
-        return self.value in [self.ERC20, self.ERC721, self.ERC1155]
+        return self.value in [self.BEP20, self.ERC20, self.ERC721, self.ERC1155]
 
     @property
     def is_uniswap_pair(self):
