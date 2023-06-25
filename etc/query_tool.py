@@ -4,25 +4,61 @@ import asyncio
 from datetime import datetime
 
 import asyncpg
+import matplotlib.pyplot as plt
 
 
 async def cmd_plot_overview(conn, args):
     """ """
     print(datetime.now())
 
-    # Get the number of transactions
-    n_txs_record = await conn.fetchrow(
-        "SELECT count(*) FROM (SELECT transaction_hash FROM eth_transaction) AS tx"
-    )
-    n_txs = n_txs_record["count"]
-    print(f"Number of transactions: {n_txs}")
+    # # Get the number of transactions
+    # n_txs_record = await conn.fetchrow(
+    #     "SELECT count(*) FROM (SELECT transaction_hash FROM eth_transaction) AS tx"
+    # )
+    # n_txs = n_txs_record["count"]
+    # print(f"Number of transactions: {n_txs}")
 
-    # Get the number of blocks
-    n_blocks_record = await conn.fetchrow(
-        "SELECT count(*) FROM (SELECT block_number FROM eth_block) AS blk"
+    # # Get the number of blocks
+    # n_blocks_record = await conn.fetchrow(
+    #     "SELECT count(*) FROM (SELECT block_number FROM eth_block) AS blk"
+    # )
+    # n_blocks = n_blocks_record["count"]
+    # print(f"Number of blocks: {n_blocks}")
+
+    # Get the number of internal transactions
+    # n_internal_txs_record = await conn.fetchrow(
+    #     "SELECT COUNT(*) FROM eth_internal_transaction"
+    # )
+    # n_internal_txs = n_internal_txs_record["count"]
+    # print(f"Number of internal transactions: {n_internal_txs}")
+    n_internal_txs = 285000000
+
+    # Save as figure 1
+    fig, ax = plt.subplots()
+    bar_names = ("Blocks", "Ext. Transactions", "Internal Transactions")
+    counts = [1570000, 185234432, n_internal_txs]
+
+    # ax.bar(bar_names, counts)
+    bars = ax.barh(bar_names, counts)
+    ax.bar_label(bars, fmt="{:,}", padding=16)
+    ax.set_ylabel("Record Type")
+    ax.set_xlabel("# of records in DB")
+    ax.set_title("Database records")
+    ax.set_xscale("log")
+    ax.set_xlim(0, 4e9)
+
+    fig.savefig(f"{args.output_dir}/database_records.png", bbox_inches="tight")
+
+    # Number of logs per contract
+    n_logs_per_contract = await conn.fetch(
+        """
+        SELECT address, count(*) AS n_logs
+        FROM eth_transaction_logs
+        GROUP BY address
+        ORDER BY n_logs DESC
+        """
     )
-    n_blocks = n_blocks_record["count"]
-    print(f"Number of blocks: {n_blocks}")
+    print(f"Number of logs per contract: {n_logs_per_contract}")
 
     print(datetime.now())
 
@@ -129,6 +165,9 @@ async def main():
         name="plot_overview", description="Plot some graphs from data in the database"
     )
     parser_plot.set_defaults(func=cmd_plot_overview)
+    parser_plot.add_argument(
+        "-o", "--output-dir", help="Output directory name", required=True
+    )
 
     # Get the CLI arguments
     args = parser.parse_args()
