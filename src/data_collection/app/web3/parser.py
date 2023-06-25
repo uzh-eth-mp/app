@@ -59,7 +59,9 @@ class ContractParser:
     ) -> Optional[List[Dict[str, Any]]]:
         """Return contract ABI depending on the contract category"""
         abi = None
-        if contract_category == ContractCategory.ERC20:
+        if contract_category == ContractCategory.BEP20:
+            api = self.contract_api.bep20
+        elif contract_category == ContractCategory.ERC20:
             abi = self.contract_abi.erc20
         elif contract_category == ContractCategory.ERC721:
             abi = self.contract_abi.erc721
