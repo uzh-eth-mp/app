@@ -15,6 +15,7 @@ from app.web3.transaction_events.types import (
 )
 
 
+@_event_mapper(ContractCategory.BEP20)
 @_event_mapper(ContractCategory.ERC20)
 def _transfer(contract: Contract, receipt: TxReceipt) -> EventsGenerator:
     # ABI for ERC20 https://gist.github.com/veox/8800debbf56e24718f9f483e1e40c35c
@@ -60,6 +61,7 @@ def _transfer(contract: Contract, receipt: TxReceipt) -> EventsGenerator:
 
 
 @_event_mapper(ContractCategory.ERC20)
+@_event_mapper(ContractCategory.BEP20)
 def _issue(contract: Contract, receipt: TxReceipt) -> EventsGenerator:
     # USDT -> https://etherscan.io/address/0xdac17f958d2ee523a2206206994597c13d831ec7#code#L444
     # Issue = USDT owner creates tokens.
@@ -74,6 +76,7 @@ def _issue(contract: Contract, receipt: TxReceipt) -> EventsGenerator:
         )
 
 
+@_event_mapper(ContractCategory.BEP20)
 @_event_mapper(ContractCategory.ERC20)
 def _redeem(contract: Contract, receipt: TxReceipt) -> EventsGenerator:
     # Redeem = USDT owner makes tokens dissapear - no null address. if they transfer to null address, still burn.
