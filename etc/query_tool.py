@@ -11,44 +11,79 @@ async def cmd_plot_overview(conn, args):
     """ """
     print(datetime.now())
 
-    # # Get the number of transactions
-    # n_txs_record = await conn.fetchrow(
-    #     "SELECT count(*) FROM (SELECT transaction_hash FROM eth_transaction) AS tx"
-    # )
-    # n_txs = n_txs_record["count"]
-    # print(f"Number of transactions: {n_txs}")
+    # Get the number of transactions
+    n_txs_record = await conn.fetchrow(
+        "SELECT count(*) FROM (SELECT transaction_hash FROM eth_transaction) AS tx"
+    )
+    n_txs = n_txs_record["count"]
+    print(f"Number of transactions: {n_txs}")
 
-    # # Get the number of blocks
-    # n_blocks_record = await conn.fetchrow(
-    #     "SELECT count(*) FROM (SELECT block_number FROM eth_block) AS blk"
-    # )
-    # n_blocks = n_blocks_record["count"]
-    # print(f"Number of blocks: {n_blocks}")
+    # Get the number of blocks
+    n_blocks_record = await conn.fetchrow(
+        "SELECT count(*) FROM (SELECT block_number FROM eth_block) AS blk"
+    )
+    n_blocks = n_blocks_record["count"]
+    print(f"Number of blocks: {n_blocks}")
 
     # Get the number of internal transactions
-    # n_internal_txs_record = await conn.fetchrow(
-    #     "SELECT COUNT(*) FROM eth_internal_transaction"
-    # )
-    # n_internal_txs = n_internal_txs_record["count"]
-    # print(f"Number of internal transactions: {n_internal_txs}")
-    n_internal_txs = 285000000
+    n_internal_txs_record = await conn.fetchrow(
+        "SELECT COUNT(*) FROM eth_internal_transaction"
+    )
+    n_internal_txs = n_internal_txs_record["count"]
+    print(f"Number of internal transactions: {n_internal_txs}")
+
+    # Get the number of logs
+    n_logs_record = await conn.fetchrow("SELECT COUNT(*) FROM eth_transaction_logs")
+    n_logs = n_logs_record["count"]
+    print(f"Number of logs: {n_logs}")
+
+    # Get sizes of tables
+    table_sizes_record = await conn.fetch(
+        """
+        select
+        table_name,
+        pg_size_pretty(pg_relation_size(quote_ident(table_name))) as size_in_db,
+        pg_relation_size(quote_ident(table_name))
+        from information_schema.tables
+        where table_schema = 'public'
+        AND (table_name = 'eth_block' OR table_name = 'eth_transaction' OR table_name = 'eth_internal_transaction' OR table_name = 'eth_transaction_logs')
+        ORDER BY 3 ASC
+        """
+    )
+    table_sizes = [record["size_in_db"] for record in table_sizes_record]
+    print(table_sizes)
 
     # Save as figure 1
     fig, ax = plt.subplots()
-    bar_names = ("Blocks", "Ext. Transactions", "Internal Transactions")
-    counts = [1570000, 185234432, n_internal_txs]
+    bar_names = ("Blocks", "Ext. Transactions", "Logs", "Internal Transactions")
+    counts = [n_blocks, n_txs, n_logs, n_internal_txs]
 
     # ax.bar(bar_names, counts)
     bars = ax.barh(bar_names, counts)
     ax.bar_label(bars, fmt="{:,}", padding=16)
     ax.set_ylabel("Record Type")
     ax.set_xlabel("# of records in DB")
-    ax.set_title("Database records")
+    ax.set_title("Database overview")
     ax.set_xscale("log")
-    ax.set_xlim(0, 4e9)
+    ax.set_xlim(1, 4e12)
 
-    fig.savefig(f"{args.output_dir}/database_records.png", bbox_inches="tight")
+    for bar, size_in_db in zip(ax.patches, table_sizes):
+        ax.text(
+            2,
+            bar.get_y() + bar.get_height() / 2,
+            size_in_db,
+            color="white",
+            ha="left",
+            va="center",
+        )
 
+    fig.savefig(f"{args.output_dir}/database_overview.png", bbox_inches="tight")
+
+    print(datetime.now())
+
+
+async def cmd_plot_others(conn, args):
+    """"""
     # Number of logs per contract
     n_logs_per_contract = await conn.fetch(
         """
@@ -59,8 +94,6 @@ async def cmd_plot_overview(conn, args):
         """
     )
     print(f"Number of logs per contract: {n_logs_per_contract}")
-
-    print(datetime.now())
 
 
 async def cmd_event(conn, args):
@@ -162,9 +195,19 @@ async def main():
 
     # 'plot_overview' command
     parser_plot = subparsers.add_parser(
-        name="plot_overview", description="Plot some graphs from data in the database"
+        name="plot_overview",
+        description="Plot overview graphs from data in the database",
     )
     parser_plot.set_defaults(func=cmd_plot_overview)
+    parser_plot.add_argument(
+        "-o", "--output-dir", help="Output directory name", required=True
+    )
+
+    # 'plot_others' command
+    parser_plot = subparsers.add_parser(
+        name="plot_others", description="Plot some graphs from data in the database"
+    )
+    parser_plot.set_defaults(func=cmd_plot_others)
     parser_plot.add_argument(
         "-o", "--output-dir", help="Output directory name", required=True
     )
