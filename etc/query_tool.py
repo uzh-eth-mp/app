@@ -1,6 +1,7 @@
 """Script for executing pre defined SQL queries / statements."""
 import argparse
 import asyncio
+import json
 from datetime import datetime
 
 import asyncpg
@@ -85,7 +86,7 @@ async def cmd_plot_overview(conn, args):
 async def cmd_plot_others(conn, args):
     """"""
     # Number of logs per contract
-    n_logs_per_contract = await conn.fetch(
+    n_logs_per_contract_records = await conn.fetch(
         """
         SELECT address, count(*) AS n_logs
         FROM eth_transaction_logs
@@ -93,7 +94,57 @@ async def cmd_plot_others(conn, args):
         ORDER BY n_logs DESC
         """
     )
-    print(f"Number of logs per contract: {n_logs_per_contract}")
+    n_logs_per_contract = {
+        r.get("address"): r.get("n_logs") for r in n_logs_per_contract_records
+    }
+
+    # Load config
+    cfg = json.load(open(args.config_path))
+    cfg_dict = {c["address"].lower(): c for c in cfg["data_collection"][0]["contracts"]}
+    symbols = []
+    contract_categories = []
+    contract_colors = {
+        "UniSwapV2Pair": "lightskyblue",
+        "erc20": "green",
+        "erc721": "orange",
+    }
+    n_logs_per_symbol = []
+
+    def remove_prefix(s, prefix):
+        return s[len(prefix) :] if s.startswith(prefix) else s
+
+    for address, n_logs in n_logs_per_contract.items():
+        address = address.lower()
+        if cfg_dict.get(address):
+            symbol = remove_prefix(cfg_dict[address]["symbol"], "UniSwap V2 Pair ")
+            symbols.append(symbol)
+            contract_categories.append(cfg_dict[address]["category"])
+            n_logs_per_symbol.append(n_logs)
+
+    # Save as figure 1
+    fig, ax = plt.subplots(figsize=(20, 10))
+
+    for i, symbol in enumerate(symbols):
+        color = contract_colors[contract_categories[i]]
+        ax.bar(symbol, n_logs_per_symbol[i], color=color, label=contract_categories[i])
+
+    # ax.bar(symbols, n_logs_per_symbol, color=contract_categories, width=0.7)
+    ax.set_ylabel("# of logs")
+    ax.set_xlabel("Symbol")
+    ax.set_title("Number of logs per contract")
+    ax.set_yscale("log")
+    ax.set_xticklabels(symbols, rotation=90)
+    labels = list(contract_colors.keys())
+    ax.legend(
+        [plt.Rectangle((0, 0), 1, 1, color=contract_colors[label]) for label in labels],
+        labels,
+        loc="upper right",
+        prop={"size": 14},
+    )
+
+    fig.savefig(
+        f"{args.output_dir}/database_logs_per_contract.png", bbox_inches="tight"
+    )
 
 
 async def cmd_event(conn, args):
@@ -210,6 +261,9 @@ async def main():
     parser_plot.set_defaults(func=cmd_plot_others)
     parser_plot.add_argument(
         "-o", "--output-dir", help="Output directory name", required=True
+    )
+    parser_plot.add_argument(
+        "-c", "--config-path", help="Path to the config file", required=True
     )
 
     # Get the CLI arguments
