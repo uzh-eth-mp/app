@@ -51,6 +51,9 @@ Compose files should be started with run scripts that can be found in the `scrip
 $ bash scripts/run-dev-eth.sh
 # use CTRL+C once to gracefully exit (with automatic docker compose down cleanup)
 ```
+
+Check the [docs](docs/example.md) for a more in-depth example with configuration and output.
+
 ### Deployment Environment 🏙️
 There are two deployment environments available for the collection process.
 
@@ -96,6 +99,13 @@ $ bash scripts/run-db.sh
 To connect to the running database, from another terminal window:
 ```
 $ docker exec -it <project_name>-db-1 psql <postgresql_dsn>
+```
+
+Then you can easily execute SQL statements in the psql CLI:
+```
+db=# \dt+ eth*;
+...
+(10 rows)
 ```
 More details on how to connect can be found in the [src/db/](src/db/README.md) directory.
 

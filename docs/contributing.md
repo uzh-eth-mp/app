@@ -22,4 +22,4 @@ This project leverages multiple github actions for:
 | Code Style checks | on push to a branch with a PR | !main |
 | Release Please | on push to main | main |
 | Publish docs | on release published | any/none |
-| Publish docker images | on release publish | any/none |
+| Publish docker images | on release published | any/none |
