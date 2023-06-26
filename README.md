@@ -20,6 +20,7 @@ A collection of Docker Containers and their orchestration for collecting EVM-com
     * [Querying data](#querying-data)
     * [Extensions](#extensions)
     * [Tools](#tools)
+* [Documentation](#documentation)
 * [FAQ](#faq)
 * [Contributing](#contributing)
 * [License](/LICENSE)
@@ -68,14 +69,23 @@ There are some minor differences between a development and production environmen
 Two main configuration sources (files):
 
 1. `.env` = static configuration variables (data directory, connection URLs, credentials, timeout settings, ...)
-2. `src/data_collection/etc/cfg/<environment>/<blockchain>.json` = data collection configuration (block range, mode, addresses, events, ...)
+2. `src/data_collection/etc/cfg/<environment>/<blockchain>.json` = data collection configuration (block range, data collection mode, addresses, events, ...)
 
 For more, check the [configuration guide](docs/configuration.md).
 
 ## Features
 
+* EVM compatible blockchains supported ☑️
+* Multiple data collection modes (partial, full, get_logs, ...) ☑️
+* `trace_Block` and `trace_replayTransaction` data included ☑️
+* Parallelization of producers and consumers (multiple modes can run at the same time) ☑️
+* Collect data on multiple blockchains at the same time ☑️
+* Configurable timeouts for consumers and retries for web3 requests ☑️
+* Single SQL database across all chains ☑️
+* Add your own Events, contract ABIs and more...
+
 ### Scripts 📜
-The [scripts/](scripts/) directory contains bash scripts that mostly consist of docker compose commands.
+The [scripts/](scripts/) directory contains bash scripts that mostly consist of docker compose commands. These scripts are used for orchestrating the whole application.
 
 ### Querying Data 📁
 To query the collected data from the database you will need a running PostgreSQL service. To start one, use:
@@ -83,7 +93,7 @@ To query the collected data from the database you will need a running PostgreSQL
 $ bash scripts/run-db.sh
 ```
 
-In order to then connect to the database, from another terminal window:
+To connect to the running database, from another terminal window:
 ```
 $ docker exec -it <project_name>-db-1 psql <postgresql_dsn>
 ```
@@ -105,6 +115,9 @@ The [etc/](etc/) directory contains a few python scripts that can be used for va
 1. [get_top_uniswap_pairs.py](etc/get_top_uniswap_pairs.py) = print top `n` uniswap pairs in a JSON format ready to be plugged into the data collection cfg.json
 2. [query_tool.py](etc/query_tool.py) = CLI with predefined SQL queries for easily accessing the DB data (e.g for plotting).
 3. [web3_method_benchmark.py](etc/web3_method_benchmark.py) = request response time benchmarking tool
+
+## Documentation 📗
+Most python code is documented with google docstrings and [handsdown](https://github.com/vemel/handsdown) is used as a docgen [https://uzh-eth-mp.github.io/app/](https://uzh-eth-mp.github.io/app/).
 
 ## FAQ 🙋🏻
 A list of frequently asked questions and their answers can be found [here](docs/faq.md).
