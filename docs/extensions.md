@@ -38,11 +38,12 @@
             elif isinstance(event, MintFungibleEvent):
                 amount_changed += event.value
   ```
-  3. Map the event to a contract in [app](/src/data_collection/app/web3/transaction_events)
-    * (e.g. MintfungibleEvent is mapped to a erc20 token in [app](/src/data_collection/app/web3/transaction_events/erc20.py))
-    ```
-    @_event_mapper(ContractCategory.ERC20)
-    def _issue(contract: Contract, receipt: TxReceipt) -> EventsGenerator:
+3. Map the event to a contract in [app](/src/data_collection/app/web3/transaction_events)
+  * (e.g. MintfungibleEvent is mapped to a erc20 token in [app](/src/data_collection/app/web3/transaction_events/erc20.py))
+  
+  ```
+  @_event_mapper(ContractCategory.ERC20)
+  def _issue(contract: Contract, receipt: TxReceipt) -> EventsGenerator:
     ...
     for eventLog in contract.events.Issue().process_receipt(receipt, errors=DISCARD):
         val = eventLog["args"]["amount"]
@@ -53,9 +54,9 @@
             log_index=log_index,
             value=val,
         )
-    ```
+  ```
 
-  4. Add test in [app](/src/data_collection/tests/unit/web3/test_transaction_events.py) if needed
+4. Add test in [app](/src/data_collection/tests/unit/web3/test_transaction_events.py) if needed
 
 ## Add new Contract ABI
 
@@ -65,19 +66,18 @@ In order to extend the application with a new token contract the following steps
 
 2. Update in [app](/src/data_collection/app/model/abi.py) the `ContractABI(BaseModel)` class
   * (e.g.for erc20 Token)
-   ```
+  ```
    class ContractABI(BaseModel):
       """Model for Contract ABIs. The data is loaded from `abi.json`"""
 
       erc20: List[Dict[str, Any]]
-
-    ```
+  ```
 
 3. Add contract category enum value to the `ContractCategory(Enum)` [app](/src/data_collection/app/model/contract.py) class.
 
 4. Update the [app](/src/data_collection/app/web3/parser.py) class 
   * Add an elif clause for the added Token to the `_get_contract_abi()` function:
-     ```
+  ```
     def _get_contract_abi(
         self, contract_category: ContractCategory
     ) -> Optional[List[Dict[str, Any]]]:
@@ -88,8 +88,9 @@ In order to extend the application with a new token contract the following steps
         elif contract_category == ContractCategory.ERC20:
             abi = self.contract_abi.erc20
         elif contract_category == ContractCategory.ERC721:
-     ```
-  * If the added contract is a token contract (i.e erc20, bep20) a category can be added in the `get_token_contract_data()` function and if the contract is a pair contract (i.e. Uniswap) the category can be added in the `get_pair_contract_data()` function. 
+  ```
+  * If the added contract is a token contract (i.e erc20, bep20) a category can be added in the    `get_token_contract_data()` function and if the contract is a pair contract (i.e. Uniswap) the category can be added
+  in the `get_pair_contract_data()` function. 
  
 
 ## Add new data collection mode
@@ -166,7 +167,7 @@ In order to be able to support more Blockchains for the data collection the foll
   ```
   {
       "node_url": "http://host.docker.internal:8547",
-      ....
+      
 
       "data_collection": [
           {
@@ -189,7 +190,7 @@ In order to be able to support more Blockchains for the data collection the foll
                       "events": [
                           "TransferNonFungibleEvent"
                       ]
-                  }, ...
+                  }, 
     }
   ```
 
