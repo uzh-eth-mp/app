@@ -17,12 +17,12 @@ A collection of Docker Containers and their orchestration for collecting EVM-com
     * [Configuration](#configuration)
 * [Features](#features)
     * [Scripts](#scripts)
-    * [Extensions](#extensions)
     * [Querying data](#querying-data)
+    * [Extensions](#extensions)
     * [Tools](#tools)
 * [FAQ](#faq)
 * [Contributing](#contributing)
-* [License][#license]
+* [License](/LICENSE)
 
 ## Overview
 
@@ -43,48 +43,41 @@ The containers are orchestrated by docker compose yaml files. For convenience a 
 * [`docker compose`](https://docs.docker.com/compose/#compose-v2-and-the-new-docker-compose-command) (v2.14.0+)
     * to use with abacus-3: [install the compose plugin manually](https://docs.docker.com/compose/install/linux/#install-the-plugin-manually).
 
-### Quickstart
-Compose files should be started with run scripts that can be found in the `scripts/` directory. For this you also need to have an `.env` file present. If you are cloning this directory, use `cp .env.default .env` and check all the env variables. Then to start the collection for Ethereum:
+### Quickstart 🚀
+Compose files should be started with run scripts that can be found in the `scripts/` directory. For this you also need to have an `.env` file present. If you are cloning this directory, use `cp .env.default .env` and update env variables according to your needs. Then to start the collection with the development environment for Ethereum:
 
 ```
 $ bash scripts/run-dev-eth.sh
 # use CTRL+C once to gracefully exit (with automatic docker compose down cleanup)
 ```
-### Deployment Environment
+### Deployment Environment 🏙️
 There are two deployment environments available for the collection process.
 
 * **Development** = use for development of new features
     * `$ bash scripts/run-dev-eth.sh`
     * exit with CTRL+C, followed by an automatic cleanup via `docker compose down`
-* **Production** = intended for use on Abacus-3 (for long running collection of data)
+    * config file: [`src/data_collection/etc/cfg/dev`](src/data_collection/etc/cfg/dev/)
+* **Production** = intended for long running collection of data (Abacus-3)
     * `$ bash scripts/run-prod-eth.sh`
-    * CTRL+C only closes the logs output, containers continue running. Stopping and removing of containers is manual.
+    * CTRL+C only closes the logs output, containers continue running. Stopping and removing of containers is manual!
+    * config file: [`src/data_collection/etc/cfg/prod`](src/data_collection/etc/cfg/prod/)
 
-Each of the environments has their own configuration `.json` files. For instance, for *development* you would find the configuration files in [`src/data_collection/etc/cfg/dev`](src/data_collection/etc/cfg/dev/). Similarly, the *production* environment config is in [`src/data_collection/etc/cfg/prod`](src/data_collection/etc/cfg/prod/).
-There are minor differences between a development and production environment besides the configuration files. Details can be found in the [scripts directory](scripts/README.md).
+There are some minor differences between a development and production environment besides the configuration files. Details can be found in the [scripts directory](scripts/README.md).
 
-### Configuration
+### Configuration 🏗️
 Two main configuration sources (files):
 
 1. `.env` = static configuration variables (data directory, connection URLs, credentials, timeout settings, ...)
 2. `src/data_collection/etc/cfg/<environment>/<blockchain>.json` = data collection configuration (block range, mode, addresses, events, ...)
 
-The exact description of the environment variables and data collection configuration can be found in the [configuration guide](docs/configuration.md).
+For more, check the [configuration guide](docs/configuration.md).
 
-# Features
-### Scripts
+## Features
+
+### Scripts 📜
 The [scripts/](scripts/) directory contains bash scripts that mostly consist of docker compose commands.
-### Extensions
-If you'd like to extend the current data collection functionality, such as:
 
-* adding a new web3 `Event` to store in the db or to process (e.g. [OwnershipTransferred](https://docs.openzeppelin.com/contracts/2.x/api/ownership#Ownable-OwnershipTransferred-address-address-))
-* adding a new contract ABI (e.g. [cETH](https://compound.finance/Developers/abi/mainnet/cETH))
-* adding a new data collection mode (e.g. LogFilter)
-* supporting more blockchains than ETH and BSC
-
-Please check out the [functionality extension guide](docs/extensions.md).
-
-### Querying Data
+### Querying Data 📁
 To query the collected data from the database you will need a running PostgreSQL service. To start one, use:
 ```
 $ bash scripts/run-db.sh
@@ -96,17 +89,25 @@ $ docker exec -it <project_name>-db-1 psql <postgresql_dsn>
 ```
 More details on how to connect can be found in the [src/db/](src/db/README.md) directory.
 
-### Tools
+### Extensions 🚧
+If you'd like to extend the current data collection functionality, such as:
+
+* adding a new web3 `Event` to store in the db or to process (e.g. [OwnershipTransferred](https://docs.openzeppelin.com/contracts/2.x/api/ownership#Ownable-OwnershipTransferred-address-address-))
+* adding a new contract ABI (e.g. [cETH](https://compound.finance/Developers/abi/mainnet/cETH))
+* adding a new data collection mode (e.g. LogFilter)
+* supporting more blockchains than ETH and BSC
+
+Please check out the [functionality extension guide](docs/extensions.md).
+
+### Tools 🛠️
 The [etc/](etc/) directory contains a few python scripts that can be used for various tasks:
 
 1. [get_top_uniswap_pairs.py](etc/get_top_uniswap_pairs.py) = print top `n` uniswap pairs in a JSON format ready to be plugged into the data collection cfg.json
-2. [query_tool.py](etc/query_tool.py) = CLI with predefined SQL queries for easily accessing the DB.
+2. [query_tool.py](etc/query_tool.py) = CLI with predefined SQL queries for easily accessing the DB data (e.g for plotting).
 3. [web3_method_benchmark.py](etc/web3_method_benchmark.py) = request response time benchmarking tool
 
-## FAQ
+## FAQ 🙋🏻
 A list of frequently asked questions and their answers can be found [here](docs/faq.md).
 
-## Contributing
+## Contributing 🥷🏻
 Contributions are welcome and appreciated. Please follow the convention and rules described [here](docs/contributing.md).
-
-## License
