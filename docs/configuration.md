@@ -54,7 +54,7 @@ A *sample configuration file* for the Ethereum blockchain with partial collectio
                     "symbol": "USDT",
                     "category": "erc20",
                     "events": [
-                        "TransferFungibleEvent",
+                        "TransferFungibleEvent"
                     ]
                 }
             ]
