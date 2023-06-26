@@ -1,7 +1,7 @@
 # Extensions
 ## Add new Event
 
-1. Define the event class in [app](/src/data_collection/app/web3/transaction_events/types.py) 
+1. Define the event class in [app/transaction_events/types.py](/src/data_collection/app/web3/transaction_events/types.py) 
   * (e.g. for the `MintFungibleEvent`)
   ```
   class MintFungibleEvent(ContractEvent):
@@ -13,7 +13,7 @@
 
   ```
 
-2. Add an instance of the event in [app](/src/data_collection/app/consumer/tx_processor.py) to the `_handle_transaction_events()` function 
+2. Add an instance of the event in [app/consumer/tx_processor.py](/src/data_collection/app/consumer/tx_processor.py) to the `_handle_transaction_events()` function 
   * (e.g. here the elif clause for the MintFungibleEvent)
   ```
   async def _handle_transaction_events(
@@ -38,8 +38,8 @@
             elif isinstance(event, MintFungibleEvent):
                 amount_changed += event.value
   ```
-3. Map the event to a contract in [app](/src/data_collection/app/web3/transaction_events)
-  * (e.g. MintfungibleEvent is mapped to a erc20 token in [app](/src/data_collection/app/web3/transaction_events/erc20.py))
+3. Map the event to a contract in [app/web3/transaction_events](/src/data_collection/app/web3/transaction_events)
+  * (e.g. MintfungibleEvent is mapped to a erc20 token in [app/web3/transaction_events/erc20.py](/src/data_collection/app/web3/transaction_events/erc20.py))
   
   ```
   @_event_mapper(ContractCategory.ERC20)
@@ -56,7 +56,7 @@
         )
   ```
 
-4. Add test in [app](/src/data_collection/tests/unit/web3/test_transaction_events.py) if needed
+4. Add test in [/tests/unit/web3/test_transaction_events.py](/src/data_collection/tests/unit/web3/test_transaction_events.py) if needed
 
 ## Add new Contract ABI
 
@@ -64,7 +64,7 @@ In order to extend the application with a new token contract the following steps
 
 1. Add new Contract Application Binary Interface (ABI) for the specific token in JSON format to [app](/src/data_collection/etc/contract_abi.json). 
 
-2. Update in [app](/src/data_collection/app/model/abi.py) the `ContractABI(BaseModel)` class
+2. Update in [app/model/abi.py](/src/data_collection/app/model/abi.py) the `ContractABI(BaseModel)` class
   * (e.g.for erc20 Token)
   ```
    class ContractABI(BaseModel):
@@ -73,9 +73,9 @@ In order to extend the application with a new token contract the following steps
       erc20: List[Dict[str, Any]]
   ```
 
-3. Add contract category enum value to the `ContractCategory(Enum)` [app](/src/data_collection/app/model/contract.py) class.
+3. Add contract category enum value to the `ContractCategory(Enum)` [app/model/contract.py](/src/data_collection/app/model/contract.py) class.
 
-4. Update the [app](/src/data_collection/app/web3/parser.py) class 
+4. Update the [app/web3/parser.py](/src/data_collection/app/web3/parser.py) class 
   * Add an elif clause for the added Token to the `_get_contract_abi()` function:
   ```
     def _get_contract_abi(
@@ -162,12 +162,13 @@ Adding a new data collection / processing mode can be useful if you want to make
 
 In order to be able to support more Blockchains for the data collection the following configurations have to be added. 
 
-1. Add `cfg.json` file [app](/src/data_collection/etc/cfg) in the following format: `<blockchain>.json`. The file can be copied from an existing Blockchain(i.e eth.json), the `node_url` has be changed to the new Blockchain url and the `contracts` which should to be collected in `partial` mode have to be added. The token category and events have to be added first as explained in the chapters above. 
+1. Add `cfg.json` file [etc/cfg](/src/data_collection/etc/cfg) in the following format: `<blockchain>.json`. The file can be copied from an existing Blockchain(i.e eth.json), the `node_url` has be changed to the new Blockchain url and the `contracts` which should to be collected in `partial` mode have to be added. The token category and events have to be added first as explained in the chapters above. 
  * i.e. for eth
   ```
   {
       "node_url": "http://host.docker.internal:8547",
-      
+
+      ...
 
       "data_collection": [
           {
@@ -211,7 +212,7 @@ In order to be able to support more Blockchains for the data collection the foll
       N_CONSUMER_INSTANCES: 1
   ```
 
-3. Add a new `run-<environment>-<blockchain>` script to [app](/scripts) and copy the code from the script of any other blockchain and update inside the file everywhere the name of the blockchain to the new one. 
+3. Add a new `run-<environment>-<blockchain>` script to [app/scripts](app/scripts) and copy the code from the script of any other blockchain and update inside the file everywhere the name of the blockchain to the new one. 
 
 4. Update the `ERIGON_PORT` in the `.env` file to the port of the new Blockchain.
 
